@@ -10,7 +10,7 @@ commercial hosting code, billing code, or internal operational code.
 
 The Community Edition is fully unlocked for self-hosted personal and
 noncommercial use. Commercial use, resale, paid hosting, or use for profit
-requires a separate commercial license from the author.
+requires a separate commercial license from EL Websolutions.
 
 ## What Is Included
 
@@ -27,7 +27,7 @@ requires a separate commercial license from the author.
 MemoryVault Community Edition is licensed under the PolyForm Noncommercial
 License 1.0.0.
 
-See [LICENSE](./LICENSE) and [NOTICE](./NOTICE).
+See [LICENSE.md](./LICENSE.md) and [NOTICE](./NOTICE).
 
 ## Requirements
 
@@ -43,8 +43,8 @@ See [LICENSE](./LICENSE) and [NOTICE](./NOTICE).
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/EgbertLudema/MemoryVault-OpenSource.git
-cd MemoryVault-OpenSource
+git clone https://github.com/EgbertLudema/MemoryVault-Community-Edition.git
+cd MemoryVault-Community-Edition
 ```
 
 2. Install dependencies:
