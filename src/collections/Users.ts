@@ -31,16 +31,12 @@ export const Users: CollectionConfig = {
   hooks: {
     afterChange: [
       async ({ doc, operation, req }) => {
-        // Only run right after a new user is created
         if (operation !== 'create') {
           return
         }
 
-        // In some edge cases req.user can be undefined right after signup,
-        // but doc.id is always the newly created user id.
         const userId = doc.id
 
-        // Use overrideAccess because req.user can be missing immediately after signup.
         const existing = await req.payload.find({
           collection: 'loved-one-groups',
           overrideAccess: true,
@@ -85,24 +81,6 @@ export const Users: CollectionConfig = {
       name: 'lastName',
       type: 'text',
       required: false,
-    },
-    {
-      name: 'authProvider',
-      type: 'text',
-      required: false,
-      admin: {
-        readOnly: true,
-      },
-    },
-    {
-      name: 'googleSub',
-      type: 'text',
-      required: false,
-      unique: true,
-      index: true,
-      admin: {
-        readOnly: true,
-      },
     },
     {
       name: 'profileImageUrl',

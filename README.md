@@ -17,7 +17,7 @@ requires a separate commercial license from EL Websolutions.
 - MemoryVault app routes for dashboard, memories, loved ones, groups, account,
   and feature ideas
 - Payload admin panel
-- App authentication and Google auth routes
+- App email/password authentication routes
 - Memory, media, loved-one, group, legacy-delivery, user, and feature-request
   APIs
 - App/Admin entitlement layer that defaults to unlocked `oss` mode
@@ -36,7 +36,6 @@ See [LICENSE.md](./LICENSE.md) and [NOTICE](./NOTICE).
 - PostgreSQL
 - Vercel Blob token for media uploads
 - Optional: Resend for email delivery
-- Optional: Google OAuth credentials
 
 ## Setup
 

@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { useSearchParams } from 'next/navigation'
 import { MemoryVaultLogo } from '@/components/ui/MemoryVaultLogo'
 import { PrimaryButton } from '@/components/ui/PrimaryButton'
 import { Link, useRouter } from '@/i18n/navigation'
@@ -67,7 +66,6 @@ function getPasswordStrength(password: string) {
 export default function RegisterPage() {
   const t = useTranslations('Auth')
   const router = useRouter()
-  const searchParams = useSearchParams()
 
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -85,14 +83,6 @@ export default function RegisterPage() {
       router.replace('/dashboard')
     }
   }, [router])
-
-  useEffect(() => {
-    if (searchParams.get('error') === 'google_auth_failed') {
-      setError(t('googleAuthFailed'))
-    }
-  }, [searchParams, t])
-
-  const googleHref = '/api/app-auth/google/start'
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -151,7 +141,6 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-linear-to-br from-purple-50 via-white to-purple-50">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="flex flex-row items-center justify-start gap-6 mb-8">
           <div className="h-16 w-16 flex items-center justify-center">
             <MemoryVaultLogo />
@@ -267,20 +256,6 @@ export default function RegisterPage() {
               {loading ? t('registerSubmitting') : t('registerSubmit')}
             </PrimaryButton>
           </form>
-
-          <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-[0.24em] text-gray-400">
-            <div className="h-px flex-1 bg-gray-200" />
-            <span>{t('orContinueWith')}</span>
-            <div className="h-px flex-1 bg-gray-200" />
-          </div>
-
-          <a
-            href={googleHref}
-            className="flex h-11 w-full items-center justify-center gap-3 rounded-full border border-gray-300 bg-white px-4 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50"
-          >
-            <span className="text-base font-semibold text-[#4285F4]">G</span>
-            <span>{t('continueWithGoogle')}</span>
-          </a>
 
           <p className="mt-5 text-center text-sm text-gray-600">
             {t('alreadyHaveAccount')}{' '}

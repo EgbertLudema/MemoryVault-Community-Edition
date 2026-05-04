@@ -21,24 +21,12 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // If already logged in, redirect away from login
     const hasToken = document.cookie.includes(`${APP_AUTH_COOKIE}=`)
 
     if (hasToken) {
       router.replace('/dashboard')
     }
   }, [router])
-
-  useEffect(() => {
-    if (searchParams.get('error') === 'google_auth_failed') {
-      setError(t('googleAuthFailed'))
-    }
-  }, [searchParams, t])
-
-  const next = searchParams.get('next')
-  const googleHref = next
-    ? `/api/app-auth/google/start?next=${encodeURIComponent(next)}`
-    : '/api/app-auth/google/start'
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -97,7 +85,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-linear-to-br from-purple-50 via-white to-purple-50">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="flex flex-row items-center justify-start gap-6 mb-8">
           <div className="h-16 w-16 flex items-center justify-center">
             <MemoryVaultLogo />
@@ -147,20 +134,6 @@ export default function LoginPage() {
               {loading ? t('loginSubmitting') : t('loginSubmit')}
             </PrimaryButton>
           </form>
-
-          <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-[0.24em] text-gray-400">
-            <div className="h-px flex-1 bg-gray-200" />
-            <span>{t('orContinueWith')}</span>
-            <div className="h-px flex-1 bg-gray-200" />
-          </div>
-
-          <a
-            href={googleHref}
-            className="flex h-11 w-full items-center justify-center gap-3 rounded-full border border-gray-300 bg-white px-4 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50"
-          >
-            <span className="text-base font-semibold text-[#4285F4]">G</span>
-            <span>{t('continueWithGoogle')}</span>
-          </a>
 
           <p className="mt-5 text-center text-sm text-gray-600">
             {t('newHere')}{' '}
