@@ -1,0 +1,115 @@
+:root {
+    --memory-height-minus-filters: calc(100svh - 132px);
+}
+
+/* Draggable canvas */
+.grid-wrapper {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+}
+
+.grid-container {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+}
+
+.canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    will-change: transform;
+}
+
+.item .albumTile > div{
+    --i: 1;/* Default value */
+    transition: transform 0.25s ease;
+}
+.item:hover .albumTile > div {
+    transform: translate(var(--offset-x), var(--offset-y)) rotate(calc(var(--i) * 6deg))!important;
+}
+
+.expanded-item{
+    position: fixed;
+    z-index: 160;
+    top: 50%;
+    left: 50%;
+    cursor: pointer;
+    max-height: calc(100svh - 40px);
+    box-sizing: border-box;
+}
+
+.item img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;    
+}
+
+.overlay{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #00000085;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    opacity: 0;
+    z-index: 20;
+}
+
+.overlay-active{
+    opacity: 1;
+    pointer-events: none;
+}
+
+.project-title{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    text-align: center;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.project-title p{
+    position: relative;
+    height: 42px;
+    color: #fff;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+}
+
+.project-title p .word{
+    position: relative;
+    display: inline-block;
+    font-size: 36px;
+    letter-spacing: -0.02em;
+    margin-right: 0.1em;
+    transform: translateY(0%);
+    will-change: transform;
+}
+
+.note-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.note-scrollbar::-webkit-scrollbar-track {
+    background: var(--note-scrollbar-track, transparent);
+    border-radius: 999px;
+}
+
+.note-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--note-scrollbar-thumb, rgba(15, 23, 42, 0.24));
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.note-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--note-scrollbar-thumb-hover, rgba(15, 23, 42, 0.36));
+    background-clip: padding-box;
+}

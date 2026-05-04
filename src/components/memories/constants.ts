@@ -1,0 +1,13 @@
+export const ITEM_WIDTH = 180
+export const ITEM_HEIGHT = 180
+export const ITEM_GAP = 150
+export const DRAG_EASE = 0.075
+export const MOMENTUM_FACTOR = 200
+export const UPDATE_DISTANCE = 80
+export const UPDATE_INTERVAL = 120
+export const SIDEBAR_WIDTH_OPEN = 300
+export const SIDEBAR_WIDTH_COLLAPSED = 66
+export const GRID_OFFSET_X = 40
+export const GRID_OFFSET_Y = 40
+export const MEMORY_CARD_SHADOW = 'rgb(101 101 101 / 20%) 0px 6px 12px -4px'
+export const MEMORY_CARD_RADIUS_CLASS = 'rounded-[28px] corner-shape-squircle'
