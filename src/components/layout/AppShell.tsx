@@ -8,7 +8,6 @@ import { AppIntroTour } from '@/components/onboarding/AppIntroTour'
 import { AccountCircleIcon } from '@/components/icons/AccountCircleIcon'
 import { HouseIcon } from '@/components/icons/HouseIcon'
 import { MemoryBookIcon } from '@/components/icons/MemoryBookIcon'
-import { OpenStarIcon } from '@/components/icons/OpenStarIcon'
 import { TwoPersonsIcon } from '@/components/icons/TwoPersonsIcon'
 import { Link, usePathname } from '@/i18n/navigation'
 
@@ -44,11 +43,6 @@ function MobileBottomNav(props: {
       icon: <TwoPersonsIcon className={mobileIconClass} />,
     },
     {
-      label: t('ideas'),
-      href: '/feature-ideas',
-      icon: <OpenStarIcon className={mobileIconClass} />,
-    },
-    {
       label: t('account'),
       href: '/account',
       icon: props.userProfileImageSrc?.trim() ? (
@@ -70,7 +64,7 @@ function MobileBottomNav(props: {
       aria-label="Primary"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-200 bg-white/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-2 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden"
     >
-      <ul className="grid grid-cols-5 gap-1">
+      <ul className="grid grid-cols-4 gap-1">
         {navItems.map((item) => {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
 

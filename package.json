@@ -19,14 +19,14 @@
     "test": "pnpm run test:int && pnpm run test:e2e",
     "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --no-experimental-strip-types\" pnpm exec playwright test",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
-    "legacy:checkins": "cross-env NODE_OPTIONS=--no-deprecation tsx src/scripts/runLegacyCheckIns.ts"
+    "legacy:checkins": "cross-env NODE_OPTIONS=--no-deprecation tsx src/scripts/runLegacyCheckIns.ts",
+    "predev": "cross-env NODE_OPTIONS=--no-deprecation tsx src/scripts/prepareCommunityDatabase.ts"
   },
   "dependencies": {
     "@payloadcms/db-vercel-postgres": "^3.84.1",
     "@payloadcms/email-resend": "^3.84.1",
     "@payloadcms/next": "^3.84.1",
     "@payloadcms/richtext-lexical": "^3.84.1",
-    "@payloadcms/storage-vercel-blob": "^3.84.1",
     "@payloadcms/ui": "^3.84.1",
     "@tailwindcss/postcss": "^4.2.0",
     "@vercel/analytics": "^2.0.1",
@@ -42,7 +42,9 @@
     "react-dom": "^19.2.6",
     "react-joyride": "^3.0.2",
     "sharp": "0.34.2",
-    "three": "^0.180.0"
+    "three": "^0.180.0",
+    "@payloadcms/storage-s3": "^3.84.1",
+    "pg": "^8.20.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",

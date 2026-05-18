@@ -12,12 +12,10 @@ The Community Edition is the free self-hosted app and admin experience.
 
 ## What Is Included
 
-- MemoryVault app routes for dashboard, memories, loved ones, groups, account,
-  and feature ideas
+- MemoryVault app routes for dashboard, memories, loved ones, groups, and account
 - Payload admin panel
 - App email/password authentication routes
-- Memory, media, loved-one, group, legacy-delivery, user, and feature-request
-  APIs
+- Memory, media, loved-one, group, legacy-delivery, and user APIs
 
 ## License
 
@@ -31,7 +29,7 @@ See [LICENSE.md](./LICENSE.md) and [NOTICE](./NOTICE).
 - Node.js `18.20.2` or newer
 - npm
 - PostgreSQL
-- Vercel Blob token for media uploads
+- S3-compatible object storage for media uploads
 - Optional: Resend for email delivery
 
 ## Setup
@@ -63,17 +61,28 @@ Minimum local values:
 NEXT_PUBLIC_SERVER_URL=http://localhost:3000
 PAYLOAD_SECRET=replace-with-a-long-random-secret
 POSTGRES_URL=postgresql://postgres:postgres@localhost:5432/memoryvault
-BLOB_READ_WRITE_TOKEN=your-vercel-blob-token
+S3_BUCKET=memoryvault
+S3_REGION=auto
+S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
+S3_ACCESS_KEY_ID=your-access-key-id
+S3_SECRET_ACCESS_KEY=your-secret-access-key
+S3_PUBLIC_URL=https://media.example.com
 APP_ENCRYPTION_KEY=replace-with-a-long-random-secret
 ```
 
-5. Start the app:
+5. Run the database migrations:
+
+```bash
+npm run db:migrate
+```
+
+6. Start the app:
 
 ```bash
 npm run dev
 ```
 
-6. Open:
+7. Open:
 
 ```txt
 http://localhost:3000
@@ -96,11 +105,22 @@ docker compose up
 
 The compose file provides Postgres to the app container. You still need to set
 secrets and service credentials in `.env`, especially `PAYLOAD_SECRET`,
-`APP_ENCRYPTION_KEY`, and `BLOB_READ_WRITE_TOKEN`.
+`APP_ENCRYPTION_KEY`, and the `S3_*` media storage values.
+
+## Media Storage
+
+MemoryVault stores uploaded media in S3-compatible object storage.
+
+Recommended options:
+
+- Cloudflare R2 for hosted object storage.
+- MinIO for fully self-hosted object storage.
+- Any provider with an S3-compatible API.
 
 ## Scripts
 
 - `npm run dev`: start the local development server
+- `npm run db:migrate`: run Payload database migrations
 - `npm run build`: build the production app
 - `npm run start`: start the production server after a build
 - `npm run generate:types`: generate Payload types

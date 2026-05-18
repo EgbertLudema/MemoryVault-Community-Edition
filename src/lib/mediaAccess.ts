@@ -1,9 +1,8 @@
-import path from 'path'
 import crypto from 'crypto'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getAppUserFromHeaders } from '@/lib/appAuth'
-import { getBlobReadWriteToken, getPublicBlobBaseUrl } from '@/lib/mediaBlob'
+import { getPublicMediaBaseUrl } from '@/lib/mediaBlob'
 
 type Media = Record<string, any>
 
@@ -21,18 +20,20 @@ function toNumberId(value: unknown) {
   return Number(raw)
 }
 
-function buildBlobUrlFromFilename(filename: string) {
-  const token = getBlobReadWriteToken()
-  const baseUrl = getPublicBlobBaseUrl()
+function getFileUrl(media: Media, filename: string) {
+  const mediaUrl = toStringSafe(media?.url)
 
-  if (!token || !baseUrl) {
-    throw new Error('Vercel Blob storage is not configured')
+  if (mediaUrl.startsWith('http://') || mediaUrl.startsWith('https://')) {
+    return mediaUrl
   }
 
-  return {
-    fileUrl: `${baseUrl}/${path.posix.join('', encodeURIComponent(filename))}`,
-    token,
+  const baseUrl = getPublicMediaBaseUrl()
+
+  if (!baseUrl) {
+    throw new Error('S3 media storage is not configured')
   }
+
+  return `${baseUrl}/${encodeURIComponent(filename)}`
 }
 
 export type MediaAccessError =
@@ -41,7 +42,7 @@ export type MediaAccessError =
   | { error: 'not_found' }
 
 export type OwnedMediaResult = { media: Media }
-export type OwnedMediaBlobResult = { media: Media; fileUrl: string; token: string }
+export type OwnedMediaBlobResult = { media: Media; fileUrl: string }
 
 const DELIVERY_MEDIA_COOKIE = 'mv_delivery_media'
 
@@ -184,12 +185,9 @@ export async function getOwnedMediaBlobFromHeaders(
     return { error: 'not_found' }
   }
 
-  const { fileUrl, token } = buildBlobUrlFromFilename(filename)
-
   return {
     media: mediaResult.media,
-    fileUrl,
-    token,
+    fileUrl: getFileUrl(mediaResult.media, filename),
   }
 }
 
@@ -209,18 +207,22 @@ export async function getOwnedPosterBlobFromHeaders(
     return { error: 'not_found' }
   }
 
+  if (posterUrl.startsWith('http://') || posterUrl.startsWith('https://')) {
+    return {
+      media: mediaResult.media,
+      fileUrl: posterUrl,
+    }
+  }
+
   const filename = decodeURIComponent(posterUrl.split('/').pop() ?? '')
 
   if (!filename) {
     return { error: 'not_found' }
   }
 
-  const { fileUrl, token } = buildBlobUrlFromFilename(filename)
-
   return {
     media: mediaResult.media,
-    fileUrl,
-    token,
+    fileUrl: getFileUrl(mediaResult.media, filename),
   }
 }
 

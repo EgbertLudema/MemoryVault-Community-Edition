@@ -1,4 +1,3 @@
-import { BlobNotFoundError, head } from '@vercel/blob'
 import { NextResponse } from 'next/server'
 import { applyForwardedHeaders, getOwnedPosterBlobFromHeaders } from '@/lib/mediaAccess'
 import { decryptBufferServer, isServerEncrypted } from '@/lib/serverEncryption'
@@ -13,13 +12,17 @@ function toNumberId(value: unknown) {
   return Number(raw)
 }
 
+function notFound() {
+  return NextResponse.json({ error: 'Not found' }, { status: 404 })
+}
+
 export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params
     const mediaId = toNumberId(id)
 
     if (!Number.isFinite(mediaId)) {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+      return notFound()
     }
 
     const fileData = await getOwnedPosterBlobFromHeaders(req.headers, mediaId)
@@ -32,34 +35,33 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    if ('error' in fileData && fileData.error === 'not_found') {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    if ('error' in fileData) {
+      return notFound()
     }
 
-    const metadata = await head(fileData.fileUrl, { token: fileData.token })
     const upstream = await fetch(fileData.fileUrl, { cache: 'no-store' })
+
+    if (!upstream.ok) {
+      return notFound()
+    }
+
     const headers = new Headers()
     const encryptionMetadata =
       (fileData.media as any)?.posterEncryptionMetadata ?? (fileData.media as any)?.encryptionMetadata
 
     headers.set('cache-control', 'private, max-age=300')
-    headers.set('content-disposition', metadata.contentDisposition)
     headers.set(
       'content-type',
       isServerEncrypted(encryptionMetadata)
         ? encryptionMetadata.originalType || 'image/jpeg'
-        : metadata.contentType,
+        : upstream.headers.get('content-type') || 'image/jpeg',
     )
-    headers.set('etag', `"media-poster-${mediaId}-${metadata.uploadedAt.toISOString()}"`)
+    headers.set('etag', `"media-poster-${mediaId}-${fileData.media?.updatedAt ?? ''}"`)
 
     if (isServerEncrypted(encryptionMetadata)) {
       const decrypted = decryptBufferServer(Buffer.from(await upstream.arrayBuffer()), encryptionMetadata)
       headers.set('content-length', String(decrypted.length))
-      return new Response(decrypted, {
-        headers,
-        status: upstream.ok ? 200 : upstream.status,
-        statusText: upstream.statusText,
-      })
+      return new Response(decrypted, { headers })
     }
 
     applyForwardedHeaders(headers, upstream.headers)
@@ -70,10 +72,6 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
       statusText: upstream.statusText,
     })
   } catch (error) {
-    if (error instanceof BlobNotFoundError) {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    }
-
     console.error(error)
     return NextResponse.json({ error: 'Failed to load poster image' }, { status: 500 })
   }

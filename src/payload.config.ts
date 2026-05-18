@@ -1,7 +1,7 @@
 import { vercelPostgresAdapter } from '@payloadcms/db-vercel-postgres'
 import { resendAdapter } from '@payloadcms/email-resend'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
-import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
+import { s3Storage } from '@payloadcms/storage-s3'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
@@ -14,16 +14,20 @@ import { LovedOnes } from './collections/LovedOnes'
 import { LovedOneGroups } from './collections/LovedOneGroups'
 import { Memories } from './collections/Memories'
 import { LegacyDeliveries } from './collections/LegacyDeliveries'
-import { FeatureRequests } from './collections/FeatureRequests'
-import { FeatureRequestVotes } from './collections/FeatureRequestVotes'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 const resendApiKey = process.env.RESEND_API_KEY
 const resendFromAddress = process.env.RESEND_FROM_ADDRESS
 const resendFromName = process.env.RESEND_FROM_NAME || 'Memory Vault'
-const blobReadWriteToken = process.env.BLOB_READ_WRITE_TOKEN
 const serverURL = process.env.NEXT_PUBLIC_SERVER_URL?.replace(/\/+$/, '')
+const s3Bucket = process.env.S3_BUCKET
+const s3AccessKeyId = process.env.S3_ACCESS_KEY_ID
+const s3SecretAccessKey = process.env.S3_SECRET_ACCESS_KEY
+const s3Endpoint = process.env.S3_ENDPOINT
+const s3PublicUrl = process.env.S3_PUBLIC_URL?.replace(/\/+$/, '')
+const s3Region = process.env.S3_REGION || 'auto'
+const s3Enabled = Boolean(s3Bucket && s3AccessKeyId && s3SecretAccessKey && s3Endpoint)
 
 export default buildConfig({
   serverURL,
@@ -41,8 +45,6 @@ export default buildConfig({
     LovedOnes,
     LovedOneGroups,
     LegacyDeliveries,
-    FeatureRequests,
-    FeatureRequestVotes,
   ],
   localization: {
     defaultLocale: 'en',
@@ -79,15 +81,30 @@ export default buildConfig({
   }),
   sharp,
   plugins: [
-    vercelBlobStorage({
-      enabled: Boolean(blobReadWriteToken),
+    s3Storage({
+      enabled: s3Enabled,
       collections: {
-        media: true,
+        media: s3PublicUrl
+          ? {
+              disablePayloadAccessControl: true,
+              generateFileURL: ({ filename, prefix }) => {
+                const key = prefix ? `${prefix}/${filename}` : filename
+                return `${s3PublicUrl}/${key}`
+              },
+            }
+          : true,
       },
-      token: blobReadWriteToken as string,
+      bucket: s3Bucket as string,
+      config: {
+        credentials: {
+          accessKeyId: s3AccessKeyId as string,
+          secretAccessKey: s3SecretAccessKey as string,
+        },
+        endpoint: s3Endpoint,
+        forcePathStyle: true,
+        region: s3Region,
+      },
       clientUploads: true,
-      addRandomSuffix: true,
-      cacheControlMaxAge: 31536000,
     }),
   ],
 })

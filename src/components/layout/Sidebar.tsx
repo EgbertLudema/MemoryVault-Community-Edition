@@ -9,7 +9,6 @@ import { Link, usePathname, useRouter } from '@/i18n/navigation'
 import { AccountCircleIcon } from '../icons/AccountCircleIcon'
 import { HouseIcon } from '../icons/HouseIcon'
 import { MemoryBookIcon } from '../icons/MemoryBookIcon'
-import { OpenStarIcon } from '../icons/OpenStarIcon'
 import { TwoPersonsIcon } from '../icons/TwoPersonsIcon'
 import { CollapseButton } from '../ui/CollapseButton'
 import { LogoutButton } from '../ui/LogoutButton'
@@ -134,11 +133,6 @@ export function Sidebar(props: {
       label: t('myLovedOnes'),
       href: '/loved-ones',
       icon: <TwoPersonsIcon className={iconSvgClass} />,
-    },
-    {
-      label: t('featureIdeas'),
-      href: '/feature-ideas',
-      icon: <OpenStarIcon className={iconSvgClass} />,
     },
   ]
 
@@ -316,8 +310,6 @@ export function Sidebar(props: {
                             ? 'sidebar-memories-link'
                             : item.href === '/loved-ones'
                               ? 'sidebar-loved-ones-link'
-                              : item.href === '/feature-ideas'
-                                ? 'sidebar-feature-ideas-link'
                               : undefined
                       }
                       href={item.href}
