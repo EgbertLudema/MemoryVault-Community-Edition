@@ -11,7 +11,7 @@ services:
     depends_on:
       - postgres
     env_file:
-      - .env
+      - .env.local
     environment:
       POSTGRES_URL: postgresql://postgres:postgres@postgres:5432/memoryvault
 
@@ -24,9 +24,14 @@ services:
       POSTGRES_DB: memoryvault
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d memoryvault']
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - memoryvault_dev_pgdata:/var/lib/postgresql/data
 
 volumes:
-  pgdata:
+  memoryvault_dev_pgdata:
   node_modules:

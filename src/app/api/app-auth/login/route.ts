@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       },
     })
 
-    if (!result.token) {
+    if (!result.token || !result.user) {
       return NextResponse.json({ message: 'Login failed' }, { status: 401 })
     }
 

@@ -191,7 +191,7 @@ function CarouselMediaSlide({
             poster={slide.url}
             preload="metadata"
             playsInline
-            className="block h-full w-full object-cover"
+            className="memory-carousel-video block h-full w-full object-cover"
             onClick={togglePlayback}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
@@ -320,24 +320,24 @@ export function AlbumCarousel({
 
   return (
     <div
-      className={`relative h-full w-full overflow-visible bg-transparent p-5 ${MEMORY_CARD_RADIUS_CLASS}`}
+      className={`relative h-full w-full overflow-visible bg-transparent p-3 sm:p-5 ${MEMORY_CARD_RADIUS_CLASS}`}
     >
-      <div className="pointer-events-none absolute inset-x-5 top-5 z-30 flex items-start justify-between gap-3">
+      <div className="pointer-events-none absolute inset-x-3 top-3 z-30 flex items-start justify-between gap-2 sm:inset-x-5 sm:top-5 sm:gap-3">
         <div
-          className={`max-w-[70%] rounded-full border border-white/70 bg-white/88 px-4 py-2 shadow-[0_12px_30px_rgba(15,23,42,0.12)] backdrop-blur-md transition-all duration-150 ease-out ${
+          className={`max-w-[68%] rounded-full border border-white/70 bg-white/88 px-3 py-2 shadow-[0_12px_30px_rgba(15,23,42,0.12)] backdrop-blur-md transition-all duration-150 ease-out sm:max-w-[70%] sm:px-4 ${
             controlsVisible
               ? 'pointer-events-auto translate-y-0 opacity-100'
               : 'pointer-events-none -translate-y-2 opacity-0'
           }`}
         >
-          <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 sm:tracking-[0.24em]">
             {activeSlideLabel}
           </div>
           <div className="mt-1 truncate text-sm font-semibold text-slate-900">{albumTitle}</div>
         </div>
 
         <div
-          className={`rounded-full border border-white/70 bg-white/88 px-3 py-2 text-xs font-semibold text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.12)] backdrop-blur-md transition-all duration-150 ease-out ${
+          className={`rounded-full border border-white/70 bg-white/88 px-2.5 py-2 text-xs font-semibold text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.12)] backdrop-blur-md transition-all duration-150 ease-out sm:px-3 ${
             controlsVisible
               ? 'pointer-events-auto translate-y-0 opacity-100'
               : 'pointer-events-none -translate-y-2 opacity-0'
@@ -381,9 +381,9 @@ export function AlbumCarousel({
         </div>
 
         {hasMultipleSlides ? (
-          <div className="pointer-events-none absolute inset-x-0 bottom-4 z-50 flex items-end justify-between gap-3 px-2">
+          <div className="pointer-events-none absolute inset-x-0 bottom-3 z-50 flex items-end justify-between gap-2 px-1 sm:bottom-4 sm:gap-3 sm:px-2">
             <div
-              className={`flex gap-2 transition-all duration-180 ease-out ${
+              className={`flex gap-1.5 transition-all duration-180 ease-out sm:gap-2 ${
                 controlsVisible
                   ? 'pointer-events-auto translate-y-0 opacity-100'
                   : 'pointer-events-none translate-y-3 opacity-0'
@@ -392,24 +392,24 @@ export function AlbumCarousel({
               <button
                 type="button"
                 onClick={goPrev}
-                className="inline-flex h-12 items-center gap-2 rounded-full border border-white/40 bg-white/16 px-4 text-sm font-semibold text-[#3f2f68] shadow-[0_18px_40px_rgba(91,63,154,0.18),inset_0_1px_0_rgba(255,255,255,0.58)] backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/24 hover:text-[#2d1f52]"
+                className="inline-flex h-11 w-11 items-center justify-center gap-2 rounded-full border border-white/40 bg-white/16 text-sm font-semibold text-[#3f2f68] shadow-[0_18px_40px_rgba(91,63,154,0.18),inset_0_1px_0_rgba(255,255,255,0.58)] backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/24 hover:text-[#2d1f52] sm:h-12 sm:w-auto sm:px-4"
               >
                 <span className="text-lg leading-none">&lsaquo;</span>
-                <span>Vorige</span>
+                <span className="hidden sm:inline">Vorige</span>
               </button>
 
               <button
                 type="button"
                 onClick={goNext}
-                className="inline-flex h-12 items-center gap-2 rounded-full border border-[#8c74cb]/45 bg-[linear-gradient(135deg,rgba(130,94,186,0.92),rgba(164,121,227,0.92))] px-4 text-sm font-semibold text-white shadow-[0_18px_44px_rgba(104,74,175,0.34),inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-md transition hover:-translate-y-0.5 hover:brightness-105"
+                className="inline-flex h-11 w-11 items-center justify-center gap-2 rounded-full border border-[#8c74cb]/45 bg-[linear-gradient(135deg,rgba(130,94,186,0.92),rgba(164,121,227,0.92))] text-sm font-semibold text-white shadow-[0_18px_44px_rgba(104,74,175,0.34),inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-md transition hover:-translate-y-0.5 hover:brightness-105 sm:h-12 sm:w-auto sm:px-4"
               >
-                <span>Volgende</span>
+                <span className="hidden sm:inline">Volgende</span>
                 <span className="text-lg leading-none">&rsaquo;</span>
               </button>
             </div>
 
             <div
-              className={`flex gap-2 rounded-full border border-white/40 bg-white/18 px-3 py-2 shadow-[0_18px_40px_rgba(91,63,154,0.16),inset_0_1px_0_rgba(255,255,255,0.55)] backdrop-blur-md transition-all duration-180 ease-out ${
+              className={`flex gap-1.5 rounded-full border border-white/40 bg-white/18 px-2.5 py-2 shadow-[0_18px_40px_rgba(91,63,154,0.16),inset_0_1px_0_rgba(255,255,255,0.55)] backdrop-blur-md transition-all duration-180 ease-out sm:gap-2 sm:px-3 ${
                 controlsVisible
                   ? 'pointer-events-auto translate-y-0 opacity-100'
                   : 'pointer-events-none translate-y-3 opacity-0'

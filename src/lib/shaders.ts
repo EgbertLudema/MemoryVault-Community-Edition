@@ -10,6 +10,7 @@ type DissolveShaderConfig = {
   origin?: 'top' | 'bottom'
   spread?: number
   speed?: number
+  progressEase?: number
   reverse?: boolean
   start?: string
   end?: string
@@ -17,6 +18,13 @@ type DissolveShaderConfig = {
 }
 
 type ManagedWebGLContext = WebGLRenderingContext | WebGL2RenderingContext | null
+
+type DissolveTransitionShader = {
+  setProgress: (progress: number) => void
+  setOrigin: (origin: 'top' | 'bottom') => void
+  resize: () => void
+  destroy: () => void
+}
 
 export const vertexShader = `
   varying vec2 vUv;
@@ -146,6 +154,7 @@ export function initDissolveShader(
     origin: 'top',
     spread: 0.5,
     speed: 1.1,
+    progressEase: 0.08,
     reverse: false,
     start: 'top 82%',
     end: 'top 20%',
@@ -204,10 +213,29 @@ export function initDissolveShader(
   const mesh = new THREE.Mesh(geometry, material)
   let frameId = 0
   let isContextLost = false
+  let isInView = typeof IntersectionObserver === 'undefined'
+  let isDocumentVisible = !document.hidden
+  let intersectionObserver: IntersectionObserver | null = null
+  let targetProgress = settings.reverse ? 1.1 : 0
+  let renderedProgress = targetProgress
+  let lastFrameTime = performance.now()
 
   scene.add(mesh)
   canvas.style.backgroundColor = 'transparent'
   canvas.style.opacity = '1'
+
+  const shouldAnimate = () => !isContextLost && isInView && isDocumentVisible
+
+  const render = () => {
+    if (isContextLost) {
+      return
+    }
+
+    material.uniforms.uProgress.value = renderedProgress
+    canvas.style.opacity = '1'
+    material.uniforms.uTime.value = performance.now() * 0.001
+    renderer.render(scene, camera)
+  }
 
   const resize = () => {
     const width = target.offsetWidth
@@ -220,13 +248,41 @@ export function initDissolveShader(
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
     renderer.setSize(width, height, false)
     material.uniforms.uResolution.value.set(width, height)
+    render()
   }
 
   const handleContextLost = (event: Event) => {
     event.preventDefault()
     isContextLost = true
     canvas.style.opacity = '0'
+    stopAnimation()
+  }
+
+  const startAnimation = () => {
+    if (frameId || !shouldAnimate()) {
+      return
+    }
+
+    frameId = window.requestAnimationFrame(animate)
+  }
+
+  function stopAnimation() {
+    if (!frameId) {
+      return
+    }
+
     window.cancelAnimationFrame(frameId)
+    frameId = 0
+  }
+
+  const handleVisibilityChange = () => {
+    isDocumentVisible = !document.hidden
+
+    if (shouldAnimate()) {
+      startAnimation()
+    } else {
+      stopAnimation()
+    }
   }
 
   const scrollTrigger = ScrollTrigger.create({
@@ -237,35 +293,213 @@ export function initDissolveShader(
     markers: settings.markers,
     onUpdate: (self) => {
       const progress = Math.min(self.progress * settings.speed, 0.8)
-      material.uniforms.uProgress.value = settings.reverse ? 1 - progress : progress
+      targetProgress = settings.reverse ? 1 - progress : progress
+      startAnimation()
     },
   })
 
   const animate = () => {
-    if (isContextLost) {
+    frameId = 0
+
+    if (!shouldAnimate()) {
       return
     }
 
-    canvas.style.opacity = '1'
-    material.uniforms.uTime.value = performance.now() * 0.001
-    renderer.render(scene, camera)
-    frameId = window.requestAnimationFrame(animate)
+    const now = performance.now()
+    const deltaSeconds = Math.min((now - lastFrameTime) / 1000, 0.1)
+    const progressDelta = targetProgress - renderedProgress
+    const easeAmount = 1 - Math.pow(1 - settings.progressEase, deltaSeconds * 60)
+
+    lastFrameTime = now
+
+    if (Math.abs(progressDelta) <= 0.0005) {
+      renderedProgress = targetProgress
+    } else {
+      renderedProgress += progressDelta * easeAmount
+    }
+
+    render()
+
+    if (Math.abs(targetProgress - renderedProgress) > 0.0005) {
+      startAnimation()
+    } else if (scrollTrigger.isActive) {
+      startAnimation()
+    }
   }
 
   resize()
-  animate()
+  if (typeof IntersectionObserver !== 'undefined') {
+    intersectionObserver = new IntersectionObserver(
+      ([entry]) => {
+        isInView = Boolean(entry?.isIntersecting)
+
+        if (shouldAnimate()) {
+          startAnimation()
+        } else {
+          stopAnimation()
+        }
+      },
+      { rootMargin: '240px 0px' },
+    )
+    intersectionObserver.observe(triggerElement)
+  }
+  startAnimation()
   window.addEventListener('resize', resize)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
   canvas.addEventListener('webglcontextlost', handleContextLost)
 
   return () => {
     window.cancelAnimationFrame(frameId)
     window.removeEventListener('resize', resize)
+    document.removeEventListener('visibilitychange', handleVisibilityChange)
     canvas.removeEventListener('webglcontextlost', handleContextLost)
+    intersectionObserver?.disconnect()
     scrollTrigger.kill()
     geometry.dispose()
     material.dispose()
     canvas.style.opacity = ''
     canvas.style.backgroundColor = ''
     renderer.dispose()
+  }
+}
+
+export function initDissolveTransitionShader(
+  canvas: HTMLCanvasElement,
+  target: HTMLElement,
+  config: Pick<
+    DissolveShaderConfig,
+    'accentColor' | 'color' | 'opacity' | 'origin' | 'spread'
+  > = {},
+): DissolveTransitionShader | null {
+  if (!canvas.isConnected || !target.isConnected) {
+    return null
+  }
+
+  const settings = {
+    color: '#e9d5ff',
+    accentColor: '#a855f7',
+    opacity: 1.12,
+    origin: 'top' as const,
+    spread: 0.42,
+    ...config,
+  }
+  const rgb = hexToRgb(settings.color)
+  const accentRgb = hexToRgb(settings.accentColor)
+  const webglContext = createManagedWebGLContext(canvas)
+
+  if (!webglContext) {
+    canvas.style.display = 'none'
+    return {
+      setProgress: () => {},
+      setOrigin: () => {},
+      resize: () => {},
+      destroy: () => {
+        canvas.style.display = ''
+      },
+    }
+  }
+
+  const scene = new THREE.Scene()
+  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
+  let renderer: THREE.WebGLRenderer
+
+  try {
+    renderer = new THREE.WebGLRenderer({
+      canvas,
+      alpha: true,
+      antialias: false,
+      context: webglContext,
+      powerPreference: 'low-power',
+    })
+  } catch {
+    canvas.style.display = 'none'
+    return {
+      setProgress: () => {},
+      setOrigin: () => {},
+      resize: () => {},
+      destroy: () => {
+        canvas.style.display = ''
+      },
+    }
+  }
+
+  renderer.setClearColor(0x000000, 0)
+  const geometry = new THREE.PlaneGeometry(2, 2)
+  const material = new THREE.ShaderMaterial({
+    vertexShader,
+    fragmentShader,
+    uniforms: {
+      uProgress: { value: 0 },
+      uResolution: {
+        value: new THREE.Vector2(target.offsetWidth, target.offsetHeight),
+      },
+      uColor: { value: new THREE.Vector3(rgb.r, rgb.g, rgb.b) },
+      uAccentColor: { value: new THREE.Vector3(accentRgb.r, accentRgb.g, accentRgb.b) },
+      uOpacity: { value: settings.opacity },
+      uOrigin: { value: settings.origin === 'bottom' ? 1 : 0 },
+      uTime: { value: 0 },
+      uSpread: { value: settings.spread },
+    },
+    transparent: true,
+  })
+  const mesh = new THREE.Mesh(geometry, material)
+  let isContextLost = false
+
+  scene.add(mesh)
+  canvas.style.backgroundColor = 'transparent'
+  canvas.style.opacity = '1'
+
+  const render = () => {
+    if (isContextLost) {
+      return
+    }
+
+    material.uniforms.uTime.value = performance.now() * 0.001
+    renderer.render(scene, camera)
+  }
+
+  const resize = () => {
+    const width = target.offsetWidth
+    const height = target.offsetHeight
+
+    if (!width || !height) {
+      return
+    }
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
+    renderer.setSize(width, height, false)
+    material.uniforms.uResolution.value.set(width, height)
+    render()
+  }
+
+  const handleContextLost = (event: Event) => {
+    event.preventDefault()
+    isContextLost = true
+    canvas.style.opacity = '0'
+  }
+
+  resize()
+  window.addEventListener('resize', resize)
+  canvas.addEventListener('webglcontextlost', handleContextLost)
+
+  return {
+    setProgress: (progress: number) => {
+      material.uniforms.uProgress.value = progress
+      render()
+    },
+    setOrigin: (origin: 'top' | 'bottom') => {
+      material.uniforms.uOrigin.value = origin === 'bottom' ? 1 : 0
+      render()
+    },
+    resize,
+    destroy: () => {
+      window.removeEventListener('resize', resize)
+      canvas.removeEventListener('webglcontextlost', handleContextLost)
+      geometry.dispose()
+      material.dispose()
+      canvas.style.opacity = ''
+      canvas.style.backgroundColor = ''
+      renderer.dispose()
+    },
   }
 }

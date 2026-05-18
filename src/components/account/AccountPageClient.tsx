@@ -4,6 +4,8 @@ import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import React, { useEffect, useMemo, useState } from 'react'
 import { DashboardLoadReveal } from '@/components/dashboard/DashboardLoadReveal'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { AccountHelpTour } from '@/components/onboarding/AccountHelpTour'
 import { LogoutButton } from '@/components/ui/LogoutButton'
 import { PrimaryButton } from '@/components/ui/PrimaryButton'
 import { buildMediaImageUrl } from '@/lib/mediaBlob'
@@ -12,26 +14,18 @@ type LovedOneOption = {
   id: number
   fullName: string
   email: string
-}
-
-type SecureDeliveryDraft = {
-  id: number
-  recipientName: string
-  recipientEmail: string | null
-  memoryCount: number
-  memoryIds: number[]
-  url: string
-  secureUrl: string
-  accessPassword: string
+  trustedContactInviteStatus: 'none' | 'pending' | 'accepted'
 }
 
 type AccountPageClientProps = {
   userId: number
+  locale: string
   initialFirstName: string
   initialLastName: string
   initialProfileImageSrc: string
   email: string
   initialLegacyProtectionEnabled: boolean
+  initialLegacyProtectionPendingEnable: boolean
   lovedOneOptions: LovedOneOption[]
   initialLegacyProtectionContactIds: number[]
 }
@@ -42,11 +36,13 @@ function cn(...classes: Array<string | false | null | undefined>) {
 
 export function AccountPageClient({
   userId,
+  locale,
   initialFirstName,
   initialLastName,
   initialProfileImageSrc,
   email,
   initialLegacyProtectionEnabled,
+  initialLegacyProtectionPendingEnable,
   lovedOneOptions,
   initialLegacyProtectionContactIds,
 }: AccountPageClientProps) {
@@ -61,11 +57,18 @@ export function AccountPageClient({
   const [legacyProtectionEnabled, setLegacyProtectionEnabled] = useState(
     initialLegacyProtectionEnabled,
   )
+  const [legacyProtectionPendingEnable, setLegacyProtectionPendingEnable] = useState(
+    initialLegacyProtectionPendingEnable,
+  )
   const [selectedContactIds, setSelectedContactIds] = useState(initialLegacyProtectionContactIds)
+  const [contactInviteStatuses, setContactInviteStatuses] = useState(() =>
+    Object.fromEntries(
+      lovedOneOptions.map((option) => [option.id, option.trustedContactInviteStatus]),
+    ) as Record<number, LovedOneOption['trustedContactInviteStatus']>,
+  )
   const [savingProfile, setSavingProfile] = useState(false)
   const [savingLegacy, setSavingLegacy] = useState(false)
-  const [creatingDeliveryLinks, setCreatingDeliveryLinks] = useState(false)
-  const [secureDeliveryDrafts, setSecureDeliveryDrafts] = useState<SecureDeliveryDraft[]>([])
+  const [resendingContactId, setResendingContactId] = useState<number | null>(null)
   const [logoutLoading, setLogoutLoading] = useState(false)
   const [profileMessage, setProfileMessage] = useState<string | null>(null)
   const [legacyMessage, setLegacyMessage] = useState<string | null>(null)
@@ -74,6 +77,10 @@ export function AccountPageClient({
 
   const hasSelectableLovedOnes = lovedOneOptions.length > 0
   const hasSelectedTrustedContact = selectedContactIds.length > 0
+  const acceptedSelectedContactIds = selectedContactIds.filter(
+    (contactId) => contactInviteStatuses[contactId] === 'accepted',
+  )
+  const hasAcceptedTrustedContact = acceptedSelectedContactIds.length > 0
   const selectedContactLabel = useMemo(() => {
     return lovedOneOptions
       .filter((option) => selectedContactIds.includes(option.id))
@@ -122,6 +129,8 @@ export function AccountPageClient({
 
       throw new Error(message)
     }
+
+    return body
   }
 
   async function handleProfileSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -203,8 +212,10 @@ export function AccountPageClient({
     }
   }, [pendingProfilePreview, profileImageFile])
 
+
   async function handleLegacyProtectionChange(nextValue: boolean) {
     const previousValue = legacyProtectionEnabled
+    const previousPendingValue = legacyProtectionPendingEnable
 
     if (nextValue && !hasSelectedTrustedContact) {
       setLegacyError(t('enableTrustedContactRequired'))
@@ -213,20 +224,32 @@ export function AccountPageClient({
     }
 
     try {
-      setLegacyProtectionEnabled(nextValue)
+      setLegacyProtectionEnabled(nextValue && hasAcceptedTrustedContact)
+      setLegacyProtectionPendingEnable(nextValue && !hasAcceptedTrustedContact)
       setSavingLegacy(true)
       setLegacyError(null)
       setLegacyMessage(null)
 
-      await updateAccount({
+      const body = await updateAccount({
         enableLegacyProtection: nextValue,
         legacyProtectionContacts: selectedContactIds,
       })
 
-      setLegacyMessage(nextValue ? t('legacyEnabled') : t('legacyDisabled'))
+      const nextEnabled = Boolean(body?.user?.enableLegacyProtection)
+      const nextPending = Boolean(body?.user?.legacyProtectionPendingEnable)
+      setLegacyProtectionEnabled(nextEnabled)
+      setLegacyProtectionPendingEnable(nextPending)
+      setLegacyMessage(
+        nextPending
+          ? t('legacyPendingAcceptance')
+          : nextEnabled
+            ? t('legacyEnabled')
+            : t('legacyDisabled'),
+      )
       router.refresh()
     } catch (error) {
       setLegacyProtectionEnabled(previousValue)
+      setLegacyProtectionPendingEnable(previousPendingValue)
       setLegacyError(error instanceof Error ? error.message : t('saveChangesError'))
     } finally {
       setSavingLegacy(false)
@@ -239,13 +262,23 @@ export function AccountPageClient({
       ? Array.from(new Set([...selectedContactIds, contactId]))
       : selectedContactIds.filter((id) => id !== contactId)
 
-    if (legacyProtectionEnabled && nextIds.length === 0) {
+    const nextHasAcceptedTrustedContact = nextIds.some(
+      (id) => contactInviteStatuses[id] === 'accepted',
+    )
+
+    if (
+      (legacyProtectionEnabled && !nextHasAcceptedTrustedContact) ||
+      (legacyProtectionPendingEnable && nextIds.length === 0)
+    ) {
       setLegacyError(t('keepTrustedContactSelected'))
       return
     }
 
     try {
       setSelectedContactIds(nextIds)
+      if (checked && contactInviteStatuses[contactId] === 'none') {
+        setContactInviteStatuses((current) => ({ ...current, [contactId]: 'pending' }))
+      }
       setSavingLegacy(true)
       setLegacyError(null)
       setLegacyMessage(null)
@@ -258,9 +291,44 @@ export function AccountPageClient({
       router.refresh()
     } catch (error) {
       setSelectedContactIds(previousIds)
+      setContactInviteStatuses(
+        Object.fromEntries(
+          lovedOneOptions.map((option) => [option.id, option.trustedContactInviteStatus]),
+        ) as Record<number, LovedOneOption['trustedContactInviteStatus']>,
+      )
       setLegacyError(error instanceof Error ? error.message : t('saveChangesError'))
     } finally {
       setSavingLegacy(false)
+    }
+  }
+
+  async function handleResendTrustedContactInvite(contactId: number) {
+    try {
+      setResendingContactId(contactId)
+      setLegacyError(null)
+      setLegacyMessage(null)
+
+      const response = await fetch('/api/legacy/trusted-contact/resend', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ contactId }),
+      })
+      const body = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(typeof body?.error === 'string' ? body.error : t('saveChangesError'))
+      }
+
+      setContactInviteStatuses((current) => ({ ...current, [contactId]: 'pending' }))
+      setLegacyMessage(t('trustedContactInviteResent'))
+      router.refresh()
+    } catch (error) {
+      setLegacyError(error instanceof Error ? error.message : t('saveChangesError'))
+    } finally {
+      setResendingContactId(null)
     }
   }
 
@@ -274,101 +342,26 @@ export function AccountPageClient({
     } catch {
       // Ignore logout errors and continue to login.
     } finally {
-      router.push('/login')
+      router.push(`/${locale}/login`)
       router.refresh()
       setLogoutLoading(false)
     }
   }
 
-  function buildSecureDeliveryMailto(delivery: SecureDeliveryDraft) {
-    const subject = `Memories have been shared with you through Memory Vault`
-    const body = [
-      `Hello ${delivery.recipientName},`,
-      '',
-      'A collection of memories has been shared with you through Memory Vault.',
-      '',
-      `Open your private link here: ${delivery.secureUrl}`,
-      `Password: ${delivery.accessPassword}`,
-      '',
-      `This link and password give you access to ${delivery.memoryCount} ${delivery.memoryCount === 1 ? 'memory' : 'memories'}.`,
-    ].join('\n')
-
-    return `mailto:${encodeURIComponent(delivery.recipientEmail ?? '')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-  }
-
-  async function handleCreateSecureDeliveryEmails() {
-    if (selectedContactIds.length === 0) {
-      setLegacyError(t('enableTrustedContactRequired'))
-      return
-    }
-
-    try {
-      setCreatingDeliveryLinks(true)
-      setLegacyError(null)
-      setLegacyMessage(null)
-      setSecureDeliveryDrafts([])
-
-      const response = await fetch('/api/legacy/deliver', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          lovedOneIds: selectedContactIds,
-          sendEmails: false,
-        }),
-      })
-
-      const body = await response.json().catch(() => ({}))
-
-      if (!response.ok) {
-        throw new Error(typeof body?.error === 'string' ? body.error : 'Could not create links')
-      }
-
-      const drafts = (Array.isArray(body?.deliveries) ? body.deliveries : []).map(
-        (delivery: any) => ({
-          id: Number(delivery.id),
-          recipientName: String(delivery.recipientName ?? ''),
-          recipientEmail: String(delivery.recipientEmail ?? '').trim() || null,
-          memoryCount: Number(delivery.memoryCount ?? 0),
-          memoryIds: Array.isArray(delivery.memoryIds)
-            ? delivery.memoryIds.map((id: unknown) => Number(id)).filter((id: number) => Number.isFinite(id))
-            : [],
-          url: String(delivery.url ?? ''),
-          secureUrl: String(delivery.url ?? ''),
-          accessPassword: String(delivery.accessPassword ?? ''),
-        }),
-      ) as SecureDeliveryDraft[]
-
-      setSecureDeliveryDrafts(drafts)
-      setLegacyMessage(
-        drafts.length > 0
-          ? 'Delivery email links were created. Use the email buttons below.'
-          : 'No delivery links were created.',
-      )
-
-      const firstWithEmail = drafts.find((delivery) => delivery.recipientEmail)
-      if (firstWithEmail) {
-        window.location.href = buildSecureDeliveryMailto(firstWithEmail)
-      }
-    } catch (error) {
-      setLegacyError(error instanceof Error ? error.message : 'Could not create delivery links')
-    } finally {
-      setCreatingDeliveryLinks(false)
-    }
-  }
-
   return (
     <div className="relative max-h-full overflow-y-auto">
+      <AccountHelpTour />
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-[520px] animate-dashboard-ambient bg-[radial-gradient(circle_at_top_left,rgba(216,180,254,0.38),transparent_35%),radial-gradient(circle_at_top_right,rgba(251,207,232,0.42),transparent_32%),linear-gradient(180deg,rgba(243,232,255,0.74)_0%,rgba(247,239,252,0.46)_42%,rgba(249,250,251,0.12)_78%,rgba(249,250,251,0)_100%)] [mask-image:linear-gradient(to_bottom,rgba(0,0,0,1)_0%,rgba(0,0,0,0.94)_62%,rgba(0,0,0,0.45)_84%,transparent_100%)]"
       />
 
-      <div className="relative grid gap-6 p-6">
+      <div className="relative grid gap-4 p-3 sm:gap-6 sm:p-6">
         <DashboardLoadReveal delayMs={40}>
-          <section className="relative overflow-hidden rounded-[34px] corner-shape-squircle border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(250,245,255,0.92))] p-7 shadow-[0_24px_80px_rgba(167,139,250,0.16)] sm:p-8">
+          <section
+            data-tour="account-hero"
+            className="relative overflow-hidden rounded-[28px] corner-shape-squircle border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(250,245,255,0.92))] p-5 shadow-[0_24px_80px_rgba(167,139,250,0.16)] sm:rounded-[34px] sm:p-8"
+          >
             <div
               aria-hidden="true"
               className="absolute -right-16 -top-20 h-56 w-56 animate-dashboard-float rounded-full bg-purple-200/60 blur-3xl"
@@ -399,14 +392,20 @@ export function AccountPageClient({
                 </div>
               </div>
 
-              <div className="rounded-[28px] border border-white/80 bg-white/75 p-5 shadow-[0_18px_50px_rgba(168,85,247,0.12)] backdrop-blur-sm">
+              <div className="min-w-0 rounded-[24px] border border-white/80 bg-white/75 p-4 shadow-[0_18px_50px_rgba(168,85,247,0.12)] backdrop-blur-sm sm:rounded-[28px] sm:p-5">
                 <div className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">
                   {t('accountOverview')}
                 </div>
-                <div className="mt-3 text-2xl font-bold tracking-tight text-gray-900">{email}</div>
+                <div className="mt-3 break-all text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
+                  {email}
+                </div>
                 <p className="mt-2 text-sm leading-6 text-stone-600">
                   {t('legacyProtectionCurrently', {
-                    status: legacyProtectionEnabled ? t('enabled') : t('disabled'),
+                    status: legacyProtectionPendingEnable
+                      ? t('pending')
+                      : legacyProtectionEnabled
+                        ? t('enabled')
+                        : t('disabled'),
                   })}
                 </p>
                 <div className="mt-5">
@@ -422,8 +421,12 @@ export function AccountPageClient({
           </section>
         </DashboardLoadReveal>
 
+
         <DashboardLoadReveal delayMs={120}>
-          <section className="rounded-[32px] corner-shape-squircle border border-white/70 bg-white/80 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:p-7">
+          <section
+            data-tour="account-profile"
+            className="rounded-[28px] corner-shape-squircle border border-white/70 bg-white/80 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:rounded-[32px] sm:p-7"
+          >
             <div className="mb-6">
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
                 {t('profileLabel')}
@@ -515,12 +518,9 @@ export function AccountPageClient({
                 <label className="mb-2 block text-sm font-medium text-stone-700">
                   {t('email')}
                 </label>
-                <input
-                  value={email}
-                  disabled
-                  readOnly
-                  className="h-12 w-full rounded-[20px] corner-shape-squircle border border-stone-200/80 bg-stone-50 px-4 text-stone-500 outline-none"
-                />
+                <div className="min-h-12 w-full min-w-0 break-all rounded-[20px] corner-shape-squircle border border-stone-200/80 bg-stone-50 px-4 py-3 text-stone-500">
+                  {email}
+                </div>
                 <p className="mt-2 text-xs text-stone-500">{t('emailLocked')}</p>
               </div>
 
@@ -546,7 +546,10 @@ export function AccountPageClient({
         </DashboardLoadReveal>
 
         <DashboardLoadReveal delayMs={200}>
-          <section className="rounded-[32px] corner-shape-squircle border border-white/70 bg-white/80 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:p-7">
+          <section
+            data-tour="account-legacy"
+            className="rounded-[28px] corner-shape-squircle border border-white/70 bg-white/80 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:rounded-[32px] sm:p-7"
+          >
             <div className="mb-6">
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
                 {t('legacyProtectionLabel')}
@@ -579,6 +582,11 @@ export function AccountPageClient({
                       {t('enableCheckInsHint')}
                     </p>
                   )}
+                  {hasSelectedTrustedContact && !hasAcceptedTrustedContact && (
+                    <p className="mt-3 text-sm font-medium text-amber-700">
+                      {t('enableCheckInsPendingHint')}
+                    </p>
+                  )}
                 </div>
 
                 <label
@@ -592,15 +600,20 @@ export function AccountPageClient({
                   <input
                     type="checkbox"
                     className="h-4 w-4 accent-purple-600"
-                    checked={legacyProtectionEnabled}
+                    checked={legacyProtectionEnabled || legacyProtectionPendingEnable}
                     onChange={(event) => handleLegacyProtectionChange(event.target.checked)}
                     disabled={
-                      savingLegacy || (!hasSelectedTrustedContact && !legacyProtectionEnabled)
+                      savingLegacy ||
+                      (!hasSelectedTrustedContact &&
+                        !legacyProtectionEnabled &&
+                        !legacyProtectionPendingEnable)
                     }
                   />
                   {savingLegacy
                     ? t('saving')
-                    : legacyProtectionEnabled
+                    : legacyProtectionPendingEnable
+                      ? t('pending')
+                      : legacyProtectionEnabled
                       ? t('enabled')
                       : t('disabled')}
                 </label>
@@ -627,12 +640,15 @@ export function AccountPageClient({
                   <div className="mt-4 grid gap-3">
                     {lovedOneOptions.map((option, index) => {
                       const checked = selectedContactIds.includes(option.id)
+                      const inviteStatus = contactInviteStatuses[option.id] ?? 'none'
+                      const isPending = inviteStatus === 'pending'
+                      const isAccepted = inviteStatus === 'accepted'
 
                       return (
                         <DashboardLoadReveal key={option.id} delayMs={260 + index * 40}>
-                          <label
+                          <div
                             className={cn(
-                              'flex cursor-pointer items-start gap-3 rounded-[24px] corner-shape-squircle border p-4 transition',
+                              'flex items-start gap-3 rounded-[24px] corner-shape-squircle border p-4 transition',
                               checked
                                 ? 'border-purple-300 bg-purple-50/80 shadow-[0_12px_30px_rgba(168,85,247,0.08)]'
                                 : 'border-stone-200/80 bg-white hover:border-purple-200',
@@ -647,13 +663,47 @@ export function AccountPageClient({
                                 handleTrustedContactToggle(option.id, event.target.checked)
                               }
                             />
-                            <div className="min-w-0">
-                              <div className="text-sm font-semibold text-gray-900">
-                                {option.fullName}
+                            <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                              <div className="min-w-0">
+                                <div className="text-sm font-semibold text-gray-900">
+                                  {option.fullName}
+                                </div>
+                                <div className="mt-1 break-all text-sm text-stone-600">
+                                  {option.email}
+                                </div>
                               </div>
-                              <div className="mt-1 text-sm text-stone-600">{option.email}</div>
+                              <div className="flex shrink-0 flex-wrap items-center gap-2">
+                                <span
+                                  className={cn(
+                                    'rounded-full border px-3 py-1 text-xs font-semibold',
+                                    isAccepted
+                                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                      : isPending
+                                        ? 'border-amber-200 bg-amber-50 text-amber-800'
+                                        : 'border-stone-200 bg-stone-50 text-stone-600',
+                                  )}
+                                >
+                                  {isAccepted
+                                    ? t('trustedContactInviteAccepted')
+                                    : isPending
+                                      ? t('trustedContactInvitePending')
+                                      : t('trustedContactInviteNotSent')}
+                                </span>
+                                {checked && !isAccepted ? (
+                                  <button
+                                    type="button"
+                                    disabled={resendingContactId === option.id}
+                                    onClick={() => handleResendTrustedContactInvite(option.id)}
+                                    className="h-8 rounded-full border border-purple-200 bg-white px-3 text-xs font-semibold text-purple-700 transition hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {resendingContactId === option.id
+                                      ? t('resendingTrustedContactInvite')
+                                      : t('resendTrustedContactInvite')}
+                                  </button>
+                                ) : null}
+                              </div>
                             </div>
-                          </label>
+                          </div>
                         </DashboardLoadReveal>
                       )
                     })}
@@ -673,55 +723,15 @@ export function AccountPageClient({
                 </div>
               )}
 
-              <div className="mt-5 rounded-[24px] corner-shape-squircle border border-white/80 bg-white/80 p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-                <div className="text-sm font-semibold text-gray-900">
-                  Delivery email links
-                </div>
-                <p className="mt-1 text-sm leading-6 text-stone-600">
-                  Create email drafts for the trusted contacts selected above.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleCreateSecureDeliveryEmails}
-                  disabled={creatingDeliveryLinks || selectedContactIds.length === 0}
-                  className="mt-4 rounded-full bg-purple-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {creatingDeliveryLinks ? 'Creating links...' : 'Create email links'}
-                </button>
-
-                {secureDeliveryDrafts.length > 0 ? (
-                  <div className="mt-4 grid gap-3">
-                    {secureDeliveryDrafts.map((delivery) => (
-                      <div
-                        key={delivery.id}
-                        className="rounded-[20px] border border-stone-200 bg-white p-3 text-sm"
-                      >
-                        <div className="font-semibold text-gray-900">{delivery.recipientName}</div>
-                        <div className="mt-1 break-all text-xs text-stone-600">
-                          {delivery.secureUrl}
-                        </div>
-                        <div className="mt-1 text-xs font-semibold text-stone-700">
-                          Password: {delivery.accessPassword}
-                        </div>
-                        {delivery.recipientEmail ? (
-                          <a
-                            href={buildSecureDeliveryMailto(delivery)}
-                            className="mt-3 inline-flex rounded-full border border-purple-200 px-4 py-2 text-xs font-semibold text-purple-700 transition hover:bg-purple-50"
-                          >
-                            Open email draft
-                          </a>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
             </div>
           </section>
         </DashboardLoadReveal>
 
         <DashboardLoadReveal delayMs={280}>
-          <section className="rounded-[32px] corner-shape-squircle border border-white/70 bg-white/80 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:p-7">
+          <section
+            data-tour="account-actions"
+            className="rounded-[28px] corner-shape-squircle border border-white/70 bg-white/80 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:rounded-[32px] sm:p-7"
+          >
             <div className="mb-6">
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
                 {t('accountActionsLabel')}
@@ -730,6 +740,10 @@ export function AccountPageClient({
                 {t('accountActionsTitle')}
               </h2>
               <p className="mt-1 text-sm leading-6 text-stone-600">{t('accountActionsBody')}</p>
+            </div>
+
+            <div className="mb-4 lg:hidden">
+              <LanguageSwitcher variant="full" />
             </div>
 
             <LogoutButton

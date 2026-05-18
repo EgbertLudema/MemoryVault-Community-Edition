@@ -12,6 +12,31 @@ button:disabled {
     cursor: not-allowed;
 }
 
+:where(a, button, input, textarea, select, summary, [role='button'], [tabindex]:not([tabindex='-1'])):focus-visible {
+    outline: 2px solid rgb(216 180 254 / 0.95) !important;
+    outline-offset: 3px !important;
+    box-shadow: none !important;
+}
+
+:where(a, button, input, textarea, select, summary, [role='button'], [tabindex]:not([tabindex='-1'])):focus:not(:focus-visible) {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.memory-carousel-video:fullscreen {
+    height: 100%;
+    width: 100%;
+    background: #000;
+    object-fit: contain;
+}
+
+.memory-carousel-video:-webkit-full-screen {
+    height: 100%;
+    width: 100%;
+    background: #000;
+    object-fit: contain;
+}
+
 @media (prefers-reduced-motion: reduce) {
     html {
         scroll-behavior: auto;

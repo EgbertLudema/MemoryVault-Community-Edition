@@ -7,6 +7,13 @@ import { encryptBufferServer } from '@/lib/serverEncryption'
 
 const payloadPost = REST_POST(config)
 
+function toEncryptedBlobName(fileName: string) {
+  const safeName = fileName.trim() || 'upload'
+  const baseName = safeName.replace(/\.[^./\\]+$/, '') || 'upload'
+
+  return `${baseName}.encrypted.bin`
+}
+
 export async function POST(req: Request) {
   const user = await getAppUserFromHeaders(req.headers)
 
@@ -33,7 +40,7 @@ export async function POST(req: Request) {
       file.type || 'application/octet-stream',
     )
     const payloadFile = {
-      name: file.name,
+      name: toEncryptedBlobName(file.name),
       data: encryptedFile.data,
       mimetype: 'application/octet-stream',
       size: encryptedFile.data.length,
@@ -58,7 +65,7 @@ export async function POST(req: Request) {
       const posterArrayBuffer = await poster.arrayBuffer()
       const encryptedPoster = encryptBufferServer(Buffer.from(posterArrayBuffer), poster.type || 'image/jpeg')
       const posterPayloadFile = {
-        name: poster.name,
+        name: toEncryptedBlobName(poster.name),
         data: encryptedPoster.data,
         mimetype: 'application/octet-stream',
         size: encryptedPoster.data.length,

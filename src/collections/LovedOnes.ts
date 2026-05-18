@@ -63,6 +63,41 @@ export const LovedOnes: CollectionConfig = {
       relationTo: 'users',
       required: true,
     },
+    {
+      name: 'trustedContactInviteStatus',
+      type: 'select',
+      options: [
+        { label: 'Not invited', value: 'none' },
+        { label: 'Pending', value: 'pending' },
+        { label: 'Accepted', value: 'accepted' },
+      ],
+      defaultValue: 'none',
+      admin: {
+        readOnly: true,
+      },
+    },
+    {
+      name: 'trustedContactInviteTokenHash',
+      type: 'text',
+      admin: {
+        hidden: true,
+        readOnly: true,
+      },
+    },
+    {
+      name: 'trustedContactInviteSentAt',
+      type: 'date',
+      admin: {
+        readOnly: true,
+      },
+    },
+    {
+      name: 'trustedContactInviteAcceptedAt',
+      type: 'date',
+      admin: {
+        readOnly: true,
+      },
+    },
   ],
   hooks: {
     beforeChange: [

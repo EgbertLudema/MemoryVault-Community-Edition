@@ -33,7 +33,7 @@ export const Media: CollectionConfig = {
   },
   upload: {
     staticDir: 'media',
-    mimeTypes: ['image/*', 'video/*', 'application/octet-stream'],
+    mimeTypes: ['image/*', 'video/*', 'application/octet-stream', 'text/plain'],
   },
   hooks: {
     beforeChange: [

@@ -8,7 +8,7 @@ import { localeCookieName } from '@/i18n/locales'
 
 type LanguageSwitcherProps = {
   className?: string
-  variant?: 'header' | 'sidebar'
+  variant?: 'header' | 'sidebar' | 'full'
 }
 
 function cn(...classes: Array<string | false | null | undefined>) {
@@ -25,7 +25,10 @@ const sidebarIconMotionClass =
   'inline-flex h-full w-full items-center justify-center origin-center transform-gpu transition-transform duration-200 ease-out motion-reduce:transform-none group-hover:-rotate-2 group-hover:scale-105'
 
 const headerButtonClass =
-  'inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-stone-200 bg-white/90 px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-stone-600 shadow-sm transition hover:border-purple-200 hover:bg-purple-50 hover:text-purple-700'
+  'inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-stone-200 bg-white/90 px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-stone-600 shadow-sm transition hover:border-purple-200 hover:bg-purple-50 hover:text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-300/70'
+
+const fullButtonClass =
+  'inline-flex w-full cursor-pointer items-center justify-between gap-3 rounded-[20px] corner-shape-squircle border border-stone-200/80 bg-white/90 px-4 py-3 text-sm font-medium text-stone-700 shadow-sm transition hover:border-purple-200 hover:bg-purple-50 hover:text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-300/70'
 
 function getUnlocalizedPathname(pathname: string, locale: string) {
   const localePrefix = `/${locale}`
@@ -54,6 +57,7 @@ export function LanguageSwitcher({ className, variant = 'header' }: LanguageSwit
   const rawPathname = useRawPathname()
   const searchParams = useSearchParams()
   const isSidebar = variant === 'sidebar'
+  const isFull = variant === 'full'
   const [open, setOpen] = React.useState(false)
   const rootRef = React.useRef<HTMLDivElement | null>(null)
 
@@ -109,7 +113,7 @@ export function LanguageSwitcher({ className, variant = 'header' }: LanguageSwit
   return (
     <div
       ref={rootRef}
-      className={cn('relative inline-flex', isSidebar && 'block w-full', className)}
+      className={cn('relative inline-flex', (isSidebar || isFull) && 'block w-full', className)}
     >
       <button
         type="button"
@@ -117,7 +121,7 @@ export function LanguageSwitcher({ className, variant = 'header' }: LanguageSwit
         title={t('label')}
         aria-label={t('label')}
         aria-expanded={open}
-        className={isSidebar ? sidebarButtonClass : headerButtonClass}
+        className={isSidebar ? sidebarButtonClass : isFull ? fullButtonClass : headerButtonClass}
       >
         {isSidebar ? (
           <>
@@ -132,6 +136,16 @@ export function LanguageSwitcher({ className, variant = 'header' }: LanguageSwit
               {currentLanguage?.label ?? locale.toUpperCase()}
             </span>
           </>
+        ) : isFull ? (
+          <>
+            <span className="inline-flex min-w-0 items-center gap-3">
+              <LanguagesIcon className="h-5 w-5 shrink-0" />
+              <span className="truncate">{currentLanguage?.label ?? locale.toUpperCase()}</span>
+            </span>
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-400">
+              {locale}
+            </span>
+          </>
         ) : (
           <>
             <LanguagesIcon className="h-4 w-4 shrink-0" />
@@ -144,7 +158,8 @@ export function LanguageSwitcher({ className, variant = 'header' }: LanguageSwit
         <div
           className={cn(
             'absolute z-50 rounded-2xl border border-stone-200 bg-white p-1.5 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.25)]',
-            !isSidebar && 'right-0 top-full mt-2 min-w-[8rem]',
+            !isSidebar && !isFull && 'right-0 top-full mt-2 min-w-[8rem]',
+            isFull && 'left-0 right-0 top-full mt-2 w-full',
             isSidebar &&
               'bottom-full left-0 right-0 mb-2 min-w-full overflow-hidden rounded-xl border-0 bg-white p-0 shadow-[0_20px_45px_-26px_rgba(15,23,42,0.28)] ring-1 ring-stone-200',
           )}

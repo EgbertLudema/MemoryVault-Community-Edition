@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 declare module 'three' {
   export class Vector2 {
     constructor(x?: number, y?: number)
@@ -12,9 +14,12 @@ declare module 'three' {
     y: number
     z: number
     set(x: number, y: number, z?: number): this
+    setScalar(value: number): this
   }
 
   export class Material {
+    needsUpdate: boolean
+    opacity: number
     dispose(): void
   }
 
@@ -37,6 +42,10 @@ declare module 'three' {
     constructor(width?: number, height?: number)
   }
 
+  export class BoxGeometry extends BufferGeometry {
+    constructor(width?: number, height?: number, depth?: number)
+  }
+
   export class Shape {
     moveTo(x: number, y: number): void
     lineTo(x: number, y: number): void
@@ -52,6 +61,11 @@ declare module 'three' {
     constructor(parameters?: Record<string, unknown>)
     color: { set(value: unknown): void; setHex(value: number): void }
     map?: Texture | null
+    transparent: boolean
+  }
+
+  export class MeshStandardMaterial extends Material {
+    constructor(parameters?: Record<string, unknown>)
   }
 
   export class LineBasicMaterial extends Material {
@@ -72,19 +86,36 @@ declare module 'three' {
     geometry: BufferGeometry
     material: any
     position: Vector3
+    rotation: Vector3
     scale: Vector3
+    name: string
     uuid: string
     userData: Record<string, any>
+    isMesh: boolean
+    castShadow: boolean
+    receiveShadow: boolean
+    visible: boolean
+    traverse(callback: (object: Mesh) => void): void
+    add(...objects: unknown[]): void
   }
 
   export class LineSegments extends Mesh {}
+  export class Line extends Mesh {}
   export class Sprite extends Mesh {
     constructor(material?: Material)
+  }
+  export class Group extends Mesh {}
+
+  export class Box3 {
+    setFromObject(object: Mesh): this
+    getCenter(target: Vector3): Vector3
+    getSize(target: Vector3): Vector3
   }
 
   export class Scene {
     add(...objects: unknown[]): void
     remove(...objects: unknown[]): void
+    traverse(callback: (object: Mesh) => void): void
   }
 
   export class OrthographicCamera {
@@ -98,14 +129,40 @@ declare module 'three' {
     updateProjectionMatrix(): void
   }
 
+  export class PerspectiveCamera {
+    constructor(fov?: number, aspect?: number, near?: number, far?: number)
+    aspect: number
+    position: Vector3
+    updateProjectionMatrix(): void
+  }
+
+  export class HemisphereLight extends Mesh {
+    constructor(skyColor?: unknown, groundColor?: unknown, intensity?: number)
+  }
+
+  export class DirectionalLight extends Mesh {
+    constructor(color?: unknown, intensity?: number)
+  }
+
+  export class PointLight extends Mesh {
+    constructor(color?: unknown, intensity?: number, distance?: number)
+  }
+
   export class WebGLRenderer {
     constructor(parameters?: Record<string, unknown>)
     domElement: HTMLCanvasElement
+    outputColorSpace: unknown
+    toneMapping: unknown
+    toneMappingExposure: number
     setPixelRatio(value: number): void
     setSize(width: number, height: number, updateStyle?: boolean): void
     setClearColor(color: unknown, alpha?: number): void
-    render(scene: Scene, camera: OrthographicCamera): void
+    render(scene: Scene, camera: OrthographicCamera | PerspectiveCamera): void
     dispose(): void
+  }
+
+  export class Clock {
+    getElapsedTime(): number
   }
 
   export class TextureLoader {
@@ -124,8 +181,28 @@ declare module 'three' {
   }
 
   export const LinearFilter: unknown
+  export const SRGBColorSpace: unknown
+  export const ACESFilmicToneMapping: unknown
+  export const DoubleSide: unknown
   export const MathUtils: {
     clamp(value: number, min: number, max: number): number
     lerp(a: number, b: number, t: number): number
+  }
+}
+
+declare module 'three/examples/jsm/loaders/GLTFLoader.js' {
+  import type { Mesh } from 'three'
+
+  export type GLTF = {
+    scene: Mesh
+  }
+
+  export class GLTFLoader {
+    load(
+      url: string,
+      onLoad?: (gltf: GLTF) => void,
+      onProgress?: (event: ProgressEvent) => void,
+      onError?: (event: unknown) => void,
+    ): void
   }
 }

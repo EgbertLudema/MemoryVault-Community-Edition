@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { useEffect, useMemo, useState } from 'react'
+import { getDefaultGroupLabel } from '@/lib/groupMeta'
 import { getEffectiveGroupUiMeta, mapApiGroupToUiOption, type GroupUiOption } from '@/lib/groupUi'
 import { GroupButton } from './ui/GroupButton'
 import { PrimaryButton } from './ui/PrimaryButton'
@@ -397,6 +398,7 @@ async function fetchOptions(url: string): Promise<SelectOption[]> {
 
 export function MemoryEditForm(props: MemoryEditFormProps) {
   const t = useTranslations('MemoryEditForm')
+  const tGroups = useTranslations('GroupLabels')
   const { memory, mode = 'page', onClose, onSaved, onDeleted } = props
   const isEditing = Boolean(memory)
 
@@ -432,6 +434,7 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
 
       setGroups(g)
       setLovedOnes(l)
+
     }
 
     load()
@@ -965,19 +968,31 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
             </div>
           </section>
 
-          <div className="flex flex-wrap justify-between gap-2 rounded-2xl corner-shape-squircle border border-slate-200 bg-white p-3 shadow-sm">
+          <div className="flex flex-col gap-2 rounded-2xl corner-shape-squircle border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:flex-wrap sm:justify-between">
             {isEditing ? (
-              <DeleteButton onClick={handleDelete} disabled={saving || deleting}>
+              <DeleteButton
+                onClick={handleDelete}
+                disabled={saving || deleting}
+                className="w-full sm:w-auto"
+              >
                 {deleting ? t('deleting') : t('deleteMemory')}
               </DeleteButton>
             ) : null}
 
-            <div className="ml-auto flex gap-2">
-              <SecondaryButton onClick={onClose} disabled={saving || deleting}>
+            <div className="flex flex-col gap-2 sm:ml-auto sm:flex-row">
+              <SecondaryButton
+                onClick={onClose}
+                disabled={saving || deleting}
+                className="w-full sm:w-auto"
+              >
                 {t('cancel')}
               </SecondaryButton>
 
-              <PrimaryButton onClick={save} disabled={!canSubmit || saving || deleting}>
+              <PrimaryButton
+                onClick={save}
+                disabled={!canSubmit || saving || deleting}
+                className="w-full sm:w-auto"
+              >
                 {saving ? t('saving') : isEditing ? t('saveChanges') : t('saveMemory')}
               </PrimaryButton>
             </div>
@@ -1001,6 +1016,9 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
             <div className="flex flex-wrap gap-2.5">
               {groups.length > 0 ? (
                 groups.map((group) => {
+                  const label = getDefaultGroupLabel(group.defaultKey, group.name, (key) =>
+                    tGroups(key),
+                  )
                   const meta = getEffectiveGroupUiMeta(group)
                   const IconComponent = meta.icon.Icon
                   const active = groupIds.includes(normalizeId(group.id))
@@ -1008,7 +1026,7 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
                   return (
                     <GroupButton
                       key={group.id}
-                      label={group.label}
+                      label={label}
                       active={active}
                       colorValue={meta.color.value}
                       onClick={() => setGroupIds((prev) => toggleId(prev, group.id))}
@@ -1070,11 +1088,11 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
           role="dialog"
           aria-modal="true"
           aria-label={t('addContentAria')}
-          className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/35 p-4"
+          className="fixed inset-0 z-[1100] flex items-end justify-center bg-black/35 p-0 sm:items-center sm:p-4"
           onMouseDown={() => setIsAddContentModalOpen(false)}
         >
           <div
-            className="w-full max-w-[560px] rounded-2xl corner-shape-squircle border border-slate-200 bg-white p-4 shadow-[0_20px_70px_rgba(0,0,0,0.18)]"
+            className="max-h-[88dvh] w-full max-w-[560px] overflow-y-auto rounded-t-2xl corner-shape-squircle border border-slate-200 bg-white p-4 shadow-[0_20px_70px_rgba(0,0,0,0.18)] sm:rounded-2xl"
             onMouseDown={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">

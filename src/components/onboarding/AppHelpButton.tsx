@@ -22,7 +22,7 @@ export function AppHelpButton() {
       data-tour="app-help-button"
       aria-label="Help"
       onClick={handleClick}
-      className="fixed cursor-pointer right-6 bottom-6 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full border border-white/90 bg-white text-xl font-semibold text-stone-700 shadow-[0_20px_50px_rgba(15,23,42,0.16)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_24px_60px_rgba(15,23,42,0.2)] active:scale-[0.98]"
+      className="fixed bottom-23 right-3 z-40 inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/90 bg-white text-base font-semibold text-stone-700 shadow-[0_14px_32px_rgba(15,23,42,0.14)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_18px_42px_rgba(15,23,42,0.18)] active:scale-[0.98] lg:bottom-6 lg:right-6 lg:h-14 lg:w-14 lg:text-xl lg:shadow-[0_20px_50px_rgba(15,23,42,0.16)] lg:hover:shadow-[0_24px_60px_rgba(15,23,42,0.2)]"
     >
       ?
     </button>

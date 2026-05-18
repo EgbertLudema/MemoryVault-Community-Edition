@@ -4,7 +4,13 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getAppUserFromHeaders } from '@/lib/appAuth'
 import { buildMediaImageUrl, buildMediaPosterUrl, buildMediaVideoStreamUrl } from '@/lib/mediaBlob'
-import { getMemoryContentLimitMessage, isWithinMemoryContentItemLimit } from '@/lib/memoryLimits'
+import {
+  getMemoryContentItemLimit,
+  getMemoryContentLimitMessage,
+  getMemoryCountLimit,
+  getMemoryCountLimitMessage,
+  isWithinMemoryContentItemLimit,
+} from '@/lib/memoryLimits'
 import { decryptTextServer, encryptTextServer, isServerEncrypted } from '@/lib/serverEncryption'
 
 type SortOption = 'newest' | 'oldest'
@@ -363,8 +369,30 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Content is required' }, { status: 400 })
     }
 
-    if (!isWithinMemoryContentItemLimit(content.length)) {
-      return NextResponse.json({ error: getMemoryContentLimitMessage() }, { status: 400 })
+    const memoryContentItemLimit = getMemoryContentItemLimit(user)
+    if (!isWithinMemoryContentItemLimit(content.length, memoryContentItemLimit)) {
+      return NextResponse.json(
+        { error: getMemoryContentLimitMessage(memoryContentItemLimit) },
+        { status: 400 },
+      )
+    }
+
+    const memoryCountLimit = getMemoryCountLimit(user)
+    if (memoryCountLimit !== null) {
+      const existingMemoryCount = await payload.count({
+        collection: 'memories',
+        overrideAccess: true,
+        where: {
+          owner: { equals: user.id },
+        },
+      })
+
+      if (existingMemoryCount.totalDocs >= memoryCountLimit) {
+        return NextResponse.json(
+          { error: getMemoryCountLimitMessage(memoryCountLimit) },
+          { status: 403 },
+        )
+      }
     }
 
     const groupNumberIds = groupIds
@@ -428,8 +456,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No valid content items found' }, { status: 400 })
     }
 
-    if (!isWithinMemoryContentItemLimit(contentRows.length)) {
-      return NextResponse.json({ error: getMemoryContentLimitMessage() }, { status: 400 })
+    if (!isWithinMemoryContentItemLimit(contentRows.length, memoryContentItemLimit)) {
+      return NextResponse.json(
+        { error: getMemoryContentLimitMessage(memoryContentItemLimit) },
+        { status: 400 },
+      )
     }
 
     const created = await payload.create({

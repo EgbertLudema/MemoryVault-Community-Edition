@@ -3,6 +3,10 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getAppUserFromHeaders } from '@/lib/appAuth'
 import { getProfileImageSrc } from '@/lib/profileImage'
+import {
+  sendTrustedContactInvite,
+  type TrustedContactInviteLovedOne,
+} from '@/lib/trustedContactInvites'
 
 function toNumberId(value: string) {
   const parsed = Number(value)
@@ -32,15 +36,53 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       profileImageUrl?: string | null
       enableLegacyProtection?: boolean
       legacyProtectionContacts?: number[]
-      encryptedVaultKey?: string | null
-      vaultKeyEncryptionMetadata?: unknown
     }
-    const data: Record<string, unknown> = { ...body }
+    const data: Record<string, unknown> = {}
+    let selectedTrustedContacts: TrustedContactInviteLovedOne[] = []
+
+    if (Array.isArray(body.legacyProtectionContacts) && body.legacyProtectionContacts.length > 0) {
+      const contacts = await payload.find({
+        collection: 'loved-ones',
+        overrideAccess: true,
+        depth: 0,
+        limit: 100,
+        where: {
+          and: [
+            { id: { in: body.legacyProtectionContacts } },
+            { user: { equals: targetId } },
+          ],
+        },
+      })
+
+      selectedTrustedContacts = contacts.docs as TrustedContactInviteLovedOne[]
+    }
+
+    const acceptedTrustedContactIds = new Set(
+      selectedTrustedContacts
+        .filter((contact) => contact.trustedContactInviteStatus === 'accepted')
+        .map((contact) => contact.id),
+    )
+
+    for (const key of [
+      'firstName',
+      'lastName',
+      'profileImage',
+      'profileImageUrl',
+      'enableLegacyProtection',
+      'legacyProtectionContacts',
+    ] as const) {
+      if (key in body) {
+        data[key] = body[key]
+      }
+    }
 
     if (body.enableLegacyProtection === true) {
+      const hasAcceptedTrustedContact = acceptedTrustedContactIds.size > 0
+      data.enableLegacyProtection = hasAcceptedTrustedContact
+      data.legacyProtectionPendingEnable = !hasAcceptedTrustedContact
       data.legacyCheckInMode = 'user'
       data.legacyCheckInStage = 'none'
-      data.legacyNextCheckInAt = new Date().toISOString()
+      data.legacyNextCheckInAt = hasAcceptedTrustedContact ? new Date().toISOString() : null
       data.legacyCheckInSentAt = null
       data.legacyCheckInDueAt = null
       data.legacyCheckInTokenHash = null
@@ -48,6 +90,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     }
 
     if (body.enableLegacyProtection === false) {
+      data.legacyProtectionPendingEnable = false
       data.legacyCheckInStage = 'none'
       data.legacyNextCheckInAt = null
       data.legacyCheckInSentAt = null
@@ -63,6 +106,23 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       req: { user },
     })
 
+    if (Array.isArray(body.legacyProtectionContacts)) {
+      const origin = new URL(req.url).origin
+
+      for (const contact of selectedTrustedContacts) {
+        if (acceptedTrustedContactIds.has(contact.id)) {
+          continue
+        }
+
+        await sendTrustedContactInvite({
+          payload,
+          lovedOne: contact,
+          user: updated,
+          origin,
+        })
+      }
+    }
+
     return NextResponse.json({
       user: {
         id: updated.id,
@@ -71,6 +131,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
         lastName: updated.lastName,
         profileImageSrc: getProfileImageSrc(updated),
         enableLegacyProtection: updated.enableLegacyProtection,
+        legacyProtectionPendingEnable: updated.legacyProtectionPendingEnable,
         legacyProtectionContacts: updated.legacyProtectionContacts,
       },
     })

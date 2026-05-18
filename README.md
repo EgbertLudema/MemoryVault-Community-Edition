@@ -6,11 +6,9 @@ profiles, groups, and legacy messages in your own deployment.
 
 This public repository intentionally contains only the product app and Payload
 admin. It does not include the private MemoryVault website, marketing CMS,
-commercial hosting code, billing code, or internal operational code.
+hosted-service code, or internal operational code.
 
-The Community Edition is fully unlocked for self-hosted personal and
-noncommercial use. Commercial use, resale, paid hosting, or use for profit
-requires a separate commercial license from EL Websolutions.
+The Community Edition is the free self-hosted app and admin experience.
 
 ## What Is Included
 
@@ -20,7 +18,6 @@ requires a separate commercial license from EL Websolutions.
 - App email/password authentication routes
 - Memory, media, loved-one, group, legacy-delivery, user, and feature-request
   APIs
-- App/Admin entitlement layer that defaults to unlocked `oss` mode
 
 ## License
 
@@ -63,8 +60,6 @@ cp .env.example .env
 Minimum local values:
 
 ```txt
-MEMORYVAULT_EDITION=oss
-NEXT_PUBLIC_MEMORYVAULT_EDITION=oss
 NEXT_PUBLIC_SERVER_URL=http://localhost:3000
 PAYLOAD_SECRET=replace-with-a-long-random-secret
 POSTGRES_URL=postgresql://postgres:postgres@localhost:5432/memoryvault
@@ -114,5 +109,5 @@ secrets and service credentials in `.env`, especially `PAYLOAD_SECRET`,
 ## Not Included
 
 This repository does not include the MemoryVault marketing website, website page
-builder, website assets, paid hosting implementation, billing integration, or
-private deployment workflows.
+builder, website assets, hosted-service implementation, or private deployment
+workflows.

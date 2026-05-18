@@ -1,6 +1,5 @@
 import { vercelPostgresAdapter } from '@payloadcms/db-vercel-postgres'
 import { resendAdapter } from '@payloadcms/email-resend'
-import { payloadCloudPlugin } from '@payloadcms/payload-cloud'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 import path from 'path'
@@ -23,9 +22,11 @@ const dirname = path.dirname(filename)
 const resendApiKey = process.env.RESEND_API_KEY
 const resendFromAddress = process.env.RESEND_FROM_ADDRESS
 const resendFromName = process.env.RESEND_FROM_NAME || 'Memory Vault'
+const blobReadWriteToken = process.env.BLOB_READ_WRITE_TOKEN
+const serverURL = process.env.NEXT_PUBLIC_SERVER_URL?.replace(/\/+$/, '')
 
 export default buildConfig({
-  serverURL: process.env.NEXT_PUBLIC_SERVER_URL,
+  serverURL,
   admin: {
     user: Admins.slug,
     importMap: {
@@ -74,16 +75,16 @@ export default buildConfig({
     pool: {
       connectionString: process.env.POSTGRES_URL || '',
     },
+    migrationDir: path.resolve(dirname, 'migrations'),
   }),
   sharp,
   plugins: [
-    payloadCloudPlugin(),
     vercelBlobStorage({
-      enabled: true,
+      enabled: Boolean(blobReadWriteToken),
       collections: {
         media: true,
       },
-      token: process.env.BLOB_READ_WRITE_TOKEN as string,
+      token: blobReadWriteToken as string,
       clientUploads: true,
       addRandomSuffix: true,
       cacheControlMaxAge: 31536000,

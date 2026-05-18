@@ -11,6 +11,7 @@ type MeResponse = {
     lastName?: string | null
     profileImageSrc?: string | null
     enableLegacyProtection?: boolean | null
+    legacyProtectionPendingEnable?: boolean | null
     legacyProtectionContacts?: Array<number | { id?: number | null } | null> | null
   }
 }
@@ -19,6 +20,7 @@ type LovedOne = {
   id: number
   fullName?: string | null
   email?: string | null
+  trustedContactInviteStatus?: 'none' | 'pending' | 'accepted' | null
 }
 
 type PayloadListResponse<T> = {
@@ -89,6 +91,7 @@ async function getLovedOneOptions() {
       id: lovedOne.id,
       fullName: lovedOne.fullName?.trim() || 'Unnamed loved one',
       email: lovedOne.email!.trim(),
+      trustedContactInviteStatus: lovedOne.trustedContactInviteStatus ?? 'none',
     }))
 }
 
@@ -111,6 +114,8 @@ function getSelectedContactIds(
 }
 
 export default async function AccountPage() {
+  const h = await headers()
+  const locale = h.get('x-next-intl-locale') ?? 'en'
   const [meData, lovedOneOptions] = await Promise.all([getCurrentUser(), getLovedOneOptions()])
   const user = meData.user
 
@@ -121,11 +126,13 @@ export default async function AccountPage() {
   return (
     <AccountPageClient
       userId={user.id}
+      locale={locale}
       initialFirstName={user.firstName ?? ''}
       initialLastName={user.lastName ?? ''}
       initialProfileImageSrc={user.profileImageSrc ?? ''}
       email={user.email}
       initialLegacyProtectionEnabled={Boolean(user.enableLegacyProtection)}
+      initialLegacyProtectionPendingEnable={Boolean(user.legacyProtectionPendingEnable)}
       lovedOneOptions={lovedOneOptions}
       initialLegacyProtectionContactIds={getSelectedContactIds(user.legacyProtectionContacts)}
     />

@@ -95,6 +95,7 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
   const [creating, setCreating] = React.useState(false)
   const [deletingId, setDeletingId] = React.useState<string | null>(null)
   const [error, setError] = React.useState<string | null>(null)
+  const canCreateCustomGroups = true
 
   async function refreshGroups() {
     router.refresh()
@@ -175,6 +176,7 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
     setGroups(initialGroups)
   }, [initialGroups])
 
+
   const createPreviewIcon = getIconOption(iconKey)
   const createPreviewColor = getColorOption(colorKey)
   const CreatePreviewIconComponent = createPreviewIcon.Icon
@@ -208,15 +210,21 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                disabled={!canCreateCustomGroups}
                 placeholder={t('createPlaceholder')}
-                className="h-[42px] w-full rounded-xl border border-[#ddd] bg-white px-3 text-sm outline-none"
+                className="h-[42px] w-full rounded-xl border border-[#ddd] bg-white px-3 text-sm outline-none disabled:cursor-not-allowed disabled:bg-stone-50 disabled:text-stone-400"
               />
             </div>
 
-            <PrimaryButton type="submit" disabled={creating} className="h-[42px] px-3.5">
+            <PrimaryButton
+              type="submit"
+              disabled={creating || !canCreateCustomGroups}
+              className="h-[42px] px-3.5"
+            >
               {creating ? t('creating') : t('create')}
             </PrimaryButton>
           </div>
+
 
           <div className="grid gap-2.5">
             <div className="text-[13px] font-bold">{t('color')}</div>
@@ -229,12 +237,14 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
                   <button
                     key={opt.key}
                     type="button"
+                    disabled={!canCreateCustomGroups}
                     onClick={() => setColorKey(opt.key)}
                     aria-pressed={active}
                     title={opt.label}
                     className={cn(
                       'cursor-pointer rounded-xl border px-3 py-2 text-xs font-medium transition duration-150',
                       active && 'ring-2 ring-purple-700 ring-offset-1 ring-offset-white',
+                      !canCreateCustomGroups && 'cursor-not-allowed opacity-50',
                     )}
                     style={{
                       color: opt.value,
@@ -263,12 +273,14 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
                   <button
                     key={opt.key}
                     type="button"
+                    disabled={!canCreateCustomGroups}
                     onClick={() => setIconKey(opt.key)}
                     aria-pressed={active}
                     title={opt.label}
                     className={cn(
                       'grid h-[42px] w-[42px] cursor-pointer place-items-center rounded-xl border transition duration-150',
                       active && 'ring-2 ring-purple-700 ring-offset-1 ring-offset-white',
+                      !canCreateCustomGroups && 'cursor-not-allowed opacity-50',
                     )}
                     style={{
                       color: createPreviewColor.value,

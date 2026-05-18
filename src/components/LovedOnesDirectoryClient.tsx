@@ -211,7 +211,7 @@ export function LovedOnesDirectoryClient({ lovedOnes }: { lovedOnes: LovedOne[] 
               }}
               placeholder={t('searchPlaceholder')}
               aria-label={t('searchPlaceholder')}
-              className="h-12 w-full rounded-full border border-rose-100 bg-rose-50/70 pl-11 pr-4 text-sm text-stone-700 outline-none transition placeholder:text-stone-400 focus:border-rose-300 focus:bg-white focus:ring-2 focus:ring-rose-200"
+              className="h-12 w-full rounded-full border border-rose-100 bg-rose-50/70 pl-11 pr-4 text-sm text-stone-700 outline-none transition placeholder:text-stone-400 focus:border-purple-300 focus:bg-white focus:ring-2 focus:ring-purple-200"
             />
           </div>
 
@@ -310,7 +310,7 @@ export function LovedOnesDirectoryClient({ lovedOnes }: { lovedOnes: LovedOne[] 
           </div>
         </div>
       ) : (
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="waterfall-grid-lanes mt-6">
           {filteredLovedOnes.map((person, index) => (
             <DashboardLoadReveal key={person.id} delayMs={180 + index * 45}>
               <div

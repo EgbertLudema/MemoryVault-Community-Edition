@@ -141,7 +141,12 @@ export function MemoryFilters(props: MemoryFiltersProps) {
   const filtersContent = (
     <>
       <div className={cn('flex flex-col gap-3', dense && 'gap-2.5')}>
-        <div className={cn('flex flex-col gap-3 lg:flex-row lg:items-center', dense && 'gap-2.5')}>
+        <div
+          className={cn(
+            'flex flex-col gap-3 lg:flex-row lg:items-center',
+            dense && 'flex-row items-center gap-2.5',
+          )}
+        >
           <div className={cn(fieldShellClassName, 'min-w-0 flex-1')}>
             <div className="relative">
               <SearchIcon
@@ -170,8 +175,8 @@ export function MemoryFilters(props: MemoryFiltersProps) {
             disabled={!hasActiveFilters}
             className={cn(
               dense
-                ? 'inline-flex h-10 items-center justify-center gap-2 rounded-full border px-4 text-sm font-medium transition-all lg:shrink-0'
-                : 'inline-flex h-11 items-center justify-center gap-2 rounded-full border px-4 text-[15px] font-medium transition-all lg:shrink-0',
+                ? 'inline-flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full border px-0 text-sm font-medium transition-all lg:w-auto lg:px-4 lg:shrink-0'
+                : 'inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border px-4 text-[15px] font-medium transition-all sm:w-auto lg:shrink-0',
               hasActiveFilters
                 ? 'cursor-pointer border-stone-200 bg-white/85 text-stone-700 shadow-[0_10px_24px_rgba(15,23,42,0.04)] hover:border-stone-300 hover:bg-white'
                 : 'cursor-not-allowed border-stone-200/70 bg-white/60 text-stone-400',
@@ -184,16 +189,17 @@ export function MemoryFilters(props: MemoryFiltersProps) {
                 hasActiveFilters && 'animate-memory-filter-reset-spin',
               )}
             />
-            {t('resetFilters')}
+            <span className={cn(dense && 'hidden lg:inline')}>{t('resetFilters')}</span>
           </button>
         </div>
       </div>
 
       <div className={cn('flex flex-wrap gap-4', dense && 'gap-3')}>
-        <div className={cn(fieldShellClassName, dense ? 'flex-1 min-w-[220px] max-w-[360px]' : 'flex-1 min-w-[220px] max-w-[400px]')}>
+        <div className={cn(fieldShellClassName, dense ? 'min-w-0 flex-[1_1_100%] sm:flex-1 sm:min-w-[220px] sm:max-w-[360px]' : 'min-w-0 flex-[1_1_100%] sm:flex-1 sm:min-w-[220px] sm:max-w-[400px]')}>
           <SegmentedSlider<MemoryTypeFilter>
             value={value.type}
             onChange={setType}
+            className="w-full [&_button]:px-2 [&_button]:text-xs sm:[&_button]:px-3 sm:[&_button]:text-sm"
             options={[
               { label: t('typeAll'), value: 'all' },
               { label: t('typeNotes'), value: 'notes' },
@@ -203,11 +209,11 @@ export function MemoryFilters(props: MemoryFiltersProps) {
           />
         </div>
 
-        <div className={cn(fieldShellClassName, 'flex-1 min-w-[220px]')}>
+        <div className={cn(fieldShellClassName, 'min-w-0 flex-[1_1_100%] sm:flex-1 sm:min-w-[220px]')}>
           {groups.length === 0 ? (
             <div className="text-[12px] text-neutral-500">{t('noGroupsAvailable')}</div>
           ) : (
-            <div className="flex gap-[6px] flex-wrap justify-start">
+            <div className="-mx-1 flex gap-[6px] overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
               <GroupButton
                 label={t('allGroups')}
                 active={value.groupIds.length === 0}

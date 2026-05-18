@@ -18,7 +18,14 @@ export type LegacyCheckInUser = {
   lastName?: string | null
   enableLegacyProtection?: boolean | null
   legacyProtectionContacts?: Array<
-    number | { id?: number | null; fullName?: string | null; email?: string | null } | null
+    | number
+    | {
+        id?: number | null
+        fullName?: string | null
+        email?: string | null
+        trustedContactInviteStatus?: 'none' | 'pending' | 'accepted' | null
+      }
+    | null
   > | null
   legacyCheckInMode?: CheckInMode | null
   legacyCheckInStage?: CheckInStage | null
@@ -55,6 +62,14 @@ function getContactEmail(contact: unknown) {
 
   const email = String((contact as { email?: unknown }).email ?? '').trim()
   return email || null
+}
+
+function isAcceptedTrustedContact(contact: unknown) {
+  if (!contact || typeof contact !== 'object') {
+    return false
+  }
+
+  return (contact as { trustedContactInviteStatus?: unknown }).trustedContactInviteStatus === 'accepted'
 }
 
 function getContactName(contact: unknown) {
@@ -203,7 +218,9 @@ export async function sendTrustedContactCheckIn(
   origin: string,
   repeatAfterDays = RESPONSE_WINDOW_DAYS,
 ) {
-  const contacts = (user.legacyProtectionContacts ?? []).filter((contact) => getContactEmail(contact))
+  const contacts = (user.legacyProtectionContacts ?? []).filter(
+    (contact) => isAcceptedTrustedContact(contact) && getContactEmail(contact),
+  )
 
   if (contacts.length === 0) {
     return false

@@ -2,7 +2,11 @@ import { NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getAppUserFromHeaders } from '@/lib/appAuth'
-import { getMemoryContentLimitMessage, isWithinMemoryContentItemLimit } from '@/lib/memoryLimits'
+import {
+  getMemoryContentItemLimit,
+  getMemoryContentLimitMessage,
+  isWithinMemoryContentItemLimit,
+} from '@/lib/memoryLimits'
 import { decryptTextServer, encryptTextServer, isServerEncrypted } from '@/lib/serverEncryption'
 
 type IncomingContent =
@@ -185,8 +189,12 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       return NextResponse.json({ error: 'Content is required' }, { status: 400 })
     }
 
-    if (!isWithinMemoryContentItemLimit(content.length)) {
-      return NextResponse.json({ error: getMemoryContentLimitMessage() }, { status: 400 })
+    const memoryContentItemLimit = getMemoryContentItemLimit(user)
+    if (!isWithinMemoryContentItemLimit(content.length, memoryContentItemLimit)) {
+      return NextResponse.json(
+        { error: getMemoryContentLimitMessage(memoryContentItemLimit) },
+        { status: 400 },
+      )
     }
 
     const contentRows: MemoryContentRow[] = []
@@ -236,8 +244,11 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       return NextResponse.json({ error: 'No valid content items found' }, { status: 400 })
     }
 
-    if (!isWithinMemoryContentItemLimit(contentRows.length)) {
-      return NextResponse.json({ error: getMemoryContentLimitMessage() }, { status: 400 })
+    if (!isWithinMemoryContentItemLimit(contentRows.length, memoryContentItemLimit)) {
+      return NextResponse.json(
+        { error: getMemoryContentLimitMessage(memoryContentItemLimit) },
+        { status: 400 },
+      )
     }
 
     const ownsAllGroups = await ensureOwnedRelations(

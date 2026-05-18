@@ -6,6 +6,7 @@ import { DashboardLoadReveal } from '@/components/dashboard/DashboardLoadReveal'
 import { AccountCircleIcon } from '@/components/icons/AccountCircleIcon'
 import { OpenStarIcon } from '@/components/icons/OpenStarIcon'
 import { StarIcon } from '@/components/icons/StarIcon'
+import { FeatureIdeasHelpTour } from '@/components/onboarding/FeatureIdeasHelpTour'
 import { PrimaryButton } from '@/components/ui/PrimaryButton'
 import { Link } from '@/i18n/navigation'
 import type { AppFeatureBoard, FeatureIdeaCard, FeatureSubmissionCard } from '@/lib/featureRequests'
@@ -383,6 +384,7 @@ export function FeatureIdeasPageClient({ initialBoard }: FeatureIdeasPageClientP
 
   return (
     <div className="relative max-h-full overflow-y-auto">
+      <FeatureIdeasHelpTour />
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-[540px] animate-dashboard-ambient bg-[radial-gradient(circle_at_top_left,rgba(191,219,254,0.42),transparent_34%),radial-gradient(circle_at_top_right,rgba(196,181,253,0.38),transparent_30%),linear-gradient(180deg,rgba(239,246,255,0.9)_0%,rgba(248,250,252,0.28)_78%,rgba(248,250,252,0)_100%)] [mask-image:linear-gradient(to_bottom,rgba(0,0,0,1)_0%,rgba(0,0,0,0.92)_62%,rgba(0,0,0,0.4)_84%,transparent_100%)]"
@@ -390,7 +392,10 @@ export function FeatureIdeasPageClient({ initialBoard }: FeatureIdeasPageClientP
 
       <div className="relative grid gap-6 p-6">
         <DashboardLoadReveal delayMs={40}>
-          <section className="relative overflow-hidden rounded-[34px] corner-shape-squircle border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(239,246,255,0.92))] p-7 shadow-[0_24px_80px_rgba(96,165,250,0.15)] sm:p-8">
+          <section
+            data-tour="feature-ideas-hero"
+            className="relative overflow-hidden rounded-[34px] corner-shape-squircle border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(239,246,255,0.92))] p-7 shadow-[0_24px_80px_rgba(96,165,250,0.15)] sm:p-8"
+          >
             <div
               aria-hidden="true"
               className="absolute -right-12 -top-16 h-52 w-52 rounded-full bg-sky-200/60 blur-3xl"
@@ -438,7 +443,10 @@ export function FeatureIdeasPageClient({ initialBoard }: FeatureIdeasPageClientP
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
           <DashboardLoadReveal delayMs={120}>
-            <section className="rounded-[32px] corner-shape-squircle border border-white/70 bg-white/80 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:p-7">
+            <section
+              data-tour="feature-ideas-submit"
+              className="rounded-[32px] corner-shape-squircle border border-white/70 bg-white/80 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:p-7"
+            >
               <div className="mb-6">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
                   {t('submitLabel')}
@@ -457,7 +465,7 @@ export function FeatureIdeasPageClient({ initialBoard }: FeatureIdeasPageClientP
                   <input
                     value={title}
                     onChange={(event) => setTitle(event.target.value)}
-                    className="h-12 w-full rounded-[20px] corner-shape-squircle border border-stone-200/80 bg-white/90 px-4 text-gray-900 outline-none transition placeholder:text-stone-400 focus:border-sky-300 focus:ring-2 focus:ring-sky-200"
+                    className="h-12 w-full rounded-[20px] corner-shape-squircle border border-stone-200/80 bg-white/90 px-4 text-gray-900 outline-none transition placeholder:text-stone-400 focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
                     placeholder={t('titlePlaceholder')}
                   />
                 </div>
@@ -470,7 +478,7 @@ export function FeatureIdeasPageClient({ initialBoard }: FeatureIdeasPageClientP
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
                     rows={6}
-                    className="w-full rounded-[20px] corner-shape-squircle border border-stone-200/80 bg-white/90 px-4 py-3 text-gray-900 outline-none transition placeholder:text-stone-400 focus:border-sky-300 focus:ring-2 focus:ring-sky-200"
+                    className="w-full rounded-[20px] corner-shape-squircle border border-stone-200/80 bg-white/90 px-4 py-3 text-gray-900 outline-none transition placeholder:text-stone-400 focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
                     placeholder={t('descriptionPlaceholder')}
                   />
                 </div>
@@ -508,62 +516,73 @@ export function FeatureIdeasPageClient({ initialBoard }: FeatureIdeasPageClientP
           </DashboardLoadReveal>
 
           <DashboardLoadReveal delayMs={180}>
-            <MySubmissionSection
-              title={t('mySubmissionsTitle')}
-              body={t('mySubmissionsBody')}
-              empty={t('mySubmissionsEmpty')}
-              locale={locale}
-              submissions={board.mySubmissions}
-              statusLabel={statusLabel}
-              anonymousLabel={t('anonymous')}
-              namedLabel={t('named')}
-            />
+            <div data-tour="feature-ideas-submissions">
+              <MySubmissionSection
+                title={t('mySubmissionsTitle')}
+                body={t('mySubmissionsBody')}
+                empty={t('mySubmissionsEmpty')}
+                locale={locale}
+                submissions={board.mySubmissions}
+                statusLabel={statusLabel}
+                anonymousLabel={t('anonymous')}
+                namedLabel={t('named')}
+              />
+            </div>
           </DashboardLoadReveal>
         </div>
 
-        <FeatureIdeaSection
-          title={t('openIdeasTitle')}
-          body={t('openIdeasBody')}
-          empty={t('openIdeasEmpty')}
-          locale={locale}
-          ideas={board.openIdeas}
-          voteLabel={t('vote')}
-          votedLabel={t('voted')}
-          updateLabel={t('readUpdate')}
-          statusLabel={statusLabel}
-          votingId={votingId}
-          onToggleVote={handleToggleVote}
-        />
+        <div data-tour="feature-ideas-open">
+          <FeatureIdeaSection
+            title={t('openIdeasTitle')}
+            body={t('openIdeasBody')}
+            empty={t('openIdeasEmpty')}
+            locale={locale}
+            ideas={board.openIdeas}
+            voteLabel={t('vote')}
+            votedLabel={t('voted')}
+            updateLabel={t('readUpdate')}
+            statusLabel={statusLabel}
+            votingId={votingId}
+            onToggleVote={handleToggleVote}
+          />
+        </div>
 
-        <FeatureIdeaSection
-          title={t('plannedIdeasTitle')}
-          body={t('plannedIdeasBody')}
-          empty={t('plannedIdeasEmpty')}
-          locale={locale}
-          ideas={board.plannedIdeas}
-          voteLabel={t('vote')}
-          votedLabel={t('voted')}
-          updateLabel={t('readUpdate')}
-          statusLabel={statusLabel}
-          votingId={votingId}
-          onToggleVote={handleToggleVote}
-        />
+        <div data-tour="feature-ideas-planned">
+          <FeatureIdeaSection
+            title={t('plannedIdeasTitle')}
+            body={t('plannedIdeasBody')}
+            empty={t('plannedIdeasEmpty')}
+            locale={locale}
+            ideas={board.plannedIdeas}
+            voteLabel={t('vote')}
+            votedLabel={t('voted')}
+            updateLabel={t('readUpdate')}
+            statusLabel={statusLabel}
+            votingId={votingId}
+            onToggleVote={handleToggleVote}
+          />
+        </div>
 
-        <FeatureIdeaSection
-          title={t('implementedIdeasTitle')}
-          body={t('implementedIdeasBody')}
-          empty={t('implementedIdeasEmpty')}
-          locale={locale}
-          ideas={board.implementedIdeas}
-          voteLabel={t('vote')}
-          votedLabel={t('voted')}
-          updateLabel={t('readUpdate')}
-          statusLabel={statusLabel}
-          votingId={null}
-        />
+        <div data-tour="feature-ideas-implemented">
+          <FeatureIdeaSection
+            title={t('implementedIdeasTitle')}
+            body={t('implementedIdeasBody')}
+            empty={t('implementedIdeasEmpty')}
+            locale={locale}
+            ideas={board.implementedIdeas}
+            voteLabel={t('vote')}
+            votedLabel={t('voted')}
+            updateLabel={t('readUpdate')}
+            statusLabel={statusLabel}
+            votingId={null}
+          />
+        </div>
 
         <DashboardLoadReveal delayMs={260}>
-          <section className="rounded-[32px] corner-shape-squircle border border-white/70 bg-[linear-gradient(135deg,rgba(239,246,255,0.96),rgba(255,255,255,0.88))] p-6 shadow-[0_20px_60px_rgba(59,130,246,0.08)]">
+          <section
+            data-tour="feature-ideas-website-board"
+            className="rounded-[32px] corner-shape-squircle border border-white/70 bg-[linear-gradient(135deg,rgba(239,246,255,0.96),rgba(255,255,255,0.88))] p-6 shadow-[0_20px_60px_rgba(59,130,246,0.08)]"
+          >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-2xl font-bold tracking-tight text-gray-900">

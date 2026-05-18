@@ -35,6 +35,7 @@ export function SecondaryButton({
     'transition-all duration-200',
     'hover:bg-neutral-100',
     'active:scale-[0.95]',
+    'focus:outline-none focus:ring-2 focus:ring-purple-300/70',
     // Disabled state
     disabled && 'opacity-50 cursor-not-allowed',
     // Optional overrides

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getAppUserFromHeaders } from '@/lib/appAuth'
+import { getLovedOneCountLimit, getLovedOneCountLimitMessage } from '@/lib/lovedOneLimits'
 
 export async function GET(req: Request) {
   try {
@@ -82,6 +83,24 @@ export async function POST(req: Request) {
 
     if (groups.length === 0) {
       return NextResponse.json({ error: 'At least one group is required' }, { status: 400 })
+    }
+
+    const lovedOneCountLimit = getLovedOneCountLimit(user)
+    if (lovedOneCountLimit !== null) {
+      const existingLovedOneCount = await payload.count({
+        collection: 'loved-ones',
+        overrideAccess: true,
+        where: {
+          user: { equals: user.id },
+        },
+      })
+
+      if (existingLovedOneCount.totalDocs >= lovedOneCountLimit) {
+        return NextResponse.json(
+          { error: getLovedOneCountLimitMessage(lovedOneCountLimit) },
+          { status: 403 },
+        )
+      }
     }
 
     const createdLovedOne = await payload.create({

@@ -97,25 +97,19 @@ export const Users: CollectionConfig = {
       required: false,
     },
     {
-      name: 'encryptedVaultKey',
-      type: 'textarea',
-      required: false,
-      admin: {
-        hidden: true,
-      },
-    },
-    {
-      name: 'vaultKeyEncryptionMetadata',
-      type: 'json',
-      required: false,
-      admin: {
-        hidden: true,
-      },
-    },
-    {
       name: 'enableLegacyProtection',
       type: 'checkbox',
       defaultValue: false,
+    },
+    {
+      name: 'legacyProtectionPendingEnable',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        readOnly: true,
+        description:
+          'The account owner asked to enable legacy protection, but selected trusted contacts still need to accept their invite.',
+      },
     },
     {
       name: 'legacyProtectionContacts',

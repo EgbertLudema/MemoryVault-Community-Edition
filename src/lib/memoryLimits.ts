@@ -1,7 +1,9 @@
-import { getLimit } from '@/lib/entitlements'
-
 export function getMemoryContentItemLimit() {
-  return getLimit('memoryContentItems')
+  return null
+}
+
+export function getMemoryCountLimit() {
+  return null
 }
 
 export function isWithinMemoryContentItemLimit(count: number, max = getMemoryContentItemLimit()) {
@@ -10,8 +12,16 @@ export function isWithinMemoryContentItemLimit(count: number, max = getMemoryCon
 
 export function getMemoryContentLimitMessage(max = getMemoryContentItemLimit()) {
   if (max === null) {
-    return 'This MemoryVault edition does not limit content items per memory'
+    return 'Memory content is not limited'
   }
 
   return `Each memory can have at most ${max} content items`
+}
+
+export function getMemoryCountLimitMessage(max = getMemoryCountLimit()) {
+  if (max === null) {
+    return 'Memories are not limited'
+  }
+
+  return `You can have at most ${max} memories`
 }

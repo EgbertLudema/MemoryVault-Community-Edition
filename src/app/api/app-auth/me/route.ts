@@ -16,9 +16,8 @@ export async function GET(req: Request) {
       firstName: user.firstName,
       lastName: user.lastName,
       profileImageSrc: getProfileImageSrc(user),
-      encryptedVaultKey: user.encryptedVaultKey,
-      vaultKeyEncryptionMetadata: user.vaultKeyEncryptionMetadata,
       enableLegacyProtection: user.enableLegacyProtection,
+      legacyProtectionPendingEnable: user.legacyProtectionPendingEnable,
       legacyProtectionContacts: user.legacyProtectionContacts,
     },
   })

@@ -223,6 +223,10 @@ function toGroupUiOption(group: LovedOneGroup): GroupUiOption {
 
 export default async function DashboardPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
+  const memoriesHref = `/${locale}/memories`
+  const newMemoryHref = `/${locale}/memories/new`
+  const lovedOnesHref = `/${locale}/loved-ones`
+  const newLovedOneHref = `/${locale}/loved-ones/new`
   const t = await getTranslations({ locale, namespace: 'DashboardPage' })
   const tGroups = await getTranslations({ locale, namespace: 'GroupLabels' })
   const [meData, memoriesData, lovedOnesData] = await Promise.all([
@@ -296,7 +300,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
 
                 <div className="mt-5" data-tour="dashboard-create-memory">
                   <PrimaryButton
-                    href="/memories/new"
+                    href={newMemoryHref}
                     className="w-full justify-center rounded-full px-5 py-3"
                   >
                     {t('createMemory')}
@@ -304,7 +308,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                 </div>
 
                 <Link
-                  href="/memories"
+                  href={memoriesHref}
                   className="mt-3 inline-flex text-sm font-semibold text-purple-700 no-underline transition hover:text-purple-800"
                 >
                   {t('browseMemories')}
@@ -380,7 +384,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                     </div>
 
                     <Link
-                      href="/memories"
+                      href={memoriesHref}
                       className="text-sm font-semibold text-purple-700 no-underline transition hover:text-purple-800"
                     >
                       {t('viewAll')}
@@ -397,7 +401,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                           {t('noMemoriesBody')}
                         </p>
                         <div className="mt-5">
-                          <PrimaryButton href="/memories/new" className="rounded-full px-5 py-3">
+                          <PrimaryButton href={newMemoryHref} className="rounded-full px-5 py-3">
                             {t('createFirstMemory')}
                           </PrimaryButton>
                         </div>
@@ -413,7 +417,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                         return (
                           <Link
                             key={String(memory.id)}
-                            href="/memories"
+                            href={memoriesHref}
                             className="group block rounded-[28px] border border-stone-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,250,252,0.94))] p-5 text-inherit no-underline shadow-[0_12px_30px_rgba(15,23,42,0.05)] transition-all duration-200 hover:-translate-y-1 hover:border-purple-200 hover:shadow-[0_20px_44px_rgba(168,85,247,0.12)]"
                           >
                             <div className="flex items-start justify-between gap-4">
@@ -469,7 +473,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                     </div>
 
                     <Link
-                      href="/loved-ones"
+                      href={lovedOnesHref}
                       className="text-sm font-semibold text-purple-700 no-underline transition hover:text-purple-800"
                     >
                       {t('viewAll')}
@@ -486,7 +490,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                           {t('noLovedOnesBody')}
                         </p>
                         <div className="mt-5">
-                          <PrimaryButton href="/loved-ones/new" className="rounded-full px-5 py-3">
+                          <PrimaryButton href={newLovedOneHref} className="rounded-full px-5 py-3">
                             {t('addFirstLovedOne')}
                           </PrimaryButton>
                         </div>
@@ -500,7 +504,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                         return (
                           <Link
                             key={String(person.id)}
-                            href={`/loved-ones/person/${person.id}`}
+                            href={`${lovedOnesHref}/person/${person.id}`}
                             className="group block rounded-[28px] border border-stone-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,248,250,0.94))] p-5 text-inherit no-underline shadow-[0_12px_30px_rgba(15,23,42,0.05)] transition-all duration-200 hover:-translate-y-1 hover:border-rose-200 hover:shadow-[0_20px_44px_rgba(244,114,182,0.12)]"
                           >
                             <div className="flex items-start justify-between gap-4">

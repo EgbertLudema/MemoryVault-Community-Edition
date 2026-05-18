@@ -43,6 +43,10 @@ import {
 } from '@/components/memories/utils'
 import { Link } from '@/i18n/navigation'
 
+const SCROLL_ITEM_SIZE_MOBILE_CSS = 'clamp(108px, 34vw, 142px)'
+const SCROLL_ITEM_SIZE_DESKTOP_CSS = 'clamp(132px, 42vw, 180px)'
+const SCROLL_ITEM_SIZE_VAR = 'var(--scroll-item-size)'
+
 type MemoriesChangedDetail = {
   action?: 'created' | 'updated' | 'deleted'
   id?: string
@@ -607,7 +611,14 @@ export default function UserHomePage() {
 
     const viewportWidth = window.innerWidth
     const viewportHeight = window.innerHeight
-    const targetWidth = Math.min(viewportWidth * 0.4, 560)
+    const maxExpandedWidth =
+      viewportWidth < 640
+        ? viewportWidth - 32
+        : viewportWidth < 1024
+          ? Math.min(viewportWidth * 0.68, 520)
+          : Math.min(viewportWidth * 0.4, 560)
+    const maxExpandedHeight = viewportHeight - (viewportWidth < 640 ? 112 : 80)
+    const targetWidth = Math.max(240, Math.min(maxExpandedWidth, maxExpandedHeight / 1.2))
     const targetHeight = targetWidth * 1.2
 
     const originCenterX = originRect.left + originRect.width / 2
@@ -1025,7 +1036,7 @@ export default function UserHomePage() {
         <>
           <div
             ref={dragControlsRef}
-            className="pointer-events-none absolute right-4 top-4 z-20 flex items-start gap-3 sm:right-6 sm:top-6"
+            className="pointer-events-none absolute left-4 right-4 top-4 z-20 flex flex-wrap items-start justify-end gap-2 sm:left-auto sm:right-6 sm:top-6 sm:gap-3"
           >
             <div
               ref={compactModeRef}
@@ -1053,10 +1064,10 @@ export default function UserHomePage() {
               <Link
                 href="/memories/new"
                 aria-label={t('addMemory')}
-                className="relative inline-flex h-11 cursor-pointer items-center gap-2 rounded-full bg-purple-600 px-4 text-sm font-semibold text-white shadow-[0_20px_45px_rgba(124,58,237,0.28),inset_0_1px_0_rgba(255,255,255,0.22)] transition hover:scale-[1.01] hover:bg-purple-700"
+                className="relative inline-flex h-11 w-11 cursor-pointer items-center justify-center gap-2 rounded-full bg-purple-600 px-0 text-sm font-semibold text-white shadow-[0_20px_45px_rgba(124,58,237,0.28),inset_0_1px_0_rgba(255,255,255,0.22)] transition hover:scale-[1.01] hover:bg-purple-700 sm:w-auto sm:px-4"
               >
                 <PlusIcon className="h-4 w-4 shrink-0" />
-                <span>{t('addMemory')}</span>
+                <span className="hidden sm:inline">{t('addMemory')}</span>
               </Link>
             </div>
           </div>
@@ -1142,24 +1153,24 @@ export default function UserHomePage() {
               >
                 <div
                   ref={scrollViewRef}
-                  className="mx-auto flex w-full max-w-[1700px] flex-col gap-6 px-6 pb-8 pt-6"
+                  className="mx-auto flex w-full max-w-[1700px] flex-col gap-4 px-4 pb-6 pt-4 sm:gap-6 sm:px-6 sm:pb-8 sm:pt-6"
                 >
                   <div
                     ref={scrollHeaderRef}
-                    className="rounded-[30px] corner-shape-squircle border border-white/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(250,245,255,0.9))] p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:p-7"
+                    className="rounded-[24px] corner-shape-squircle border border-white/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(250,245,255,0.9))] p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:rounded-[30px] sm:p-7"
                   >
-                    <div className="flex flex-col gap-5">
+                    <div className="flex flex-col gap-4 sm:gap-5">
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div className="max-w-[760px]">
-                          <div className="inline-flex rounded-full bg-purple-600/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-purple-700">
+                          <div className="hidden rounded-full bg-purple-600/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-purple-700 lg:inline-flex">
                             {t('gridView')}
                           </div>
-                          <h2 className="mt-4 text-3xl font-bold tracking-tight text-gray-900">
+                          <h2 className="mt-3 text-2xl font-bold tracking-tight text-gray-900 sm:mt-4 sm:text-3xl">
                             {t('structuredHeading')}
                           </h2>
                         </div>
 
-                        <div className="flex items-center justify-end gap-3 lg:shrink-0">
+                        <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 lg:shrink-0">
                           <div data-tour="memories-view-toggle">
                             <GridModeToggle
                               gridMode={filters.gridMode}
@@ -1170,16 +1181,17 @@ export default function UserHomePage() {
                           <div data-tour="memories-add-memory">
                             <Link
                               href="/memories/new"
-                              className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-purple-600 px-5 py-3 text-sm font-semibold text-white no-underline shadow-[0_16px_35px_rgba(124,58,237,0.24)] transition hover:scale-[1.01] hover:bg-purple-700"
+                              aria-label={t('addMemory')}
+                              className="inline-flex h-11 w-11 cursor-pointer items-center justify-center gap-2 rounded-full bg-purple-600 px-0 text-sm font-semibold text-white no-underline shadow-[0_16px_35px_rgba(124,58,237,0.24)] transition hover:scale-[1.01] hover:bg-purple-700 sm:w-auto sm:px-5"
                             >
                               <PlusIcon className="h-4 w-4 shrink-0" />
-                              {t('addMemory')}
+                              <span className="hidden sm:inline">{t('addMemory')}</span>
                             </Link>
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap gap-3 text-sm text-stone-600">
+                      <div className="hidden flex-wrap gap-2 text-xs text-stone-600 sm:gap-3 sm:text-sm lg:flex">
                         <div className="rounded-full border border-white/80 bg-white/80 px-4 py-2 shadow-sm">
                           {t('shownCount', { count: filteredAlbums.length })}
                         </div>
@@ -1238,13 +1250,16 @@ export default function UserHomePage() {
                   {!loading && !error && filteredAlbums.length > 0 ? (
                     <div
                       ref={scrollGridSurfaceRef}
-                      className="rounded-[30px] corner-shape-squircle border border-white/75 bg-white/60 p-12 shadow-[0_18px_50px_rgba(15,23,42,0.05)] backdrop-blur-sm"
+                      className="rounded-[24px] corner-shape-squircle border border-white/75 bg-white/60 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.05)] backdrop-blur-sm sm:rounded-[30px] sm:p-8 xl:p-12"
+                      style={
+                        {
+                          '--scroll-item-size': SCROLL_ITEM_SIZE_MOBILE_CSS,
+                          '--scroll-item-size-desktop': SCROLL_ITEM_SIZE_DESKTOP_CSS,
+                        } as React.CSSProperties
+                      }
                     >
                       <div
-                        className="grid justify-items-center gap-x-10 gap-y-16"
-                        style={{
-                          gridTemplateColumns: `repeat(auto-fill, minmax(${ITEM_WIDTH}px, 1fr))`,
-                        }}
+                        className="grid grid-cols-2 justify-items-center gap-x-4 gap-y-10 sm:gap-x-8 sm:gap-y-14 lg:[--scroll-item-size:var(--scroll-item-size-desktop)] lg:[grid-template-columns:repeat(auto-fill,minmax(var(--scroll-item-size),1fr))] xl:gap-x-10 xl:gap-y-16"
                       >
                         {filteredAlbums.map((album) => {
                           const isHidden = expandedAlbum && expandedItemId === album.id
@@ -1261,8 +1276,8 @@ export default function UserHomePage() {
                               }}
                               className="item cursor-pointer justify-self-center will-change-transform"
                               style={{
-                                width: `${ITEM_WIDTH}px`,
-                                height: `${ITEM_HEIGHT}px`,
+                                width: SCROLL_ITEM_SIZE_VAR,
+                                height: SCROLL_ITEM_SIZE_VAR,
                                 visibility: isHidden ? 'hidden' : 'visible',
                               }}
                               onClick={(event) => handleScrollTileClick(event, album)}
@@ -1294,7 +1309,7 @@ export default function UserHomePage() {
           onClick={closeExpanded}
         >
           <div
-            className={`absolute right-6 top-6 transition-all duration-150 ease-out ${
+            className={`absolute right-4 top-4 transition-all duration-150 ease-out sm:right-6 sm:top-6 ${
               isExpandedUiVisible
                 ? 'pointer-events-auto translate-y-0 opacity-100'
                 : 'pointer-events-none -translate-y-2 opacity-0'
@@ -1302,7 +1317,7 @@ export default function UserHomePage() {
             style={{ zIndex: 50 }}
             onClick={(event) => event.stopPropagation()}
           >
-            <SecondaryButton href={`/memories/${expandedAlbum.id}`} className="gap-2">
+            <SecondaryButton href={`/memories/${expandedAlbum.id}`} className="gap-2 pl-2 pr-4">
               <EditIcon className="h-4 w-4" />
               {t('editMemory')}
             </SecondaryButton>

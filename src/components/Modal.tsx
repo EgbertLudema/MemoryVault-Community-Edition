@@ -37,19 +37,19 @@ export function Modal({
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      className="fixed inset-0 z-1000 flex items-center justify-center bg-black/35 p-4"
+      className="fixed inset-0 z-1000 flex items-end justify-center bg-black/35 p-0 sm:items-center sm:p-4"
       onMouseDown={close}
     >
       <div
         className={
           size === 'wide'
-            ? 'relative flex max-h-[calc(100vh_-_32px)] w-full max-w-[980px] flex-col overflow-hidden rounded-2xl corner-shape-squircle border border-[#eee] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.18)]'
-            : 'relative flex max-h-[calc(100vh_-_32px)] w-full max-w-[720px] flex-col overflow-hidden rounded-2xl corner-shape-squircle border border-[#eee] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.18)]'
+            ? 'relative flex max-h-[92dvh] w-full max-w-[980px] flex-col overflow-hidden rounded-t-2xl corner-shape-squircle border border-[#eee] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.18)] sm:max-h-[calc(100vh_-_32px)] sm:rounded-2xl'
+            : 'relative flex max-h-[92dvh] w-full max-w-[720px] flex-col overflow-hidden rounded-t-2xl corner-shape-squircle border border-[#eee] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.18)] sm:max-h-[calc(100vh_-_32px)] sm:rounded-2xl'
         }
         onMouseDown={(e) => e.stopPropagation()}
       >
       {/* Sticky header so the X stays visible */}
-        <div className="sticky top-0 z-10 border-b border-[#eee] bg-[#fafafa] px-4 py-[14px]">
+        <div className="sticky top-0 z-10 border-b border-[#eee] bg-[#fafafa] px-3 py-[14px] sm:px-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col pr-10">
               <strong className="text-[14px]">{title}</strong>
@@ -76,7 +76,7 @@ export function Modal({
         </div>
 
         {/* Scrollable content area */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 pt-4">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-6 pt-4 sm:px-4">{children}</div>
       </div>
     </div>
   )

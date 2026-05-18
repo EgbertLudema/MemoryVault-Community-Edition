@@ -76,6 +76,7 @@ export function GridModeToggle({
             type="button"
             onClick={() => onChange(option.mode)}
             aria-pressed={active}
+            aria-label={option.label}
             className={
               active
                 ? isRegular
@@ -87,7 +88,7 @@ export function GridModeToggle({
             }
           >
             <Icon className="h-4 w-4 shrink-0" />
-            <span>{option.label}</span>
+            <span className="hidden lg:inline">{option.label}</span>
           </button>
         )
       })}
