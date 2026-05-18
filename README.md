@@ -111,21 +111,6 @@ secrets and service credentials in `.env`, especially `PAYLOAD_SECRET`,
 - `npm run generate:types`: generate Payload types
 - `npm run generate:importmap`: generate the Payload admin import map
 
-## Editions
-
-The default edition is `oss`, which keeps product features unlocked for
-self-hosted noncommercial use.
-
-```txt
-MEMORYVAULT_EDITION=oss
-NEXT_PUBLIC_MEMORYVAULT_EDITION=oss
-```
-
-Future hosted/commercial builds should use the `cloud` edition and route paid
-feature checks through `src/lib/entitlements.ts`.
-
-See [docs/EDITIONS_AND_ENTITLEMENTS.md](./docs/EDITIONS_AND_ENTITLEMENTS.md).
-
 ## Not Included
 
 This repository does not include the MemoryVault marketing website, website page
