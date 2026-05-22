@@ -124,11 +124,10 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     const relationship = typeof body.relationship === 'string' ? body.relationship.trim() : ''
     const customNote = typeof body.customNote === 'string' ? body.customNote.trim() : ''
 
-    const groups = Array.isArray(body.groups)
-      ? body.groups
-          .map((value) => toNumberId(String(value)))
-          .filter((value) => Number.isFinite(value))
-      : []
+    const rawGroups = Array.isArray(body.groups) ? body.groups : []
+    const groups = rawGroups
+      .map((value) => toNumberId(String(value)))
+      .filter((value) => Number.isFinite(value))
 
     if (!fullName) {
       return NextResponse.json({ error: 'Full name is required' }, { status: 400 })
@@ -142,8 +141,8 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       return NextResponse.json({ error: 'Email is required' }, { status: 400 })
     }
 
-    if (groups.length === 0) {
-      return NextResponse.json({ error: 'At least one group is required' }, { status: 400 })
+    if (rawGroups.length !== 1 || groups.length !== 1) {
+      return NextResponse.json({ error: 'Exactly one group is required' }, { status: 400 })
     }
 
     const ownsAllGroups = await ensureOwnedGroups(payload, groups, Number(user.id))

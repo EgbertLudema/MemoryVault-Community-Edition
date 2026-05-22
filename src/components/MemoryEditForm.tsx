@@ -1,13 +1,16 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useEffect, useMemo, useState } from 'react'
+import gsap from 'gsap'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { getDefaultGroupLabel } from '@/lib/groupMeta'
 import { getEffectiveGroupUiMeta, mapApiGroupToUiOption, type GroupUiOption } from '@/lib/groupUi'
 import { GroupButton } from './ui/GroupButton'
 import { PrimaryButton } from './ui/PrimaryButton'
 import { SecondaryButton } from './ui/SecondairyButton'
 import { DeleteButton } from './ui/DeleteButton'
+import { useToast } from './ui/ToastProvider'
+import { UpgradeToProLink } from './ui/UpgradeToProLink'
 import { CheckIcon } from './icons/CheckIcon'
 import { NotesIcon } from './icons/NotesIcon'
 import { PhotoIcon } from './icons/PhotoIcon'
@@ -16,6 +19,13 @@ import { ArrowRightIcon } from './icons/ArrowRightIcon'
 import { VideoIcon } from './icons/VideoIcon'
 import { buildMediaImageUrl, buildMediaVideoStreamUrl } from '@/lib/mediaBlob'
 import { getMemoryContentItemLimit, isWithinMemoryContentItemLimit } from '@/lib/memoryLimits'
+import {
+  IMAGE_UPLOAD_MAX_LABEL,
+  VIDEO_UPLOAD_MAX_LABEL,
+  getUploadKindForMimeType,
+  getUploadLimitLabelForMimeType,
+  getUploadLimitForMimeType,
+} from '@/lib/uploadLimits'
 
 const memoryContentItemLimit = getMemoryContentItemLimit()
 const memoryContentItemLimitLabel = memoryContentItemLimit ?? 0
@@ -239,6 +249,7 @@ async function uploadToPayloadMedia(
   file: File,
   labels: {
     uploadFailed: string
+    uploadTooLarge: string
     uploadNoMediaId: string
     videoSeekFailed: string
     videoMetadataFailed: string
@@ -263,7 +274,12 @@ async function uploadToPayloadMedia(
 
   if (!res.ok) {
     const data = await safeJson(res)
-    const msg = data?.errors?.[0]?.message || data?.error || labels.uploadFailed.replace('{status}', String(res.status))
+    const msg =
+      data?.errors?.[0]?.message ||
+      data?.error ||
+      (res.status === 413
+        ? labels.uploadTooLarge
+        : labels.uploadFailed.replace('{status}', String(res.status)))
     throw new Error(String(msg))
   }
 
@@ -399,6 +415,7 @@ async function fetchOptions(url: string): Promise<SelectOption[]> {
 export function MemoryEditForm(props: MemoryEditFormProps) {
   const t = useTranslations('MemoryEditForm')
   const tGroups = useTranslations('GroupLabels')
+  const { showToast } = useToast()
   const { memory, mode = 'page', onClose, onSaved, onDeleted } = props
   const isEditing = Boolean(memory)
 
@@ -410,11 +427,21 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
   )
   const [groups, setGroups] = useState<GroupOption[]>([])
   const [lovedOnes, setLovedOnes] = useState<SelectOption[]>([])
+  const [recipientsLoading, setRecipientsLoading] = useState(true)
   const [blocks, setBlocks] = useState<ContentBlock[]>(() => initialBlocksFromMemory(memory))
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [isAddContentModalOpen, setIsAddContentModalOpen] = useState(false)
+  const [showMemoryLimitUpgradeCta, setShowMemoryLimitUpgradeCta] = useState(false)
+  const imagePickerRef = useRef<HTMLInputElement>(null)
+  const videoPickerRef = useRef<HTMLInputElement>(null)
+  const addContentPanelRef = useRef<HTMLDivElement>(null)
+  const addContentBackdropRef = useRef<HTMLDivElement>(null)
+  const groupsListRef = useRef<HTMLDivElement>(null)
+  const lovedOnesListRef = useRef<HTMLDivElement>(null)
+  const isClosingAddContentModalRef = useRef(false)
+  const animatedBlockIdsRef = useRef(new Set(blocks.map((block) => block.id)))
+  const recipientsTransitionReadyRef = useRef(false)
   const hasNoteBlock = blocks.some((block) => block.type === 'note')
   const hasReachedContentLimit =
     memoryContentItemLimit !== null && blocks.length >= memoryContentItemLimit
@@ -423,6 +450,8 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
     let mounted = true
 
     const load = async () => {
+      setRecipientsLoading(true)
+
       const [g, l] = await Promise.all([
         fetchGroupOptions('/api/loved-one-groups'),
         fetchOptions('/api/loved-ones'),
@@ -435,9 +464,17 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
       setGroups(g)
       setLovedOnes(l)
 
+
+      if (mounted) {
+        setRecipientsLoading(false)
+      }
     }
 
-    load()
+    load().catch(() => {
+      if (mounted) {
+        setRecipientsLoading(false)
+      }
+    })
 
     return () => {
       mounted = false
@@ -452,7 +489,7 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (isAddContentModalOpen) {
-          setIsAddContentModalOpen(false)
+          closeAddContentModal()
           return
         }
 
@@ -480,6 +517,101 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
       }
     }
   }, [blocks])
+
+  useEffect(() => {
+    if (!recipientsTransitionReadyRef.current) {
+      recipientsTransitionReadyRef.current = true
+      return
+    }
+
+    const elements = [groupsListRef.current, lovedOnesListRef.current].filter(
+      (element): element is HTMLDivElement => Boolean(element),
+    )
+
+    if (elements.length === 0) {
+      return
+    }
+
+    gsap.killTweensOf(elements)
+    gsap.fromTo(
+      elements,
+      { autoAlpha: 0, y: 8 },
+      {
+        autoAlpha: 1,
+        y: 0,
+        duration: 0.24,
+        ease: 'power2.out',
+        stagger: 0.04,
+        clearProps: 'opacity,visibility,transform',
+      },
+    )
+  }, [recipientsLoading])
+
+  useEffect(() => {
+    const newBlocks = blocks.filter((block) => !animatedBlockIdsRef.current.has(block.id))
+
+    if (newBlocks.length === 0) {
+      return
+    }
+
+    newBlocks.forEach((block) => {
+      animatedBlockIdsRef.current.add(block.id)
+    })
+
+    requestAnimationFrame(() => {
+      const elements = newBlocks
+        .map((block) =>
+          document.querySelector<HTMLElement>(`[data-content-block-id="${block.id}"]`),
+        )
+        .filter((element): element is HTMLElement => Boolean(element))
+
+      if (elements.length === 0) {
+        return
+      }
+
+      gsap.fromTo(
+        elements,
+        { autoAlpha: 0, y: 18, scale: 0.985 },
+        {
+          autoAlpha: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.28,
+          ease: 'power2.out',
+          stagger: 0.04,
+          clearProps: 'opacity,visibility,transform',
+        },
+      )
+    })
+  }, [blocks])
+
+  useEffect(() => {
+    if (!isAddContentModalOpen) {
+      return
+    }
+
+    const panel = addContentPanelRef.current
+    const backdrop = addContentBackdropRef.current
+
+    if (backdrop) {
+      gsap.fromTo(backdrop, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.18, ease: 'power2.out' })
+    }
+
+    if (panel) {
+      gsap.fromTo(
+        panel,
+        { autoAlpha: 0, y: 28, scale: 0.98 },
+        {
+          autoAlpha: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.26,
+          ease: 'power2.out',
+          clearProps: 'opacity,visibility,transform',
+        },
+      )
+    }
+  }, [isAddContentModalOpen])
 
   const canSubmit = useMemo(() => {
     if (!title.trim()) {
@@ -509,22 +641,62 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
     return true
   }, [title, blocks, groupIds, lovedOneIds])
 
-  const addBlock = (type: ContentType) => {
-    setError(null)
+  const closeAddContentModal = () => {
+    if (isClosingAddContentModalRef.current) {
+      return
+    }
 
+    const panel = addContentPanelRef.current
+    const backdrop = addContentBackdropRef.current
+
+    if (!panel && !backdrop) {
+      setIsAddContentModalOpen(false)
+      return
+    }
+
+    isClosingAddContentModalRef.current = true
+
+    gsap.killTweensOf([panel, backdrop].filter(Boolean))
+
+    const timeline = gsap.timeline({
+      defaults: { ease: 'power2.in' },
+      onComplete: () => {
+        isClosingAddContentModalRef.current = false
+        setIsAddContentModalOpen(false)
+      },
+    })
+
+    if (panel) {
+      timeline.to(panel, { autoAlpha: 0, y: 24, scale: 0.985, duration: 0.16 }, 0)
+    }
+
+    if (backdrop) {
+      timeline.to(backdrop, { autoAlpha: 0, duration: 0.18 }, 0)
+    }
+  }
+
+  const addBlock = (type: ContentType) => {
     if (hasReachedContentLimit) {
-      setError(t('maxContentItems', { max: memoryContentItemLimitLabel }))
+      showToast({
+        tone: 'warning',
+        message: t('maxContentItems', { max: memoryContentItemLimitLabel }),
+      })
       return false
     }
 
     if (type === 'note') {
       if (hasNoteBlock) {
-        setError(t('singleNoteOnly'))
+        showToast({ tone: 'warning', message: t('singleNoteOnly') })
         return false
       }
 
       setBlocks((prev) => [...prev, { id: uid(), type: 'note', note: '' }])
       return true
+    }
+
+    if (type === 'video' && !canUseVideo) {
+      showToast({ tone: 'warning', message: t('upgradeForVideo') })
+      return false
     }
 
     setBlocks((prev) => [
@@ -541,10 +713,81 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
     return true
   }
 
-  const chooseContentType = (type: ContentType) => {
-    if (addBlock(type)) {
-      setIsAddContentModalOpen(false)
+  const getFileValidationError = (file: File, expectedType: 'image' | 'video') => {
+    const uploadKind = getUploadKindForMimeType(file.type)
+
+    if (uploadKind !== expectedType) {
+      return expectedType === 'image' ? t('imageTypeRequired') : t('videoTypeRequired')
     }
+
+    const uploadLimit = getUploadLimitForMimeType(file.type)
+    const uploadLimitLabel = getUploadLimitLabelForMimeType(file.type)
+
+    if (uploadLimit !== null && uploadLimitLabel !== null && file.size > uploadLimit) {
+      return t('fileTooLarge', { limit: uploadLimitLabel })
+    }
+
+    return null
+  }
+
+  const chooseContentType = (type: ContentType) => {
+    if (type === 'image') {
+      imagePickerRef.current?.click()
+      return
+    }
+
+    if (type === 'video') {
+      if (!canUseVideo) {
+        showToast({ tone: 'warning', message: t('upgradeForVideo') })
+        return
+      }
+
+      videoPickerRef.current?.click()
+      return
+    }
+
+    if (addBlock(type)) {
+      closeAddContentModal()
+    }
+  }
+
+  const addMediaBlockFromFile = (type: 'image' | 'video', file: File | null) => {
+    if (!file) {
+      return
+    }
+
+    if (hasReachedContentLimit) {
+      showToast({
+        tone: 'warning',
+        message: t('maxContentItems', { max: memoryContentItemLimitLabel }),
+      })
+      return
+    }
+
+    if (type === 'video' && !canUseVideo) {
+      showToast({ tone: 'warning', message: t('upgradeForVideo') })
+      return
+    }
+
+    const validationError = getFileValidationError(file, type)
+
+    if (validationError) {
+      showToast({ tone: 'error', message: validationError })
+      return
+    }
+
+    setBlocks((prev) => [
+      ...prev,
+      {
+        id: uid(),
+        type,
+        file,
+        uploadedMediaId: null,
+        previewUrl: URL.createObjectURL(file),
+        shouldRevokePreview: true,
+      },
+    ])
+    closeAddContentModal()
   }
 
   const removeBlock = (id: string) => {
@@ -577,6 +820,17 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
   }
 
   const setFileForBlock = (id: string, file: File | null) => {
+    const targetBlock = blocks.find((block) => block.id === id)
+
+    if (targetBlock && targetBlock.type !== 'note' && file) {
+      const validationError = getFileValidationError(file, targetBlock.type)
+
+      if (validationError) {
+        showToast({ tone: 'error', message: validationError })
+        return
+      }
+    }
+
     setBlocks((prev) =>
       prev.map((block) => {
         if (block.id !== id || block.type === 'note') {
@@ -586,7 +840,6 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
         if (block.previewUrl && block.shouldRevokePreview) {
           URL.revokeObjectURL(block.previewUrl)
         }
-
         return {
           ...block,
           file,
@@ -617,23 +870,22 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
   }
 
   const save = async () => {
-    setError(null)
-
     if (!canSubmit) {
-      setError(
-        !isWithinMemoryContentItemLimit(blocks.length)
+      showToast({
+        tone: 'error',
+        message: !isWithinMemoryContentItemLimit(blocks.length)
           ? t('maxContentItems', { max: memoryContentItemLimitLabel })
           : t('submitValidation'),
-      )
+      })
       return
     }
 
     setSaving(true)
+    setShowMemoryLimitUpgradeCta(false)
 
     try {
       const uploadedBlocks: Array<
-        | { type: 'note'; note: string }
-        | { type: 'image' | 'video'; media: string | number }
+        { type: 'note'; note: string } | { type: 'image' | 'video'; media: string | number }
       > = []
 
       for (const block of blocks) {
@@ -657,15 +909,18 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
           continue
         }
 
-        const mediaId = await uploadToPayloadMedia(
-          block.file,
-          {
+        const validationError = getFileValidationError(block.file, block.type)
+        if (validationError) {
+          throw new Error(validationError)
+        }
+
+        const mediaId = await uploadToPayloadMedia(block.file, {
           uploadFailed: t('uploadFailed', { status: '{status}' }),
+          uploadTooLarge: t('uploadTooLarge'),
           uploadNoMediaId: t('uploadNoMediaId'),
           videoSeekFailed: t('videoSeekFailed'),
           videoMetadataFailed: t('videoMetadataFailed'),
-          },
-        )
+        })
         uploadedBlocks.push({ type: block.type, media: toPayloadId(mediaId) })
 
         setBlocks((prev) =>
@@ -710,7 +965,7 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
 
       const savedData = await safeJson(res)
       const changedId = String(
-        isEditing ? memory!.id : savedData?.memory?.id ?? savedData?.id ?? '',
+        isEditing ? memory!.id : (savedData?.memory?.id ?? savedData?.id ?? ''),
       )
 
       window.dispatchEvent(
@@ -722,13 +977,17 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
         }),
       )
 
+      showToast({ tone: 'success', message: t('saved') })
+
       if (onSaved) {
         onSaved()
       } else {
         onClose()
       }
     } catch (e: any) {
-      setError(e?.message ? String(e.message) : t('saveGeneric'))
+      const message = e?.message ? String(e.message) : t('saveGeneric')
+      setShowMemoryLimitUpgradeCta(/plan can have at most|memories/i.test(message))
+      showToast({ tone: 'error', message })
     } finally {
       setSaving(false)
     }
@@ -739,7 +998,6 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
       return
     }
 
-    setError(null)
     setDeleting(true)
 
     try {
@@ -768,17 +1026,57 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
         }),
       )
 
+      showToast({ tone: 'success', message: t('deleted') })
+
       if (onDeleted) {
         onDeleted()
       } else {
         onClose()
       }
     } catch (e: any) {
-      setError(e?.message ? String(e.message) : t('deleteGeneric'))
+      showToast({ tone: 'error', message: e?.message ? String(e.message) : t('deleteGeneric') })
     } finally {
       setDeleting(false)
     }
   }
+
+  const actionBar = (
+    <div
+      className={
+        mode === 'modal'
+          ? 'sticky bottom-0 z-20 -mx-3 mt-4 flex flex-col gap-2 border-t border-slate-200 bg-white/95 p-3 shadow-[0_-18px_45px_rgba(15,23,42,0.08)] backdrop-blur sm:-mx-4 sm:flex-row sm:flex-wrap sm:justify-between'
+          : 'mt-4 flex flex-col gap-2 rounded-2xl corner-shape-squircle border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:flex-wrap sm:justify-between'
+      }
+    >
+      {isEditing ? (
+        <DeleteButton
+          onClick={handleDelete}
+          disabled={saving || deleting}
+          className="w-full sm:w-auto"
+        >
+          {deleting ? t('deleting') : t('deleteMemory')}
+        </DeleteButton>
+      ) : null}
+
+      <div className="flex flex-col gap-2 sm:ml-auto sm:flex-row">
+        <SecondaryButton
+          onClick={onClose}
+          disabled={saving || deleting}
+          className="w-full sm:w-auto"
+        >
+          {t('cancel')}
+        </SecondaryButton>
+
+        <PrimaryButton
+          onClick={save}
+          disabled={!canSubmit || saving || deleting}
+          className="w-full sm:w-auto"
+        >
+          {saving ? t('saving') : isEditing ? t('saveChanges') : t('saveMemory')}
+        </PrimaryButton>
+      </div>
+    </div>
+  )
 
   const content = (
     <>
@@ -787,31 +1085,15 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
           <h1 className="text-2xl font-semibold text-slate-900">
             {isEditing ? t('editTitle') : t('newTitle')}
           </h1>
-          <p className="mt-1 text-sm text-slate-600">
-            {isEditing
-              ? t('editBody')
-              : t('newBody')}
-          </p>
-        </div>
-      ) : null}
-
-      {error ? (
-        <div
-          className={
-            mode === 'modal'
-              ? 'rounded-xl corner-shape-squircle border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700'
-              : 'mt-4 rounded-xl corner-shape-squircle border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700'
-          }
-        >
-          {error}
+          <p className="mt-1 text-sm text-slate-600">{isEditing ? t('editBody') : t('newBody')}</p>
         </div>
       ) : null}
 
       <div
         className={
           mode === 'modal'
-            ? 'grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]'
-            : 'mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]'
+            ? 'grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_280px]'
+            : 'mt-5 grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_280px]'
         }
       >
         <div className="grid gap-4">
@@ -849,7 +1131,10 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
               <div>
                 <h2 className="text-base font-bold text-slate-950">{t('contentTitle')}</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  {t('contentBody')}
+                  {t('contentBody', {
+                    imageLimit: IMAGE_UPLOAD_MAX_LABEL,
+                    videoLimit: VIDEO_UPLOAD_MAX_LABEL,
+                  })}
                 </p>
               </div>
               <span className="rounded-full corner-shape-squircle border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
@@ -860,9 +1145,17 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
             </div>
 
             <div className="mt-4 grid gap-3">
+              {showMemoryLimitUpgradeCta ? (
+                <div className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-800">
+                  <span>{t('memoryLimitUpgrade')}</span>
+                  <UpgradeToProLink />
+                </div>
+              ) : null}
+
               {blocks.map((block, index) => (
                 <div
                   key={block.id}
+                  data-content-block-id={block.id}
                   className="rounded-2xl corner-shape-squircle border border-slate-200 bg-slate-50/60 p-3"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -924,10 +1217,24 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
                         onChange={(e) => {
                           const file =
                             e.target.files && e.target.files[0] ? e.target.files[0] : null
+                          if (file) {
+                            const validationError = getFileValidationError(file, block.type)
+
+                            if (validationError) {
+                              showToast({ tone: 'error', message: validationError })
+                              e.currentTarget.value = ''
+                              return
+                            }
+                          }
                           setFileForBlock(block.id, file)
                         }}
                         className="w-full cursor-pointer rounded-xl corner-shape-squircle border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-slate-700 hover:border-slate-300"
                       />
+                      <p className="text-xs font-medium text-slate-500">
+                        {block.type === 'image'
+                          ? t('imageUploadHelp', { limit: IMAGE_UPLOAD_MAX_LABEL })
+                          : t('videoUploadHelp', { limit: VIDEO_UPLOAD_MAX_LABEL })}
+                      </p>
 
                       {block.previewUrl && block.type === 'image' ? (
                         <img
@@ -968,38 +1275,10 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
             </div>
           </section>
 
-          <div className="flex flex-col gap-2 rounded-2xl corner-shape-squircle border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:flex-wrap sm:justify-between">
-            {isEditing ? (
-              <DeleteButton
-                onClick={handleDelete}
-                disabled={saving || deleting}
-                className="w-full sm:w-auto"
-              >
-                {deleting ? t('deleting') : t('deleteMemory')}
-              </DeleteButton>
-            ) : null}
-
-            <div className="flex flex-col gap-2 sm:ml-auto sm:flex-row">
-              <SecondaryButton
-                onClick={onClose}
-                disabled={saving || deleting}
-                className="w-full sm:w-auto"
-              >
-                {t('cancel')}
-              </SecondaryButton>
-
-              <PrimaryButton
-                onClick={save}
-                disabled={!canSubmit || saving || deleting}
-                className="w-full sm:w-auto"
-              >
-                {saving ? t('saving') : isEditing ? t('saveChanges') : t('saveMemory')}
-              </PrimaryButton>
-            </div>
-          </div>
+          {mode !== 'modal' ? actionBar : null}
         </div>
 
-        <aside className="h-fit rounded-2xl corner-shape-squircle border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-3">
+        <aside className="h-fit rounded-2xl corner-shape-squircle border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-0">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-base font-bold text-slate-950">{t('recipientsTitle')}</h2>
@@ -1013,8 +1292,10 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
           <label className="mt-4 grid gap-2">
             <span className="text-xs font-semibold text-slate-700">{t('groups')}</span>
 
-            <div className="flex flex-wrap gap-2.5">
-              {groups.length > 0 ? (
+            <div ref={groupsListRef} className="flex flex-wrap gap-2.5">
+              {recipientsLoading ? (
+                <GroupSkeletons />
+              ) : groups.length > 0 ? (
                 groups.map((group) => {
                   const label = getDefaultGroupLabel(group.defaultKey, group.name, (key) =>
                     tGroups(key),
@@ -1043,8 +1324,13 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
           <div className="mt-5 grid gap-2">
             <span className="text-xs font-semibold text-slate-700">{t('lovedOnes')}</span>
 
-            <div className="grid max-h-[300px] gap-2 overflow-y-auto rounded-xl corner-shape-squircle border border-slate-200 bg-slate-50/70 p-2">
-              {lovedOnes.length > 0 ? (
+            <div
+              ref={lovedOnesListRef}
+              className="grid max-h-[300px] gap-2 overflow-y-auto rounded-xl corner-shape-squircle border border-slate-200 bg-slate-50/70 p-2"
+            >
+              {recipientsLoading ? (
+                <LovedOneSkeletons />
+              ) : lovedOnes.length > 0 ? (
                 lovedOnes.map((lovedOne) => {
                   const selected = lovedOneIds.includes(normalizeId(lovedOne.id))
 
@@ -1083,16 +1369,42 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
         </aside>
       </div>
 
+      {mode === 'modal' ? actionBar : null}
+
       {isAddContentModalOpen ? (
         <div
+          ref={addContentBackdropRef}
           role="dialog"
           aria-modal="true"
           aria-label={t('addContentAria')}
           className="fixed inset-0 z-[1100] flex items-end justify-center bg-black/35 p-0 sm:items-center sm:p-4"
-          onMouseDown={() => setIsAddContentModalOpen(false)}
+          onMouseDown={closeAddContentModal}
         >
+          <input
+            ref={imagePickerRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(event) => {
+              const file = event.target.files?.[0] ?? null
+              addMediaBlockFromFile('image', file)
+              event.currentTarget.value = ''
+            }}
+          />
+          <input
+            ref={videoPickerRef}
+            type="file"
+            accept="video/*"
+            className="hidden"
+            onChange={(event) => {
+              const file = event.target.files?.[0] ?? null
+              addMediaBlockFromFile('video', file)
+              event.currentTarget.value = ''
+            }}
+          />
           <div
-            className="max-h-[88dvh] w-full max-w-[560px] overflow-y-auto rounded-t-2xl corner-shape-squircle border border-slate-200 bg-white p-4 shadow-[0_20px_70px_rgba(0,0,0,0.18)] sm:rounded-2xl"
+            ref={addContentPanelRef}
+            className="w-full max-w-[560px] overflow-y-auto rounded-t-2xl corner-shape-squircle border border-slate-200 bg-white p-4 shadow-[0_20px_70px_rgba(0,0,0,0.18)] sm:max-h-[88dvh] sm:rounded-2xl"
             onMouseDown={(event) => event.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">
@@ -1102,14 +1414,27 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
               </div>
 
               <SecondaryButton
-                onClick={() => setIsAddContentModalOpen(false)}
+                onClick={closeAddContentModal}
                 className="h-9 w-9 rounded-lg px-0 text-lg leading-none"
               >
                 &times;
               </SecondaryButton>
             </div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="mt-4 grid gap-2.5 sm:grid-cols-3 sm:gap-3">
+              <ContentTypeOption
+                type="note"
+                label={t('note')}
+                disabled={hasNoteBlock || hasReachedContentLimit}
+                helperText={
+                  hasReachedContentLimit
+                    ? t('maxContentItems', { max: memoryContentItemLimitLabel })
+                    : hasNoteBlock
+                      ? t('alreadyAdded')
+                      : undefined
+                }
+                onSelect={chooseContentType}
+              />
               <ContentTypeOption
                 type="image"
                 label={t('image')}
@@ -1128,24 +1453,19 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
                 helperText={
                   hasReachedContentLimit
                     ? t('maxContentItems', { max: memoryContentItemLimitLabel })
-                    : undefined
-                }
-                onSelect={chooseContentType}
-              />
-              <ContentTypeOption
-                type="note"
-                label={t('note')}
-                disabled={hasNoteBlock || hasReachedContentLimit}
-                helperText={
-                  hasReachedContentLimit
-                    ? t('maxContentItems', { max: memoryContentItemLimitLabel })
-                    : hasNoteBlock
-                      ? t('alreadyAdded')
+                    : !canUseVideo
+                      ? t('proOnly')
                       : undefined
                 }
                 onSelect={chooseContentType}
               />
             </div>
+            {!canUseVideo ? (
+              <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[13px] font-medium text-amber-800">
+                <span>{t('upgradeForVideo')}</span>
+                <UpgradeToProLink />
+              </div>
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -1157,9 +1477,7 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
   }
 
   return (
-    <div
-      className="max-h-[min(86vh,900px)] w-[min(980px,100%)] overflow-auto rounded-2xl corner-shape-squircle border border-slate-200 bg-white p-4 shadow-[0_30px_90px_rgba(0,0,0,0.12)]"
-    >
+    <div className="max-h-[min(86vh,900px)] w-[min(980px,100%)] overflow-auto rounded-2xl corner-shape-squircle border border-slate-200 bg-white p-4 shadow-[0_30px_90px_rgba(0,0,0,0.12)]">
       {content}
     </div>
   )
@@ -1173,6 +1491,41 @@ function ContentBlockTitle({ type, label }: { type: ContentType; label: string }
       <IconComponent className="h-3.5 w-3.5" />
       <span>{label}</span>
     </span>
+  )
+}
+
+function GroupSkeletons() {
+  return (
+    <>
+      {Array.from({ length: 6 }).map((_, index) => (
+        <span
+          key={index}
+          className="h-10 animate-pulse rounded-2xl corner-shape-squircle border border-slate-200 bg-slate-100 px-4"
+          style={{ width: `${72 + (index % 3) * 18}px` }}
+        >
+          <span className="sr-only">Loading</span>
+        </span>
+      ))}
+    </>
+  )
+}
+
+function LovedOneSkeletons() {
+  return (
+    <>
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div
+          key={index}
+          className="flex animate-pulse items-center gap-2 rounded-xl corner-shape-squircle border border-slate-200 bg-white px-3 py-2"
+        >
+          <span className="h-5 w-5 shrink-0 rounded-md bg-slate-200" />
+          <span
+            className="h-3.5 rounded-full bg-slate-200"
+            style={{ width: `${120 - index * 16}px` }}
+          />
+        </div>
+      ))}
+    </>
   )
 }
 
@@ -1196,13 +1549,19 @@ function ContentTypeOption({
       type="button"
       disabled={disabled}
       onClick={() => onSelect(type)}
-      className="flex aspect-square min-h-[136px] flex-col items-center justify-center rounded-2xl corner-shape-squircle border border-slate-200 bg-white p-4 text-center transition hover:border-purple-200 hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-50"
+      className="flex min-h-[76px] items-center gap-3 rounded-2xl corner-shape-squircle border border-slate-200 bg-white p-3 text-left transition hover:border-purple-200 hover:bg-purple-50 disabled:cursor-not-allowed disabled:opacity-50 sm:aspect-square sm:min-h-[136px] sm:flex-col sm:justify-center sm:p-4 sm:text-center"
     >
-      <IconComponent className="h-9 w-9 text-slate-900" />
-      <span className="mt-3 text-sm font-bold text-slate-950">{label}</span>
-      {helperText ? (
-        <span className="mt-1 text-xs font-medium text-slate-500">{helperText}</span>
-      ) : null}
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-900 sm:h-auto sm:w-auto sm:bg-transparent">
+        <IconComponent className="h-6 w-6 sm:h-9 sm:w-9" />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-sm font-bold text-slate-950">{label}</span>
+        {helperText ? (
+          <span className="mt-0.5 block text-xs font-medium text-slate-500 sm:mt-1">
+            {helperText}
+          </span>
+        ) : null}
+      </span>
     </button>
   )
 }

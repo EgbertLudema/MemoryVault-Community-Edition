@@ -19,7 +19,7 @@ export function MemoryEditModalClient({ memory }: { memory: EditableMemory }) {
         mode="modal"
         onClose={() => router.back()}
         onSaved={() => router.back()}
-        onDeleted={() => router.replace('/memories')}
+        onDeleted={() => router.back()}
       />
     </Modal>
   )

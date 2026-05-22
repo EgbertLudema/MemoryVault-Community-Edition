@@ -1,7 +1,7 @@
 'use client'
 
-import Link from 'next/link'
 import * as React from 'react'
+import { Link } from '@/i18n/navigation'
 import { TrashIcon } from '@/components/icons/TrashIcon'
 
 type DeleteButtonProps = {

@@ -2,7 +2,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/i18n/navigation'
 import { LovedOneFormFields, type LovedOneFormValues } from '@/components/LovedOneFormFields'
 
 function toPayloadId(id: string | number): string | number {
@@ -33,7 +33,7 @@ export function LovedOneForm() {
   }
 
   async function handleCreate(values: LovedOneFormValues) {
-    const payloadGroupIds = values.groupIds.map((id) => toPayloadId(id))
+    const payloadGroupIds = values.groupIds.slice(0, 1).map((id) => toPayloadId(id))
 
     const res = await fetch('/api/loved-ones', {
       method: 'POST',

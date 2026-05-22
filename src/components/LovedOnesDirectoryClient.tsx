@@ -107,6 +107,8 @@ export function LovedOnesDirectoryClient({ lovedOnes }: { lovedOnes: LovedOne[] 
     const nextRects = new Map<string, DOMRect>()
 
     for (const [id, element] of cardRefs.current.entries()) {
+      gsap.killTweensOf(element)
+      gsap.set(element, { clearProps: 'transform' })
       nextRects.set(id, element.getBoundingClientRect())
     }
 
@@ -119,20 +121,22 @@ export function LovedOnesDirectoryClient({ lovedOnes }: { lovedOnes: LovedOne[] 
       return
     }
 
-    const activeAnimations: HTMLDivElement[] = []
+    const activeElements: HTMLDivElement[] = []
 
     cardRefs.current.forEach((element, id) => {
       const previousRect = previousRectsRef.current.get(id)
-      const currentRect = element.getBoundingClientRect()
 
-      activeAnimations.push(element)
+      activeElements.push(element)
       gsap.killTweensOf(element)
+      gsap.set(element, { clearProps: 'transform' })
+
+      const currentRect = element.getBoundingClientRect()
 
       if (previousRect) {
         const deltaX = previousRect.left - currentRect.left
         const deltaY = previousRect.top - currentRect.top
 
-        if (Math.abs(deltaX) > 8 || Math.abs(deltaY) > 8) {
+        if (Math.abs(deltaX) > 1 || Math.abs(deltaY) > 1) {
           gsap.fromTo(
             element,
             {
@@ -142,12 +146,13 @@ export function LovedOnesDirectoryClient({ lovedOnes }: { lovedOnes: LovedOne[] 
             {
               x: 0,
               y: 0,
-              duration: 0.38,
+              duration: 0.34,
               ease: 'power2.out',
               clearProps: 'transform',
             },
           )
         }
+
         return
       }
 
@@ -155,14 +160,14 @@ export function LovedOnesDirectoryClient({ lovedOnes }: { lovedOnes: LovedOne[] 
         element,
         {
           autoAlpha: 0,
-          y: 18,
-          scale: 0.97,
+          y: 12,
+          scale: 0.98,
         },
         {
           autoAlpha: 1,
           y: 0,
           scale: 1,
-          duration: 0.36,
+          duration: 0.28,
           ease: 'power2.out',
           clearProps: 'opacity,transform,visibility',
         },
@@ -173,7 +178,10 @@ export function LovedOnesDirectoryClient({ lovedOnes }: { lovedOnes: LovedOne[] 
     previousRectsRef.current = new Map()
 
     return () => {
-      activeAnimations.forEach((element) => gsap.killTweensOf(element))
+      activeElements.forEach((element) => {
+        gsap.killTweensOf(element)
+        gsap.set(element, { clearProps: 'transform' })
+      })
     }
   }, [filteredLovedOnes])
 
@@ -310,22 +318,23 @@ export function LovedOnesDirectoryClient({ lovedOnes }: { lovedOnes: LovedOne[] 
           </div>
         </div>
       ) : (
-        <div className="waterfall-grid-lanes mt-6">
+        <div className="mt-6 columns-1 gap-4 md:columns-2 xl:columns-3 [&>*]:mb-4 [&>*]:break-inside-avoid">
           {filteredLovedOnes.map((person, index) => (
-            <DashboardLoadReveal key={person.id} delayMs={180 + index * 45}>
-              <div
-                ref={(element) => {
-                  if (element) {
-                    cardRefs.current.set(person.id, element)
-                    return
-                  }
+            <div
+              key={person.id}
+              ref={(element) => {
+                if (element) {
+                  cardRefs.current.set(person.id, element)
+                  return
+                }
 
-                  cardRefs.current.delete(person.id)
-                }}
-              >
+                cardRefs.current.delete(person.id)
+              }}
+            >
+              <DashboardLoadReveal delayMs={180 + index * 45}>
                 <LovedOneCard lovedOne={person} tourTarget={index === 0} />
-              </div>
-            </DashboardLoadReveal>
+              </DashboardLoadReveal>
+            </div>
           ))}
         </div>
       )}

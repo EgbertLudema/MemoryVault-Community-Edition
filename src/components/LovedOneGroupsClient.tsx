@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useTranslations } from 'next-intl'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/i18n/navigation'
 import {
   GROUP_COLOR_OPTIONS,
   getColorOption,
@@ -21,6 +21,8 @@ import { WorldIcon } from './icons/WorldIcon'
 import { FriendsIcon } from './icons/FriendsIcon'
 import { HeartIcon } from './icons/HeartIcon'
 import { LockIcon } from './icons/LockIcon'
+import { useToast } from '@/components/ui/ToastProvider'
+import { UpgradeToProLink } from '@/components/ui/UpgradeToProLink'
 
 type Group = {
   id: string
@@ -86,6 +88,7 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
   const t = useTranslations('GroupsPage')
   const tGroups = useTranslations('GroupLabels')
   const router = useRouter()
+  const { showToast } = useToast()
 
   const [groups, setGroups] = React.useState<Group[]>(initialGroups)
   const [name, setName] = React.useState('')
@@ -94,7 +97,6 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
 
   const [creating, setCreating] = React.useState(false)
   const [deletingId, setDeletingId] = React.useState<string | null>(null)
-  const [error, setError] = React.useState<string | null>(null)
   const canCreateCustomGroups = true
 
   async function refreshGroups() {
@@ -103,10 +105,14 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
 
   async function onCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setError(null)
 
     if (!name.trim()) {
-      setError(t('groupNameRequired'))
+      showToast({ tone: 'error', message: t('groupNameRequired') })
+      return
+    }
+
+    if (!canCreateCustomGroups) {
+      showToast({ tone: 'warning', message: t('customGroupsProOnly') })
       return
     }
 
@@ -137,15 +143,13 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
       setColorKey(GROUP_COLOR_OPTIONS[0].key)
       await refreshGroups()
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('genericError'))
+      showToast({ tone: 'error', message: e instanceof Error ? e.message : t('genericError') })
     } finally {
       setCreating(false)
     }
   }
 
   async function onDelete(group: Group) {
-    setError(null)
-
     const ok = window.confirm(t('deleteConfirm', { name: group.name }))
     if (!ok) {
       return
@@ -166,7 +170,7 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
 
       await refreshGroups()
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('genericError'))
+      showToast({ tone: 'error', message: e instanceof Error ? e.message : t('genericError') })
     } finally {
       setDeletingId(null)
     }
@@ -188,9 +192,7 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
       <div className="rounded-[14px] border border-[#eee] bg-white p-4">
         <div className="text-sm font-bold text-stone-800">{t('createGroup')}</div>
 
-        <p className="mt-1.5 mb-3 text-[13px] text-[#555]">
-          {t('createGroupBody')}
-        </p>
+        <p className="mt-1.5 mb-3 text-[13px] text-[#555]">{t('createGroupBody')}</p>
 
         <form onSubmit={onCreate} className="grid gap-6">
           <div className="flex flex-wrap gap-4">
@@ -225,6 +227,12 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
             </PrimaryButton>
           </div>
 
+          {!canCreateCustomGroups ? (
+            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[13px] font-medium text-amber-800">
+              <span>{t('customGroupsProOnly')}</span>
+              <UpgradeToProLink />
+            </div>
+          ) : null}
 
           <div className="grid gap-2.5">
             <div className="text-[13px] font-bold">{t('color')}</div>
@@ -295,8 +303,6 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
             </div>
           </div>
         </form>
-
-        {error ? <Alert kind="error" message={error} /> : null}
       </div>
 
       {groups.length === 0 ? (
@@ -368,23 +374,6 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
           })}
         </div>
       )}
-    </div>
-  )
-}
-
-function Alert({ kind, message }: { kind: 'error' | 'success'; message: string }) {
-  const isError = kind === 'error'
-
-  return (
-    <div
-      className={cn(
-        'mt-3 rounded-xl border p-3 text-[13px]',
-        isError
-          ? 'border-[#f2c9c9] bg-[#fff5f5] text-[#7a1f1f]'
-          : 'border-[#cfe8d6] bg-[#f3fff6] text-[#1f5f2e]',
-      )}
-    >
-      {message}
     </div>
   )
 }

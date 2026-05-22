@@ -34,6 +34,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       lastName?: string
       profileImage?: number | null
       profileImageUrl?: string | null
+      appIntroCompleted?: boolean
       enableLegacyProtection?: boolean
       legacyProtectionContacts?: number[]
     }
@@ -68,6 +69,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       'lastName',
       'profileImage',
       'profileImageUrl',
+      'appIntroCompleted',
       'enableLegacyProtection',
       'legacyProtectionContacts',
     ] as const) {
@@ -130,6 +132,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
         firstName: updated.firstName,
         lastName: updated.lastName,
         profileImageSrc: getProfileImageSrc(updated),
+        appIntroCompleted: updated.appIntroCompleted,
         enableLegacyProtection: updated.enableLegacyProtection,
         legacyProtectionPendingEnable: updated.legacyProtectionPendingEnable,
         legacyProtectionContacts: updated.legacyProtectionContacts,

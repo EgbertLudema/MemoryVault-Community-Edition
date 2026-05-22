@@ -8,6 +8,7 @@ import { ExportFileIcon } from '@/components/icons/ExportFileIcon'
 import type { Album } from '@/components/memories/types'
 import type { LegacyDeliveryData, LegacyMemory } from '@/lib/legacyDeliveryContent'
 import { PrimaryButton } from '@/components/ui/PrimaryButton'
+import { useToast } from '@/components/ui/ToastProvider'
 
 type LegacyDeliveryViewProps = {
   delivery: LegacyDeliveryData
@@ -179,7 +180,7 @@ export function LegacyDeliveryView({
   const [expandedAlbum, setExpandedAlbum] = useState<Album | null>(null)
   const [activePhotoIndex, setActivePhotoIndex] = useState(0)
   const [isExporting, setIsExporting] = useState(false)
-  const [exportError, setExportError] = useState('')
+  const { showToast } = useToast()
 
   function openAlbum(album: Album) {
     setExpandedAlbum(album)
@@ -197,7 +198,6 @@ export function LegacyDeliveryView({
     }
 
     setIsExporting(true)
-    setExportError('')
 
     try {
       const response = await fetch(exportAction.url, {
@@ -222,7 +222,7 @@ export function LegacyDeliveryView({
       URL.revokeObjectURL(objectUrl)
     } catch (error) {
       console.error(error)
-      setExportError(exportAction.errorLabel)
+      showToast({ tone: 'error', message: exportAction.errorLabel })
     } finally {
       setIsExporting(false)
     }
@@ -265,8 +265,6 @@ export function LegacyDeliveryView({
                   <span>{isExporting ? exportAction.exportingLabel : exportAction.buttonLabel}</span>
                 </span>
               </PrimaryButton>
-
-              {exportError ? <p className="text-sm text-rose-700">{exportError}</p> : null}
             </div>
           ) : null}
         </div>

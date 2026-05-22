@@ -187,6 +187,7 @@ export default function RegisterPage() {
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                type="email"
                 autoComplete="email"
                 inputMode="email"
                 className="w-full h-11 rounded-xl border border-gray-300 bg-white text-gray-900 px-3 outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors placeholder:text-gray-400"

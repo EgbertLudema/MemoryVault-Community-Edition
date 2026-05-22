@@ -105,7 +105,7 @@ export function ExpandedNoteCard({
       </div>
 
       <div
-        className="note-scrollbar relative flex-1 overflow-y-auto py-10"
+        className="note-scrollbar relative flex-1 touch-pan-y overflow-y-auto py-10"
         style={
           {
             scrollbarWidth: 'thin',

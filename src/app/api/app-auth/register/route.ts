@@ -3,6 +3,36 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getAppAuthCookieOptions } from '@/lib/appAuth'
 import { APP_AUTH_COOKIE } from '@/lib/appAuthShared'
+import { ensureDefaultLovedOneGroups } from '@/lib/defaultLovedOneGroups'
+
+const emailRegex =
+  /^(?!.*\.\.)[\w!#$%&'*+/=?^`{|}~-](?:[\w!#$%&'*+/=?^`{|}~.-]*[\w!#$%&'*+/=?^`{|}~-])?@[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$/i
+
+function normalizeEmail(value: unknown) {
+  return String(value ?? '').trim().toLowerCase()
+}
+
+function getRegisterErrorMessage(error: unknown) {
+  if (typeof error === 'object' && error !== null && 'data' in error) {
+    const data = (error as { data?: { errors?: Array<{ message?: unknown; path?: unknown }> } }).data
+    const fieldError = data?.errors?.[0]
+    const fieldMessage = typeof fieldError?.message === 'string' ? fieldError.message : null
+
+    if (
+      fieldError?.path === 'email' &&
+      fieldMessage &&
+      /valid email|email address|not valid/i.test(fieldMessage)
+    ) {
+      return 'Please enter a valid email address'
+    }
+
+    if (fieldMessage) {
+      return fieldMessage
+    }
+  }
+
+  return error instanceof Error ? error.message : 'Registration failed'
+}
 
 export async function POST(req: Request) {
   try {
@@ -16,7 +46,7 @@ export async function POST(req: Request) {
 
     const firstName = String(body.firstName ?? '').trim()
     const lastName = String(body.lastName ?? '').trim()
-    const email = String(body.email ?? '').trim()
+    const email = normalizeEmail(body.email)
     const password = String(body.password ?? '')
 
     if (!firstName || !lastName || !email || !password) {
@@ -26,7 +56,11 @@ export async function POST(req: Request) {
       )
     }
 
-    await payload.create({
+    if (!emailRegex.test(email)) {
+      return NextResponse.json({ message: 'Please enter a valid email address' }, { status: 400 })
+    }
+
+    const user = await payload.create({
       collection: 'users',
       data: {
         firstName,
@@ -35,6 +69,8 @@ export async function POST(req: Request) {
         password,
       },
     })
+
+    await ensureDefaultLovedOneGroups(payload, user.id)
 
     const result = await payload.login({
       collection: 'users',
@@ -63,7 +99,7 @@ export async function POST(req: Request) {
     })
     return response
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Registration failed'
+    const message = getRegisterErrorMessage(error)
     return NextResponse.json({ message }, { status: 400 })
   }
 }

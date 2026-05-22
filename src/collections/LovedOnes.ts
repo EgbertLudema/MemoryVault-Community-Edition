@@ -56,6 +56,7 @@ export const LovedOnes: CollectionConfig = {
       relationTo: 'loved-one-groups',
       required: true,
       hasMany: true,
+      maxRows: 1,
     },
     {
       name: 'user',

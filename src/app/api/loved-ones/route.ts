@@ -4,6 +4,38 @@ import config from '@payload-config'
 import { getAppUserFromHeaders } from '@/lib/appAuth'
 import { getLovedOneCountLimit, getLovedOneCountLimitMessage } from '@/lib/lovedOneLimits'
 
+function toNumberId(value: string | number) {
+  const raw = String(value ?? '').trim()
+
+  if (!/^\d+$/.test(raw)) {
+    return NaN
+  }
+
+  return Number(raw)
+}
+
+async function ensureOwnedGroups(
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  groupIds: number[],
+  userId: number,
+) {
+  if (groupIds.length === 0) {
+    return true
+  }
+
+  const result = await payload.find({
+    collection: 'loved-one-groups',
+    overrideAccess: true,
+    depth: 0,
+    limit: groupIds.length,
+    where: {
+      and: [{ user: { equals: userId } }, { id: { in: groupIds } }],
+    },
+  })
+
+  return (result.docs?.length ?? 0) === groupIds.length
+}
+
 export async function GET(req: Request) {
   try {
     const payload = await getPayload({ config })
@@ -59,15 +91,10 @@ export async function POST(req: Request) {
     const relationship = typeof body.relationship === 'string' ? body.relationship.trim() : ''
     const customNote = typeof body.customNote === 'string' ? body.customNote.trim() : ''
 
-    const groups = Array.isArray(body.groups)
-      ? body.groups.filter((value: unknown): value is string | number => {
-          if (value === null || value === undefined) {
-            return false
-          }
-
-          return String(value).trim() !== ''
-        })
-      : []
+    const rawGroups = Array.isArray(body.groups) ? body.groups : []
+    const groups = rawGroups
+      .map((value: unknown) => toNumberId(String(value)))
+      .filter((value: number) => Number.isFinite(value))
 
     if (!fullName) {
       return NextResponse.json({ error: 'Full name is required' }, { status: 400 })
@@ -81,8 +108,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 })
     }
 
-    if (groups.length === 0) {
-      return NextResponse.json({ error: 'At least one group is required' }, { status: 400 })
+    if (rawGroups.length !== 1 || groups.length !== 1) {
+      return NextResponse.json({ error: 'Exactly one group is required' }, { status: 400 })
+    }
+
+    const ownsAllGroups = await ensureOwnedGroups(payload, groups, Number(user.id))
+
+    if (!ownsAllGroups) {
+      return NextResponse.json({ error: 'One or more groups are invalid' }, { status: 400 })
     }
 
     const lovedOneCountLimit = getLovedOneCountLimit(user)

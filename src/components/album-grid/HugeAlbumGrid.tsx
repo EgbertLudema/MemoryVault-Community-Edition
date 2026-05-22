@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/i18n/navigation'
 import {
   createOrthoCamera,
   createRenderer,

@@ -39,11 +39,13 @@ export function renderBrandedEmail({
   title,
   preview,
   body,
+  footerText = 'Memory Vault sends these messages because legacy protection is enabled for this account.',
 }: {
   eyebrow?: string
   title: string
   preview?: string
   body: string
+  footerText?: string
 }) {
   const safeTitle = escapeHtml(title)
   const safePreview = preview ? escapeHtml(preview) : ''
@@ -96,7 +98,7 @@ export function renderBrandedEmail({
                 </tr>
                 <tr>
                   <td style="padding:18px 4px 0;color:#78716c;font-size:12px;line-height:1.6;text-align:center;">
-                    Memory Vault sends these messages because legacy protection is enabled for this account.
+                    ${escapeHtml(footerText)}
                   </td>
                 </tr>
               </table>

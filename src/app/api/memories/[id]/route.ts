@@ -17,6 +17,8 @@ type MemoryContentRow =
   | { type: 'note'; note?: string; noteCiphertext?: string; noteEncryptionMetadata?: any }
   | { type: 'image' | 'video'; media: number }
 
+type PayloadClient = Awaited<ReturnType<typeof getPayload>>
+
 function toNumberId(value: unknown) {
   const raw = String(value ?? '').trim()
 
@@ -27,8 +29,34 @@ function toNumberId(value: unknown) {
   return Number(raw)
 }
 
+function getMediaId(value: unknown) {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null
+  }
+
+  if (typeof value === 'string') {
+    const id = toNumberId(value)
+    return Number.isFinite(id) ? id : null
+  }
+
+  if (value && typeof value === 'object' && 'id' in value) {
+    const id = toNumberId((value as { id?: unknown }).id)
+    return Number.isFinite(id) ? id : null
+  }
+
+  return null
+}
+
+function getMediaPosterUrl(value: unknown) {
+  if (!value || typeof value !== 'object' || !('posterUrl' in value)) {
+    return ''
+  }
+
+  return String((value as { posterUrl?: unknown }).posterUrl ?? '').trim()
+}
+
 async function getOwnedMemory(
-  payload: Awaited<ReturnType<typeof getPayload>>,
+  payload: PayloadClient,
   memoryId: number,
   userId: number,
   depth = 2,
@@ -46,8 +74,173 @@ async function getOwnedMemory(
   return result.docs?.[0] ?? null
 }
 
+function collectMemoryMediaIds(memory: unknown) {
+  const mediaIds = new Set<number>()
+  const posterUrls = new Set<string>()
+  const content =
+    memory && typeof memory === 'object' && 'content' in memory && Array.isArray(memory.content)
+      ? memory.content
+      : []
+
+  for (const item of content) {
+    if (item?.type !== 'image' && item?.type !== 'video') {
+      continue
+    }
+
+    const mediaId = getMediaId(item.media)
+    if (mediaId !== null) {
+      mediaIds.add(mediaId)
+    }
+
+    const posterUrl = getMediaPosterUrl(item.media)
+    if (posterUrl) {
+      posterUrls.add(posterUrl)
+    }
+  }
+
+  return { mediaIds, posterUrls }
+}
+
+async function addPosterMediaIds(
+  payload: PayloadClient,
+  mediaIds: Set<number>,
+  posterUrls: Set<string>,
+  userId: number,
+) {
+  for (const posterUrl of posterUrls) {
+    const result = await payload.find({
+      collection: 'media',
+      overrideAccess: true,
+      depth: 0,
+      limit: 10,
+      where: {
+        and: [
+          {
+            ownerUser: {
+              equals: userId,
+            },
+          },
+          {
+            url: {
+              equals: posterUrl,
+            },
+          },
+        ],
+      },
+    })
+
+    for (const doc of result.docs ?? []) {
+      const id = getMediaId(doc)
+      if (id !== null) {
+        mediaIds.add(id)
+      }
+    }
+  }
+}
+
+async function isMediaReferencedByAnotherMemory(
+  payload: PayloadClient,
+  mediaId: number,
+  userId: number,
+  deletedMemoryId: number,
+) {
+  const result = await payload.find({
+    collection: 'memories',
+    overrideAccess: true,
+    depth: 0,
+    limit: 1,
+    where: {
+      and: [
+        {
+          owner: {
+            equals: userId,
+          },
+        },
+        {
+          id: {
+            not_equals: deletedMemoryId,
+          },
+        },
+        {
+          'content.media': {
+            equals: mediaId,
+          },
+        },
+      ],
+    },
+  })
+
+  return (result.docs?.length ?? 0) > 0
+}
+
+async function isMediaUsedAsUserProfileImage(payload: PayloadClient, mediaId: number) {
+  const result = await payload.find({
+    collection: 'users',
+    overrideAccess: true,
+    depth: 0,
+    limit: 1,
+    where: {
+      profileImage: {
+        equals: mediaId,
+      },
+    },
+  })
+
+  return (result.docs?.length ?? 0) > 0
+}
+
+async function isMediaOwnedByUser(payload: PayloadClient, mediaId: number, userId: number) {
+  const result = await payload.find({
+    collection: 'media',
+    overrideAccess: true,
+    depth: 0,
+    limit: 1,
+    where: {
+      and: [
+        {
+          id: {
+            equals: mediaId,
+          },
+        },
+        {
+          ownerUser: {
+            equals: userId,
+          },
+        },
+      ],
+    },
+  })
+
+  return (result.docs?.length ?? 0) > 0
+}
+
+async function deleteMemoryMedia(
+  payload: PayloadClient,
+  mediaIds: Set<number>,
+  userId: number,
+  memoryId: number,
+) {
+  for (const mediaId of mediaIds) {
+    const [ownedByUser, referencedByMemory, usedAsProfileImage] = await Promise.all([
+      isMediaOwnedByUser(payload, mediaId, userId),
+      isMediaReferencedByAnotherMemory(payload, mediaId, userId, memoryId),
+      isMediaUsedAsUserProfileImage(payload, mediaId),
+    ])
+
+    if (!ownedByUser || referencedByMemory || usedAsProfileImage) {
+      continue
+    }
+
+    await payload.delete({
+      collection: 'media',
+      id: mediaId,
+      overrideAccess: true,
+    })
+  }
+}
+
 async function ensureOwnedRelations(
-  payload: Awaited<ReturnType<typeof getPayload>>,
+  payload: PayloadClient,
   collection: 'loved-one-groups' | 'loved-ones',
   ids: number[],
   userId: number,
@@ -312,17 +505,23 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
 
   try {
     const payload = await getPayload({ config })
-    const existing = await getOwnedMemory(payload, memoryId, Number(user.id), 0)
+    const userId = Number(user.id)
+    const existing = await getOwnedMemory(payload, memoryId, userId, 2)
 
     if (!existing) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
+
+    const { mediaIds, posterUrls } = collectMemoryMediaIds(existing)
+    await addPosterMediaIds(payload, mediaIds, posterUrls, userId)
 
     await payload.delete({
       collection: 'memories',
       id: memoryId,
       overrideAccess: true,
     })
+
+    await deleteMemoryMedia(payload, mediaIds, userId, memoryId)
 
     return NextResponse.json({ ok: true }, { status: 200 })
   } catch (error) {

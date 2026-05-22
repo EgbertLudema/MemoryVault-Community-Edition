@@ -41,7 +41,7 @@ export default async function LovedOnePreviewPage({
   const user = await getAppUserFromHeaders(headerList)
 
   if (!user) {
-    redirect('/login')
+    redirect(`/${locale ?? defaultLocale}/login`)
   }
 
   const lovedOneId = toNumberId(id)

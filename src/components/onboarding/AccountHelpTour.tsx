@@ -9,15 +9,8 @@ import { usePathname } from '@/i18n/navigation'
 function getSteps(t: ReturnType<typeof useTranslations>): Step[] {
   return [
     {
-      target: '[data-tour="account-hero"]',
-      placement: 'bottom',
-      skipBeacon: true,
-      title: t('heroTitle'),
-      content: t('heroBody'),
-    },
-    {
       target: '[data-tour="account-profile"]',
-      placement: 'top',
+      placement: 'bottom',
       skipBeacon: true,
       title: t('profileTitle'),
       content: t('profileBody'),

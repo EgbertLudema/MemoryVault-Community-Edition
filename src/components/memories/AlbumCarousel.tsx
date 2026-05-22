@@ -49,6 +49,7 @@ function getCarouselSlideStyle(
   index: number,
   activeIndex: number,
   total: number,
+  compactStack = false,
 ): React.CSSProperties {
   const relative = getCarouselRelativePosition(index, activeIndex, total)
 
@@ -64,7 +65,9 @@ function getCarouselSlideStyle(
 
   if (relative === 1) {
     return {
-      transform: 'translate(22px, 18px) scale(0.968) rotate(2deg)',
+      transform: compactStack
+        ? 'translate(0, 18px) scale(0.968) rotate(1deg)'
+        : 'translate(22px, 18px) scale(0.968) rotate(2deg)',
       opacity: 0.9,
       zIndex: 30,
       pointerEvents: 'auto',
@@ -74,7 +77,9 @@ function getCarouselSlideStyle(
 
   if (relative === 2) {
     return {
-      transform: 'translate(44px, 32px) scale(0.934) rotate(4deg)',
+      transform: compactStack
+        ? 'translate(0, 32px) scale(0.934) rotate(2deg)'
+        : 'translate(44px, 32px) scale(0.934) rotate(4deg)',
       opacity: 0.64,
       zIndex: 20,
       pointerEvents: 'auto',
@@ -99,6 +104,37 @@ function getCarouselSlideStyle(
     pointerEvents: 'none',
     filter: 'blur(2px)',
   }
+}
+
+function getClosingSlideStyle(index: number): React.CSSProperties {
+  const closingStack = [
+    { x: 0, y: 0, rotation: 0, zIndex: 40, opacity: 1 },
+    { x: 6, y: -2, rotation: 6, zIndex: 30, opacity: 0.95 },
+    { x: 14, y: -6, rotation: 14, zIndex: 20, opacity: 0.9 },
+  ]
+  const item = closingStack[index]
+
+  if (!item) {
+    return {
+      transform: 'translate(0, 0) scale(0.96) rotate(0deg)',
+      opacity: 0,
+      zIndex: 0,
+      pointerEvents: 'none',
+      filter: 'blur(2px)',
+    }
+  }
+
+  return {
+    transform: `translate(${item.x}px, ${item.y}px) scale(1) rotate(${item.rotation}deg)`,
+    opacity: item.opacity,
+    zIndex: item.zIndex,
+    pointerEvents: 'none',
+    filter: 'blur(0px)',
+  }
+}
+
+function isInteractiveSwipeTarget(target: EventTarget | null) {
+  return target instanceof Element && Boolean(target.closest('button, input, video, a'))
 }
 
 function CarouselMediaSlide({
@@ -279,6 +315,7 @@ export function AlbumCarousel({
   groups,
   selectedGroupIds,
   controlsVisible,
+  isClosing = false,
 }: {
   album: Album
   activeIndex: number
@@ -286,10 +323,26 @@ export function AlbumCarousel({
   groups: GroupOption[]
   selectedGroupIds: Array<string | number>
   controlsVisible: boolean
+  isClosing?: boolean
 }) {
   const slides = getAlbumPreviewItems(album)
   const noteTheme = getNoteThemeForAlbum(album, groups, selectedGroupIds)
   const albumTitle = album.title || 'Untitled memory'
+  const swipeStartRef = React.useRef<{ x: number; y: number; pointerId: number } | null>(null)
+  const swipeHandledRef = React.useRef(false)
+  const [usesCompactStack, setUsesCompactStack] = React.useState(false)
+
+  React.useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 639px)')
+    const updateCompactStack = () => setUsesCompactStack(mediaQuery.matches)
+
+    updateCompactStack()
+    mediaQuery.addEventListener('change', updateCompactStack)
+
+    return () => {
+      mediaQuery.removeEventListener('change', updateCompactStack)
+    }
+  }, [])
 
   if (slides.length === 0) {
     return (
@@ -302,7 +355,6 @@ export function AlbumCarousel({
   }
 
   const safeIndex = Math.min(Math.max(activeIndex, 0), slides.length - 1)
-  const activeSlide = slides[safeIndex]
   const hasMultipleSlides = slides.length > 1
 
   const goPrev = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -315,48 +367,92 @@ export function AlbumCarousel({
     setActiveIndex((prev) => (prev + 1) % slides.length)
   }
 
-  const activeSlideLabel =
-    activeSlide?.kind === 'note' ? 'Note' : activeSlide?.mediaType === 'video' ? 'Video' : 'Photo'
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (
+      !hasMultipleSlides ||
+      event.pointerType === 'mouse' ||
+      isInteractiveSwipeTarget(event.target)
+    ) {
+      return
+    }
+
+    swipeStartRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+      pointerId: event.pointerId,
+    }
+    swipeHandledRef.current = false
+  }
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const start = swipeStartRef.current
+
+    if (!start || start.pointerId !== event.pointerId || swipeHandledRef.current) {
+      return
+    }
+
+    const deltaX = event.clientX - start.x
+    const deltaY = event.clientY - start.y
+
+    if (Math.abs(deltaY) > 32 && Math.abs(deltaY) > Math.abs(deltaX)) {
+      swipeStartRef.current = null
+      return
+    }
+
+    if (Math.abs(deltaX) < 54 || Math.abs(deltaX) < Math.abs(deltaY) * 1.25) {
+      return
+    }
+
+    event.stopPropagation()
+    event.preventDefault()
+    swipeHandledRef.current = true
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId)
+    } catch {
+      // Native scrolling can cancel the pointer before capture is available on mobile browsers.
+    }
+
+    setActiveIndex((prev) =>
+      deltaX > 0 ? (prev + 1) % slides.length : (prev - 1 + slides.length) % slides.length,
+    )
+  }
+
+  const handlePointerEnd = (event: React.PointerEvent<HTMLDivElement>) => {
+    try {
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId)
+      }
+    } catch {
+      // The browser may already have canceled the pointer during native scrolling.
+    }
+
+    if (swipeStartRef.current?.pointerId === event.pointerId) {
+      swipeStartRef.current = null
+    }
+  }
 
   return (
     <div
-      className={`relative h-full w-full overflow-visible bg-transparent p-3 sm:p-5 ${MEMORY_CARD_RADIUS_CLASS}`}
+      className={`relative h-full w-full touch-pan-y overflow-visible bg-transparent p-3 sm:p-5 ${MEMORY_CARD_RADIUS_CLASS}`}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerEnd}
+      onPointerCancel={handlePointerEnd}
     >
-      <div className="pointer-events-none absolute inset-x-3 top-3 z-30 flex items-start justify-between gap-2 sm:inset-x-5 sm:top-5 sm:gap-3">
-        <div
-          className={`max-w-[68%] rounded-full border border-white/70 bg-white/88 px-3 py-2 shadow-[0_12px_30px_rgba(15,23,42,0.12)] backdrop-blur-md transition-all duration-150 ease-out sm:max-w-[70%] sm:px-4 ${
-            controlsVisible
-              ? 'pointer-events-auto translate-y-0 opacity-100'
-              : 'pointer-events-none -translate-y-2 opacity-0'
-          }`}
-        >
-          <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 sm:tracking-[0.24em]">
-            {activeSlideLabel}
-          </div>
-          <div className="mt-1 truncate text-sm font-semibold text-slate-900">{albumTitle}</div>
-        </div>
-
-        <div
-          className={`rounded-full border border-white/70 bg-white/88 px-2.5 py-2 text-xs font-semibold text-slate-600 shadow-[0_12px_30px_rgba(15,23,42,0.12)] backdrop-blur-md transition-all duration-150 ease-out sm:px-3 ${
-            controlsVisible
-              ? 'pointer-events-auto translate-y-0 opacity-100'
-              : 'pointer-events-none -translate-y-2 opacity-0'
-          }`}
-        >
-          {safeIndex + 1} / {slides.length}
-        </div>
-      </div>
-
-      <div className="relative h-full w-full pt-16">
+      <div className="relative h-full w-full">
         <div className="absolute inset-0">
           {slides.map((slide, index) => (
             <div
               key={slide.id}
               className="absolute inset-0 transition-[transform,opacity,filter] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
-              style={getCarouselSlideStyle(index, safeIndex, slides.length)}
+              style={
+                isClosing
+                  ? getClosingSlideStyle(index)
+                  : getCarouselSlideStyle(index, safeIndex, slides.length, usesCompactStack)
+              }
               onClick={(event) => {
                 event.stopPropagation()
-                if (index !== safeIndex) {
+                if (!isClosing && index !== safeIndex) {
                   setActiveIndex(index)
                 }
               }}

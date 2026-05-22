@@ -4,6 +4,11 @@ import config from '@payload-config'
 import { REST_POST } from '@payloadcms/next/routes'
 import { getAppUserFromHeaders } from '@/lib/appAuth'
 import { encryptBufferServer } from '@/lib/serverEncryption'
+import {
+  formatUploadBytes,
+  getUploadKindForMimeType,
+  getUploadLimitForMimeType,
+} from '@/lib/uploadLimits'
 
 const payloadPost = REST_POST(config)
 
@@ -12,6 +17,22 @@ function toEncryptedBlobName(fileName: string) {
   const baseName = safeName.replace(/\.[^./\\]+$/, '') || 'upload'
 
   return `${baseName}.encrypted.bin`
+}
+
+function uploadLimitError(file: File) {
+  const limit = getUploadLimitForMimeType(file.type)
+  const limitLabel = limit === null ? null : formatUploadBytes(limit)
+  const actualLabel = formatUploadBytes(file.size)
+
+  return {
+    error:
+      limitLabel === null
+        ? 'Unsupported file type. Upload an image or video file.'
+        : `File is too large. Choose a file up to ${limitLabel}. This file is ${actualLabel}.`,
+    code: limitLabel === null ? 'UPLOAD_UNSUPPORTED_TYPE' : 'UPLOAD_FILE_TOO_LARGE',
+    limitBytes: limit,
+    actualBytes: file.size,
+  }
 }
 
 export async function POST(req: Request) {
@@ -29,9 +50,35 @@ export async function POST(req: Request) {
     const formData = await req.formData()
     const file = formData.get('file')
     const poster = formData.get('poster')
+    const posterFile = poster instanceof File ? poster : null
+    const videoPosterFile = file instanceof File && file.type.startsWith('video/') ? posterFile : null
     const alt = String(formData.get('alt') ?? '').trim()
     if (!(file instanceof File)) {
       return NextResponse.json({ error: 'A file is required' }, { status: 400 })
+    }
+
+    const uploadKind = getUploadKindForMimeType(file.type)
+    const uploadLimit = getUploadLimitForMimeType(file.type)
+
+    if (!uploadKind || uploadLimit === null) {
+      return NextResponse.json(uploadLimitError(file), { status: 400 })
+    }
+
+    if (file.size > uploadLimit) {
+      return NextResponse.json(uploadLimitError(file), { status: 413 })
+    }
+
+    if (videoPosterFile) {
+      const posterKind = getUploadKindForMimeType(videoPosterFile.type)
+      const posterLimit = getUploadLimitForMimeType(videoPosterFile.type)
+
+      if (posterKind !== 'image' || posterLimit === null) {
+        return NextResponse.json({ error: 'Video poster must be an image file' }, { status: 400 })
+      }
+
+      if (videoPosterFile.size > posterLimit) {
+        return NextResponse.json(uploadLimitError(videoPosterFile), { status: 413 })
+      }
     }
 
     const arrayBuffer = await file.arrayBuffer()
@@ -44,6 +91,12 @@ export async function POST(req: Request) {
       data: encryptedFile.data,
       mimetype: 'application/octet-stream',
       size: encryptedFile.data.length,
+    }
+    let encryptedPoster: ReturnType<typeof encryptBufferServer> | null = null
+
+    if (videoPosterFile) {
+      const posterArrayBuffer = await videoPosterFile.arrayBuffer()
+      encryptedPoster = encryptBufferServer(Buffer.from(posterArrayBuffer), videoPosterFile.type || 'image/jpeg')
     }
 
     const payload = await getPayload({ config })
@@ -61,11 +114,9 @@ export async function POST(req: Request) {
 
     let posterUrl: string | undefined
 
-    if (file.type.startsWith('video/') && poster instanceof File) {
-      const posterArrayBuffer = await poster.arrayBuffer()
-      const encryptedPoster = encryptBufferServer(Buffer.from(posterArrayBuffer), poster.type || 'image/jpeg')
+    if (videoPosterFile && encryptedPoster) {
       const posterPayloadFile = {
-        name: toEncryptedBlobName(poster.name),
+        name: toEncryptedBlobName(videoPosterFile.name),
         data: encryptedPoster.data,
         mimetype: 'application/octet-stream',
         size: encryptedPoster.data.length,

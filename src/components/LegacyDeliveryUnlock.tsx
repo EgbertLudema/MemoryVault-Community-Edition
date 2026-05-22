@@ -3,19 +3,19 @@
 import { useLocale, useTranslations } from 'next-intl'
 import { useState, type FormEvent } from 'react'
 import { LegacyDeliveryView } from '@/components/LegacyDeliveryView'
+import { useToast } from '@/components/ui/ToastProvider'
 import type { LegacyDeliveryData } from '@/lib/legacyDeliveryContent'
 
 export function LegacyDeliveryUnlock({ token }: { token: string }) {
   const t = useTranslations('LegacyDelivery')
   const locale = useLocale()
+  const { showToast } = useToast()
   const [password, setPassword] = useState('')
   const [delivery, setDelivery] = useState<LegacyDeliveryData | null>(null)
-  const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   async function unlockDelivery(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setError(null)
     setLoading(true)
 
     try {
@@ -32,14 +32,14 @@ export function LegacyDeliveryUnlock({ token }: { token: string }) {
         | { error?: string }
 
       if (!response.ok) {
-        setError(t('passwordMismatch'))
+        showToast({ tone: 'error', message: t('passwordMismatch') })
         return
       }
 
       setDelivery(data as LegacyDeliveryData)
       setPassword('')
     } catch {
-      setError(t('unlockError'))
+      showToast({ tone: 'error', message: t('unlockError') })
     } finally {
       setLoading(false)
     }
@@ -74,12 +74,6 @@ export function LegacyDeliveryUnlock({ token }: { token: string }) {
                 required
               />
             </label>
-
-            {error ? (
-              <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {error}
-              </p>
-            ) : null}
 
             <button
               type="submit"

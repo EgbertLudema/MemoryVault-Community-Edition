@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { usePathname as useRawPathname, useSearchParams } from 'next/navigation'
 import * as React from 'react'
 import { LanguagesIcon } from '@/components/icons/LanguagesIcon'
-import { localeCookieName } from '@/i18n/locales'
+import { localeCookieName, locales } from '@/i18n/locales'
 
 type LanguageSwitcherProps = {
   className?: string
@@ -30,8 +30,20 @@ const headerButtonClass =
 const fullButtonClass =
   'inline-flex w-full cursor-pointer items-center justify-between gap-3 rounded-[20px] corner-shape-squircle border border-stone-200/80 bg-white/90 px-4 py-3 text-sm font-medium text-stone-700 shadow-sm transition hover:border-purple-200 hover:bg-purple-50 hover:text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-300/70'
 
-function getUnlocalizedPathname(pathname: string, locale: string) {
-  const localePrefix = `/${locale}`
+function getLocaleFromPathname(pathname: string) {
+  const segment = pathname.split('/')[1]
+
+  return locales.includes(segment as (typeof locales)[number]) ? segment : null
+}
+
+function getUnlocalizedPathname(pathname: string) {
+  const pathnameLocale = getLocaleFromPathname(pathname)
+
+  if (!pathnameLocale) {
+    return pathname
+  }
+
+  const localePrefix = `/${pathnameLocale}`
 
   if (pathname === localePrefix || pathname === `${localePrefix}/`) {
     return '/'
@@ -56,6 +68,7 @@ export function LanguageSwitcher({ className, variant = 'header' }: LanguageSwit
   const locale = useLocale()
   const rawPathname = useRawPathname()
   const searchParams = useSearchParams()
+  const effectiveLocale = getLocaleFromPathname(rawPathname) ?? locale
   const isSidebar = variant === 'sidebar'
   const isFull = variant === 'full'
   const [open, setOpen] = React.useState(false)
@@ -69,23 +82,23 @@ export function LanguageSwitcher({ className, variant = 'header' }: LanguageSwit
     [t],
   )
 
-  const otherLanguages = languages.filter((language) => language.code !== locale)
-  const currentLanguage = languages.find((language) => language.code === locale)
+  const otherLanguages = languages.filter((language) => language.code !== effectiveLocale)
+  const currentLanguage = languages.find((language) => language.code === effectiveLocale)
 
   const switchLanguage = React.useCallback(
     (nextLocale: string) => {
-      if (nextLocale === locale) {
+      if (nextLocale === effectiveLocale) {
         return
       }
 
-      const pathname = getUnlocalizedPathname(rawPathname, locale)
+      const pathname = getUnlocalizedPathname(rawPathname)
       const search = searchParams.toString()
       const target = buildLocalizedPath(pathname, nextLocale, search)
 
       document.cookie = `${localeCookieName}=${nextLocale}; Path=/; Max-Age=31536000; SameSite=Lax`
       window.location.assign(target)
     },
-    [locale, rawPathname, searchParams],
+    [effectiveLocale, rawPathname, searchParams],
   )
 
   React.useEffect(() => {
@@ -133,23 +146,23 @@ export function LanguageSwitcher({ className, variant = 'header' }: LanguageSwit
               </span>
             </span>
             <span className="relative z-10 truncate transition-colors duration-200 group-hover:text-stone-700">
-              {currentLanguage?.label ?? locale.toUpperCase()}
+              {currentLanguage?.label ?? effectiveLocale.toUpperCase()}
             </span>
           </>
         ) : isFull ? (
           <>
             <span className="inline-flex min-w-0 items-center gap-3">
               <LanguagesIcon className="h-5 w-5 shrink-0" />
-              <span className="truncate">{currentLanguage?.label ?? locale.toUpperCase()}</span>
+              <span className="truncate">{currentLanguage?.label ?? effectiveLocale.toUpperCase()}</span>
             </span>
             <span className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-400">
-              {locale}
+              {effectiveLocale}
             </span>
           </>
         ) : (
           <>
             <LanguagesIcon className="h-4 w-4 shrink-0" />
-            <span>{locale.toUpperCase()}</span>
+            <span>{effectiveLocale.toUpperCase()}</span>
           </>
         )}
       </button>

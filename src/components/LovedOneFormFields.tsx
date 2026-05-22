@@ -2,13 +2,15 @@
 
 import * as React from 'react'
 import { useTranslations } from 'next-intl'
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import { getDefaultGroupLabel } from '@/lib/groupMeta'
 import { sortGroupsWithDefaultsFirst } from '@/lib/groupMeta'
 import { getEffectiveGroupUiMeta, mapApiGroupToUiOption, type GroupUiOption } from '@/lib/groupUi'
 import { GroupButton } from '@/components/ui/GroupButton'
 import { PrimaryButton } from '@/components/ui/PrimaryButton'
 import { DeleteButton } from '@/components/ui/DeleteButton'
+import { useToast } from '@/components/ui/ToastProvider'
+import { UpgradeToProLink } from '@/components/ui/UpgradeToProLink'
 import { SecondaryButton } from './ui/SecondairyButton'
 
 type LovedOneGroup = {
@@ -38,18 +40,11 @@ type LovedOneFormFieldsProps = {
   onDelete?: () => Promise<void>
   deleteLabel?: string
   deletingLabel?: string
+  stickyActions?: boolean
 }
 
 function normalizeGroupId(id: string | number): string {
   return String(id).trim()
-}
-
-function toggleId(list: string[], id: string): string[] {
-  if (list.includes(id)) {
-    return list.filter((x) => x !== id)
-  }
-
-  return [...list, id]
 }
 
 function toGroupUiOption(group: LovedOneGroup): GroupUiOption {
@@ -88,13 +83,14 @@ export function LovedOneFormFields({
   onDelete,
   deleteLabel,
   deletingLabel,
+  stickyActions = false,
 }: LovedOneFormFieldsProps) {
   const t = useTranslations('LovedOneForm')
   const tGroups = useTranslations('GroupLabels')
+  const { showToast } = useToast()
   const [loading, setLoading] = React.useState(false)
   const [deleting, setDeleting] = React.useState(false)
-  const [error, setError] = React.useState<string | null>(null)
-  const [success, setSuccess] = React.useState<string | null>(null)
+  const [showUpgradeCta, setShowUpgradeCta] = React.useState(false)
 
   const [groups, setGroups] = React.useState<LovedOneGroup[]>([])
   const [groupsLoading, setGroupsLoading] = React.useState(true)
@@ -104,7 +100,7 @@ export function LovedOneFormFields({
   const [email, setEmail] = React.useState(initialValues.email)
   const [relationship, setRelationship] = React.useState(initialValues.relationship)
   const [customNote, setCustomNote] = React.useState(initialValues.customNote)
-  const [groupIds, setGroupIds] = React.useState<string[]>(initialValues.groupIds)
+  const [groupIds, setGroupIds] = React.useState<string[]>(initialValues.groupIds.slice(0, 1))
 
   React.useEffect(() => {
     let mounted = true
@@ -147,7 +143,7 @@ export function LovedOneFormFields({
           return
         }
 
-        setError(e instanceof Error ? e.message : t('genericError'))
+        showToast({ tone: 'error', message: e instanceof Error ? e.message : t('genericError') })
       } finally {
         if (mounted) {
           setGroupsLoading(false)
@@ -160,35 +156,33 @@ export function LovedOneFormFields({
     return () => {
       mounted = false
     }
-  }, [t])
+  }, [showToast, t])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setError(null)
-    setSuccess(null)
-
     if (!fullName.trim()) {
-      setError(t('fullNameRequired'))
+      showToast({ tone: 'error', message: t('fullNameRequired') })
       return
     }
 
     if (!relationship.trim()) {
-      setError(t('relationshipRequired'))
+      showToast({ tone: 'error', message: t('relationshipRequired') })
       return
     }
 
     if (!email.trim()) {
-      setError(t('emailRequired'))
+      showToast({ tone: 'error', message: t('emailRequired') })
       return
     }
 
-    if (groupIds.length === 0) {
-      setError(t('groupRequired'))
+    if (groupIds.length !== 1) {
+      showToast({ tone: 'error', message: t('groupRequired') })
       return
     }
 
     try {
       setLoading(true)
+      setShowUpgradeCta(false)
 
       await onSubmit({
         fullName: fullName.trim(),
@@ -199,9 +193,11 @@ export function LovedOneFormFields({
         groupIds,
       })
 
-      setSuccess(t('saved'))
+      showToast({ tone: 'success', message: t('saved') })
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('genericError'))
+      const message = e instanceof Error ? e.message : t('genericError')
+      setShowUpgradeCta(/plan can have at most|loved ones/i.test(message))
+      showToast({ tone: 'error', message })
     } finally {
       setLoading(false)
     }
@@ -212,9 +208,6 @@ export function LovedOneFormFields({
       return
     }
 
-    setError(null)
-    setSuccess(null)
-
     const ok = window.confirm(t('deleteConfirm', { name: fullName }))
     if (!ok) {
       return
@@ -224,7 +217,7 @@ export function LovedOneFormFields({
       setDeleting(true)
       await onDelete()
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('genericError'))
+      showToast({ tone: 'error', message: e instanceof Error ? e.message : t('genericError') })
     } finally {
       setDeleting(false)
     }
@@ -232,18 +225,6 @@ export function LovedOneFormFields({
 
   return (
     <form onSubmit={handleSubmit} className="grid gap-[14px]">
-      {error ? (
-        <div className="rounded-xl border border-[#f2c9c9] bg-[#fff5f5] p-3 text-[13px] text-[#7a1f1f]">
-          {error}
-        </div>
-      ) : null}
-
-      {success ? (
-        <div className="rounded-xl border border-[#cfe8d6] bg-[#f3fff6] p-3 text-[13px] text-[#1f5f2e]">
-          {success}
-        </div>
-      ) : null}
-
       <div className="grid gap-2">
         <label>
           <RequiredLabel required>{t('fullName')}</RequiredLabel>
@@ -303,9 +284,7 @@ export function LovedOneFormFields({
           placeholder={t('customNotePlaceholder')}
           className="min-h-[110px] rounded-xl border border-[#dddddd] bg-white px-3 py-2.5 text-[14px] outline-none"
         />
-        <div className="text-xs text-[#666666]">
-          {t('customNoteHelp')}
-        </div>
+        <div className="text-xs text-[#666666]">{t('customNoteHelp')}</div>
       </div>
 
       <div className="grid gap-2">
@@ -340,7 +319,7 @@ export function LovedOneFormFields({
                     label={getDefaultGroupLabel(g.defaultKey, g.name, (key) => tGroups(key))}
                     active={selected}
                     colorValue={meta.color.value}
-                    onClick={() => setGroupIds((prev) => toggleId(prev, id))}
+                    onClick={() => setGroupIds((prev) => (prev.includes(id) ? [] : [id]))}
                     icon={<IconComponent className="h-4 w-4 shrink-0" />}
                   />
                 )
@@ -360,14 +339,29 @@ export function LovedOneFormFields({
         </div>
       </div>
 
-      <div className="mt-1.5 flex flex-wrap justify-between gap-2.5">
+      <div
+        className={
+          stickyActions
+            ? 'sticky bottom-0 z-20 -mx-3 mt-1.5 flex flex-wrap justify-between gap-2.5 border-t border-[#eeeeee] bg-white/95 px-3 py-3 shadow-[0_-18px_45px_rgba(15,23,42,0.08)] backdrop-blur sm:-mx-4 sm:px-4'
+            : 'mt-1.5 flex flex-wrap justify-between gap-2.5'
+        }
+      >
+        {showUpgradeCta ? (
+          <div className="w-full rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-800">
+            <div className="flex flex-wrap items-center gap-3">
+              <span>{t('lovedOneLimitUpgrade')}</span>
+              <UpgradeToProLink />
+            </div>
+          </div>
+        ) : null}
+
         {onDelete ? (
           <DeleteButton
             onClick={handleDelete}
             disabled={deleting || loading}
             className="h-10 px-[14px]"
           >
-            {deleting ? deletingLabel ?? t('deleting') : deleteLabel ?? t('delete')}
+            {deleting ? (deletingLabel ?? t('deleting')) : (deleteLabel ?? t('delete'))}
           </DeleteButton>
         ) : (
           <div />

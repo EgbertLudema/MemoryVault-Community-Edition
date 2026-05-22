@@ -2,7 +2,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/i18n/navigation'
 import { LovedOneFormFields, type LovedOneFormValues } from '@/components/LovedOneFormFields'
 
 type LovedOneGroup = {
@@ -85,7 +85,7 @@ export function LovedOneEditForm({ lovedOne }: { lovedOne: LovedOne }) {
   }
 
   async function handleSave(values: LovedOneFormValues) {
-    const payloadGroupIds = values.groupIds.map((id) => toPayloadId(id))
+    const payloadGroupIds = values.groupIds.slice(0, 1).map((id) => toPayloadId(id))
 
     const res = await fetch(`/api/loved-ones/${toPayloadId(String(lovedOne.id))}`, {
       method: 'PATCH',
@@ -147,6 +147,7 @@ export function LovedOneEditForm({ lovedOne }: { lovedOne: LovedOne }) {
       onSubmit={handleSave}
       onDelete={handleDelete}
       onCancel={closeModal}
+      stickyActions
     />
   )
 }

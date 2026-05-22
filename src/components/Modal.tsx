@@ -2,7 +2,10 @@
 'use client'
 
 import * as React from 'react'
-import { useRouter } from 'next/navigation'
+import gsap from 'gsap'
+import { useTranslations } from 'next-intl'
+import { useRouter } from '@/i18n/navigation'
+import { MODAL_NAVIGATION_EVENT, type ModalNavigationDetail } from '@/lib/modalNavigation'
 import { SecondaryButton } from './ui/SecondairyButton'
 
 export function Modal({
@@ -15,10 +18,104 @@ export function Modal({
   size?: 'default' | 'wide'
 }) {
   const router = useRouter()
+  const t = useTranslations('Modal')
+  const overlayRef = React.useRef<HTMLDivElement>(null)
+  const panelRef = React.useRef<HTMLDivElement>(null)
+  const closingRef = React.useRef(false)
 
-  function close() {
-    router.back()
+  const close = React.useCallback(
+    (nextHref?: string) => {
+      if (closingRef.current) {
+        return
+      }
+
+      const overlay = overlayRef.current
+      const panel = panelRef.current
+
+      if (!overlay || !panel) {
+        if (nextHref) {
+          router.push(nextHref)
+        } else {
+          router.back()
+        }
+        return
+      }
+
+      closingRef.current = true
+      gsap.killTweensOf([overlay, panel])
+
+      const timeline = gsap.timeline({
+        defaults: { ease: 'power2.in' },
+        onComplete: () => {
+          if (nextHref) {
+            router.push(nextHref)
+          } else {
+            router.back()
+          }
+        },
+      })
+
+      timeline.to(panel, { autoAlpha: 0, y: 18, scale: 0.985, duration: 0.16 }, 0)
+      timeline.to(overlay, { backgroundColor: 'rgba(0,0,0,0)', duration: 0.18 }, 0)
+    },
+    [router],
+  )
+
+  React.useEffect(() => {
+    function onModalNavigation(event: Event) {
+      const modalEvent = event as CustomEvent<ModalNavigationDetail>
+      const href = modalEvent.detail?.href
+
+      if (!href) {
+        return
+      }
+
+      event.preventDefault()
+      close(href)
+    }
+
+    window.addEventListener(MODAL_NAVIGATION_EVENT, onModalNavigation)
+
+    return () => window.removeEventListener(MODAL_NAVIGATION_EVENT, onModalNavigation)
+  }, [close])
+
+  function closeFromMouse() {
+    if (closingRef.current) {
+      return
+    }
+    close()
   }
+
+  React.useLayoutEffect(() => {
+    const overlay = overlayRef.current
+    const panel = panelRef.current
+
+    if (!overlay || !panel) {
+      return
+    }
+
+    gsap.set(overlay, { backgroundColor: 'rgba(0,0,0,0)' })
+    gsap.set(panel, { autoAlpha: 0, y: 24, scale: 0.985 })
+
+    const timeline = gsap.timeline({ defaults: { ease: 'power2.out' } })
+    timeline.to(overlay, { backgroundColor: 'rgba(0,0,0,0.35)', duration: 0.2 }, 0)
+    timeline.to(
+      panel,
+      {
+        autoAlpha: 1,
+        y: 0,
+        scale: 1,
+        duration: 0.28,
+        clearProps: 'opacity,visibility,transform',
+      },
+      0.04,
+    )
+
+    return () => {
+      timeline.kill()
+      gsap.killTweensOf([overlay, panel])
+    }
+  }, [])
 
   React.useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -29,45 +126,51 @@ export function Modal({
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [close])
 
   return (
     <div
+      ref={overlayRef}
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      className="fixed inset-0 z-1000 flex items-end justify-center bg-black/35 p-0 sm:items-center sm:p-4"
-      onMouseDown={close}
+      className="fixed inset-0 z-1000 flex items-stretch justify-center bg-black/35 p-0 sm:items-center sm:p-4"
+      onMouseDown={closeFromMouse}
     >
       <div
+        ref={panelRef}
         className={
           size === 'wide'
-            ? 'relative flex max-h-[92dvh] w-full max-w-[980px] flex-col overflow-hidden rounded-t-2xl corner-shape-squircle border border-[#eee] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.18)] sm:max-h-[calc(100vh_-_32px)] sm:rounded-2xl'
-            : 'relative flex max-h-[92dvh] w-full max-w-[720px] flex-col overflow-hidden rounded-t-2xl corner-shape-squircle border border-[#eee] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.18)] sm:max-h-[calc(100vh_-_32px)] sm:rounded-2xl'
+            ? 'relative flex h-dvh w-full max-w-[980px] flex-col overflow-hidden border border-[#eee] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.18)] sm:h-auto sm:max-h-[calc(100vh_-_32px)] sm:rounded-2xl'
+            : 'relative flex h-dvh w-full max-w-[720px] flex-col overflow-hidden border border-[#eee] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.18)] sm:h-auto sm:max-h-[calc(100vh_-_32px)] sm:rounded-2xl'
         }
         onMouseDown={(e) => e.stopPropagation()}
       >
-      {/* Sticky header so the X stays visible */}
-        <div className="sticky top-0 z-10 border-b border-[#eee] bg-[#fafafa] px-3 py-[14px] sm:px-4">
+        {/* Sticky header so the X stays visible */}
+        <div className="sticky top-0 z-10 border-b border-[#eee] bg-white px-4 py-4 sm:bg-[#fafafa] sm:px-4 sm:py-[14px]">
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col pr-10">
-              <strong className="text-[14px]">{title}</strong>
-              <span className="mt-[2px] text-[12px] text-[#666]">Press Escape to close</span>
+              <strong className="line-clamp-2 text-[15px] leading-5 text-slate-950 sm:text-[14px]">
+                {title}
+              </strong>
+              <span className="mt-[2px] hidden text-[12px] text-[#666] sm:block">
+                {t('escapeToClose')}
+              </span>
             </div>
 
             {/* Always top-right, inside the modal */}
             <SecondaryButton
               type="button"
-              onClick={close}
-              aria-label="Close"
+              onClick={() => close()}
+              aria-label={t('close')}
               className="
-                                absolute right-3 top-3
-                                h-[36px] w-[36px]
+                                absolute right-3 top-1/2
+                                h-9 w-9 -translate-y-1/2
                                 cursor-pointer rounded-[10px]
                                 border border-[#ddd] bg-white
                                 text-[18px] leading-[1]
                                 flex items-center justify-center
+                                sm:top-3 sm:h-[36px] sm:w-[36px] sm:translate-y-0
                             "
             >
               &times;
@@ -76,7 +179,7 @@ export function Modal({
         </div>
 
         {/* Scrollable content area */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-6 pt-4 sm:px-4">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-4 sm:px-4">{children}</div>
       </div>
     </div>
   )

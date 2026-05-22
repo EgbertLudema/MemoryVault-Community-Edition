@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages } from 'next-intl/server'
+import { ToastProvider } from '@/components/ui/ToastProvider'
 import './globals.css'
 import { Cormorant_Garamond } from 'next/font/google'
 
@@ -20,7 +21,7 @@ export default async function RootLayout(props: { children: ReactNode }) {
     <html lang={locale} className={cormorant.variable}>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          {props.children}
+          <ToastProvider>{props.children}</ToastProvider>
         </NextIntlClientProvider>
         <Analytics />
         <SpeedInsights />

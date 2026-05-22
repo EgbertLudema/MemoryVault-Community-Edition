@@ -10,6 +10,7 @@ import { AccountCircleIcon } from '../icons/AccountCircleIcon'
 import { HouseIcon } from '../icons/HouseIcon'
 import { MemoryBookIcon } from '../icons/MemoryBookIcon'
 import { TwoPersonsIcon } from '../icons/TwoPersonsIcon'
+import { WorldIcon } from '../icons/WorldIcon'
 import { CollapseButton } from '../ui/CollapseButton'
 import { LogoutButton } from '../ui/LogoutButton'
 import { MemoryVaultLogo } from '../ui/MemoryVaultLogo'
@@ -90,6 +91,7 @@ const iconMotionClass =
 export function Sidebar(props: {
   userFullName?: string | null
   userProfileImageSrc?: string | null
+  legacyProtectionNeedsAttention?: boolean
   mobileOpen?: boolean
   onMobileClose?: () => void
 }) {
@@ -232,7 +234,7 @@ export function Sidebar(props: {
       // Ignore logout errors
     }
 
-    router.push('/login')
+    router.push('/')
     router.refresh()
   }
 
@@ -272,10 +274,7 @@ export function Sidebar(props: {
           </div>
         </div>
 
-        <div
-          onMouseLeave={() => setHoveredKey(null)}
-          className="flex-1 px-2 py-4"
-        >
+        <div onMouseLeave={() => setHoveredKey(null)} className="flex-1 px-2 py-4">
           <nav>
             <ul
               ref={navListRef}
@@ -310,7 +309,7 @@ export function Sidebar(props: {
                             ? 'sidebar-memories-link'
                             : item.href === '/loved-ones'
                               ? 'sidebar-loved-ones-link'
-                              : undefined
+                                : undefined
                       }
                       href={item.href}
                       ref={(element) => {
@@ -371,6 +370,38 @@ export function Sidebar(props: {
         </div>
 
         <div className="space-y-2 px-2 py-4">
+          <Link
+            href="/"
+            className={cn(
+              linkBaseClass,
+              'w-full active:scale-[0.98]',
+              itemIsActive('/')
+                ? 'bg-purple-100 text-purple-500'
+                : 'text-stone-500 hover:bg-stone-50',
+              effectiveCollapsed && 'justify-center',
+            )}
+            title={effectiveCollapsed ? t('website') : undefined}
+            aria-current={itemIsActive('/') ? 'page' : undefined}
+            onClick={props.onMobileClose}
+          >
+            <span
+              className={cn(
+                iconWrapperClass,
+                itemIsActive('/') ? 'text-inherit' : 'group-hover:text-stone-700',
+              )}
+            >
+              <span className={iconMotionClass}>
+                <WorldIcon className={iconSvgClass} />
+              </span>
+            </span>
+
+            {!effectiveCollapsed && (
+              <span className="truncate transition-colors duration-200 group-hover:text-stone-700">
+                {t('website')}
+              </span>
+            )}
+          </Link>
+
           {!effectiveCollapsed ? <LanguageSwitcher variant="sidebar" /> : null}
 
           <Link
@@ -385,30 +416,35 @@ export function Sidebar(props: {
             aria-current={accountActive ? 'page' : undefined}
             onClick={props.onMobileClose}
           >
-            <span
-              className={cn(
-                'inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-stone-200 bg-white',
-                accountActive ? 'border-purple-200' : 'group-hover:border-stone-300',
-              )}
-            >
-              {props.userProfileImageSrc?.trim() ? (
-                <img
-                  src={props.userProfileImageSrc.trim()}
-                  alt={displayName}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <span
-                  className={cn(
-                    iconWrapperClass,
-                    accountActive ? 'text-inherit' : 'group-hover:text-stone-700',
-                  )}
-                >
-                  <span className={iconMotionClass}>
-                    <AccountCircleIcon className={iconSvgClass} />
+            <span className="relative inline-flex h-10 w-10 shrink-0">
+              <span
+                className={cn(
+                  'inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-stone-200 bg-white',
+                  accountActive ? 'border-purple-200' : 'group-hover:border-stone-300',
+                )}
+              >
+                {props.userProfileImageSrc?.trim() ? (
+                  <img
+                    src={props.userProfileImageSrc.trim()}
+                    alt={displayName}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span
+                    className={cn(
+                      iconWrapperClass,
+                      accountActive ? 'text-inherit' : 'group-hover:text-stone-700',
+                    )}
+                  >
+                    <span className={iconMotionClass}>
+                      <AccountCircleIcon className={iconSvgClass} />
+                    </span>
                   </span>
-                </span>
-              )}
+                )}
+              </span>
+              {props.legacyProtectionNeedsAttention ? (
+                <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full border border-white bg-amber-500" />
+              ) : null}
             </span>
 
             {!effectiveCollapsed && (
@@ -422,7 +458,7 @@ export function Sidebar(props: {
                   {displayName}
                 </div>
                 <div className="truncate text-xs text-stone-500 transition-colors duration-200 group-hover:text-stone-600">
-                  {t('viewProfile')}
+                  {props.legacyProtectionNeedsAttention ? t('actionNeeded') : t('viewProfile')}
                 </div>
               </div>
             )}

@@ -27,7 +27,7 @@ export function MemoryDetailPageClient({
       mode={mode}
       onClose={close}
       onSaved={close}
-      onDeleted={() => router.replace('/memories')}
+      onDeleted={close}
     />
   )
 }

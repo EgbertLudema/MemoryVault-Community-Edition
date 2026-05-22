@@ -3,7 +3,6 @@
 import * as React from 'react'
 import { Joyride, STATUS, type EventData, type Step } from 'react-joyride'
 import { useTranslations } from 'next-intl'
-import { usePersistentState } from '@/app/_hooks/usePersistentState'
 import { AppIntroTooltip } from '@/components/onboarding/AppIntroTooltip'
 import { usePathname } from '@/i18n/navigation'
 
@@ -146,13 +145,48 @@ function selectorsExist(steps: Step[]) {
   })
 }
 
-export function AppIntroTour(props: { userFullName?: string | null }) {
+export function AppIntroTour(props: {
+  userId: number
+  userFullName?: string | null
+  initialCompleted?: boolean | null
+}) {
   const t = useTranslations('AppIntroTour')
   const pathname = usePathname()
-  const [completed, setCompleted] = usePersistentState<boolean>(TOUR_COMPLETED_KEY, false)
+  const initialCompleted = Boolean(props.initialCompleted)
+  const [completed, setCompleted] = React.useState(initialCompleted)
+  const [hasResolvedCompletion, setHasResolvedCompletion] = React.useState(false)
   const [run, setRun] = React.useState(false)
   const [isDesktop, setIsDesktop] = React.useState(false)
   const [restartToken, setRestartToken] = React.useState(0)
+
+  const syncCompleted = React.useCallback(
+    (nextCompleted: boolean) => {
+      try {
+        if (nextCompleted) {
+          window.localStorage.setItem(TOUR_COMPLETED_KEY, 'true')
+        } else {
+          window.localStorage.removeItem(TOUR_COMPLETED_KEY)
+        }
+      } catch {
+        // localStorage is only a fallback for older sessions.
+      }
+
+      if (!nextCompleted) {
+        return
+      }
+
+      void fetch(`/api/app-users/${props.userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ appIntroCompleted: true }),
+      }).catch(() => {
+        // Keep the local fallback so the current device does not repeat the tour.
+      })
+    },
+    [props.userId],
+  )
 
   React.useEffect(() => {
     const mediaQuery = window.matchMedia(DESKTOP_MEDIA_QUERY)
@@ -166,6 +200,33 @@ export function AppIntroTour(props: { userFullName?: string | null }) {
     }
   }, [])
 
+  React.useEffect(() => {
+    let localCompleted = false
+
+    try {
+      localCompleted = window.localStorage.getItem(TOUR_COMPLETED_KEY) === 'true'
+    } catch {
+      localCompleted = false
+    }
+
+    const nextCompleted = initialCompleted || localCompleted
+    setCompleted(nextCompleted)
+    setHasResolvedCompletion(true)
+
+    if (initialCompleted) {
+      try {
+        window.localStorage.setItem(TOUR_COMPLETED_KEY, 'true')
+      } catch {
+        // localStorage is only a fallback for older sessions.
+      }
+      return
+    }
+
+    if (localCompleted) {
+      syncCompleted(true)
+    }
+  }, [initialCompleted, syncCompleted])
+
   const steps = React.useMemo(() => {
     return isDesktop ? getDesktopSteps(t, props.userFullName) : getMobileSteps(t, props.userFullName)
   }, [isDesktop, props.userFullName, t])
@@ -174,6 +235,7 @@ export function AppIntroTour(props: { userFullName?: string | null }) {
     const handleRestart = () => {
       setRun(false)
       setCompleted(false)
+      syncCompleted(false)
       setRestartToken((current) => current + 1)
     }
 
@@ -182,10 +244,10 @@ export function AppIntroTour(props: { userFullName?: string | null }) {
     return () => {
       window.removeEventListener('app-intro:restart', handleRestart)
     }
-  }, [setCompleted])
+  }, [syncCompleted])
 
   React.useEffect(() => {
-    if (completed || pathname !== '/dashboard') {
+    if (!hasResolvedCompletion || completed || pathname !== '/dashboard') {
       setRun(false)
       return
     }
@@ -214,16 +276,17 @@ export function AppIntroTour(props: { userFullName?: string | null }) {
         window.clearTimeout(timeoutId)
       }
     }
-  }, [completed, pathname, restartToken, steps])
+  }, [completed, hasResolvedCompletion, pathname, restartToken, steps])
 
   const handleCallback = React.useCallback(
     (data: EventData) => {
       if (data.status === STATUS.FINISHED || data.status === STATUS.SKIPPED) {
         setRun(false)
         setCompleted(true)
+        syncCompleted(true)
       }
     },
-    [setCompleted],
+    [syncCompleted],
   )
 
   if (completed) {

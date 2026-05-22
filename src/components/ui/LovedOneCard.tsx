@@ -76,13 +76,46 @@ export function LovedOneCard({
   const t = useTranslations('LovedOneCard')
   const tGroups = useTranslations('GroupLabels')
   const displayGroups = getDisplayGroups(lovedOne.groups)
+  const primaryGroup = displayGroups[0] ?? null
+  const primaryGroupMeta = primaryGroup
+    ? getEffectiveGroupUiMeta(toGroupUiOption(primaryGroup))
+    : null
+  const primaryColor = primaryGroupMeta?.color.value ?? '#f472b6'
   const note = getEffectiveLovedOneNote(lovedOne.customNote)
   const cardTourId = tourTarget ? 'loved-ones-first-card' : undefined
   const editTourId = tourTarget ? 'loved-ones-first-card-edit' : undefined
+  const cardStyle = {
+    borderColor: hexToRgba(primaryColor, 0.26),
+    background: `linear-gradient(180deg, rgba(255,255,255,0.99), ${hexToRgba(primaryColor, 0.1)})`,
+    boxShadow: `0 10px 30px ${hexToRgba(primaryColor, 0.08)}`,
+  }
+  const badgeStyle = {
+    backgroundColor: hexToRgba(primaryColor, 0.12),
+    color: primaryColor,
+  }
+  const noteStyle = {
+    borderColor: hexToRgba(primaryColor, 0.18),
+    backgroundColor: hexToRgba(primaryColor, 0.08),
+  }
+  const noteLabelStyle = {
+    color: primaryColor,
+  }
+  const noteBodyStyle = {
+    color: '#444444',
+  }
+  const editLinkStyle = {
+    color: primaryColor,
+  }
+  const previewLinkStyle = {
+    borderColor: hexToRgba(primaryColor, 0.28),
+    backgroundColor: hexToRgba(primaryColor, 0.1),
+    color: primaryColor,
+  }
 
   return (
     <article
-      className="rounded-[24px] corner-shape-squircle border border-stone-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.99),rgba(255,249,250,0.95))] p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)] transition-all duration-200 ease-out hover:-translate-y-1 hover:border-rose-200 hover:shadow-[0_18px_40px_rgba(244,114,182,0.12)]"
+      className="rounded-[24px] corner-shape-squircle border p-5 transition-all duration-200 ease-out hover:-translate-y-1"
+      style={cardStyle}
       data-tour={cardTourId}
     >
       <Link
@@ -93,7 +126,10 @@ export function LovedOneCard({
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <div className="inline-flex rounded-full bg-rose-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-700">
+            <div
+              className="inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]"
+              style={badgeStyle}
+            >
               {t('lovedOne')}
             </div>
 
@@ -108,12 +144,11 @@ export function LovedOneCard({
             ) : null}
           </div>
 
-          {displayGroups.length > 0 ? (
+          {primaryGroup && primaryGroupMeta ? (
             <div className="flex max-w-[48%] flex-wrap justify-end gap-2">
-              {displayGroups.map((group) => {
-                const meta = getEffectiveGroupUiMeta(toGroupUiOption(group))
-                const IconComponent = meta.icon.Icon
-                const colorValue = meta.color.value
+              {(() => {
+                const IconComponent = primaryGroupMeta.icon.Icon
+                const colorValue = primaryGroupMeta.color.value
 
                 const badgeStyle = {
                   borderColor: hexToRgba(colorValue, 0.22),
@@ -121,14 +156,14 @@ export function LovedOneCard({
                   color: colorValue,
                 }
                 const groupLabel = getDefaultGroupLabel(
-                  group.defaultKey,
-                  group.name,
+                  primaryGroup.defaultKey,
+                  primaryGroup.name,
                   (key) => tGroups(key),
                 )
 
                 return (
                   <span
-                    key={group.id}
+                    key={primaryGroup.id}
                     className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full corner-shape-squircle border px-[10px] py-[6px] text-[12px] font-medium backdrop-blur-sm"
                     style={badgeStyle}
                   >
@@ -136,7 +171,7 @@ export function LovedOneCard({
                     <span>{groupLabel}</span>
                   </span>
                 )
-              })}
+              })()}
             </div>
           ) : null}
         </div>
@@ -153,11 +188,16 @@ export function LovedOneCard({
           ) : null}
         </div>
 
-        <div className="mt-4 rounded-[18px] border border-rose-100 bg-rose-50/70 p-3">
-          <p className="m-0 text-[12px] font-semibold uppercase tracking-[0.14em] text-rose-700">
+        <div className="mt-4 rounded-[18px] border p-3" style={noteStyle}>
+          <p
+            className="m-0 text-[12px] font-semibold uppercase tracking-[0.14em]"
+            style={noteLabelStyle}
+          >
             {t('note')}
           </p>
-          <p className="m-0 mt-2 text-[14px] leading-6 text-[#5b4450]">{note}</p>
+          <p className="m-0 mt-2 text-[14px] leading-6" style={noteBodyStyle}>
+            {note}
+          </p>
         </div>
       </Link>
 
@@ -166,7 +206,8 @@ export function LovedOneCard({
           href={`/loved-ones/person/${lovedOne.id}`}
           scroll={false}
           prefetch={false}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-rose-700 no-underline transition-colors duration-200 hover:text-rose-800"
+          className="inline-flex items-center gap-2 text-sm font-semibold no-underline transition-colors duration-200"
+          style={editLinkStyle}
           data-tour={editTourId}
         >
           <EditIcon className="h-3.5 w-3.5 shrink-0" />
@@ -178,7 +219,8 @@ export function LovedOneCard({
           prefetch={false}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50 px-3.5 py-2 text-sm font-semibold text-purple-700 no-underline transition hover:border-purple-300 hover:bg-purple-100 hover:text-purple-800"
+          className="inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-semibold no-underline transition"
+          style={previewLinkStyle}
         >
           {t('viewRecipientPage')}
           <RedirectIcon className="h-4 w-4 shrink-0" />
