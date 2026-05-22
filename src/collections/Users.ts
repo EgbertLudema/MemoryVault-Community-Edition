@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { isAdminUser } from '@/lib/access'
-import { DEFAULT_GROUP_DEFINITIONS } from '@/lib/groupMeta'
+import { ensureDefaultLovedOneGroups } from '@/lib/defaultLovedOneGroups'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -35,39 +35,7 @@ export const Users: CollectionConfig = {
           return
         }
 
-        const userId = doc.id
-
-        const existing = await req.payload.find({
-          collection: 'loved-one-groups',
-          overrideAccess: true,
-          where: {
-            user: { equals: userId },
-          },
-          limit: 200,
-        })
-
-        const existingKeys = new Set(
-          (existing?.docs ?? []).map((group) => String(group.defaultKey ?? '').trim().toLowerCase()),
-        )
-
-        for (const group of DEFAULT_GROUP_DEFINITIONS) {
-          if (existingKeys.has(group.key)) {
-            continue
-          }
-
-          await req.payload.create({
-            collection: 'loved-one-groups',
-            overrideAccess: true,
-            data: {
-              name: group.name,
-              isDefault: true,
-              defaultKey: group.key,
-              iconKey: group.iconKey,
-              colorKey: group.colorKey,
-              user: userId,
-            },
-          })
-        }
+        await ensureDefaultLovedOneGroups(req.payload, doc.id, req)
       },
     ],
   },

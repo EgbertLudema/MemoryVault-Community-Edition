@@ -46,7 +46,7 @@ function MobileBottomNav(props: {
     },
     {
       label: t('website'),
-      href: '/',
+      href: 'https://memory-vault.app',
       icon: <WorldIcon className={mobileIconClass} />,
     },
     {
@@ -73,9 +73,9 @@ function MobileBottomNav(props: {
       aria-label="Primary"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-200 bg-white/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-2 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden"
     >
-      <ul className="grid grid-cols-6 gap-0.5">
+      <ul className="grid grid-cols-5 gap-0.5">
         {navItems.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
+          const active = !item.href.startsWith('http') && (pathname === item.href || pathname.startsWith(`${item.href}/`))
 
           return (
             <li key={item.href}>
@@ -86,6 +86,8 @@ function MobileBottomNav(props: {
                   active ? 'bg-purple-100 text-purple-600' : 'text-stone-500 hover:bg-stone-50',
                 )}
                 aria-current={active ? 'page' : undefined}
+                target={item.href.startsWith('http') ? '_blank' : undefined}
+                rel={item.href.startsWith('http') ? 'noreferrer' : undefined}
               >
                 <span className="relative flex h-6 items-center justify-center">
                   {item.icon}

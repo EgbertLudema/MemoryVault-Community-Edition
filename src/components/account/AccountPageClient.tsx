@@ -244,16 +244,6 @@ export function AccountPageClient({
     }
   }, [pendingProfilePreview, profileImageFile])
 
-  useEffect(() => {
-    if (isBillingSuccess) {
-      showToast({ tone: 'info', message: t('billingActivating') })
-      return
-    }
-
-    if (isBillingCanceled) {
-      showToast({ tone: 'info', message: t('billingCanceled') })
-    }
-  }, [isBillingCanceled, isBillingSuccess, showToast, t])
 
 
   async function handleLegacyProtectionChange(nextValue: boolean) {
@@ -401,7 +391,7 @@ export function AccountPageClient({
     } catch {
       // Ignore logout errors and continue to the website.
     } finally {
-      router.push('/')
+      router.push('/login')
       router.refresh()
       setLogoutLoading(false)
     }
@@ -555,68 +545,6 @@ export function AccountPageClient({
           </section>
         </DashboardLoadReveal>
 
-        <DashboardLoadReveal delayMs={120}>
-          <section
-            id="billing"
-            data-tour="account-billing"
-            className="rounded-[28px] corner-shape-squircle border border-white/70 bg-white/80 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:rounded-[32px] sm:p-7"
-          >
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
-                  {t('billingLabel')}
-                </div>
-                <h2 className="mt-2 text-[26px] font-bold tracking-tight text-gray-900">
-                  {isPro ? t('billingProTitle') : t('billingFreeTitle')}
-                </h2>
-                <p className="mt-1 max-w-2xl text-sm leading-6 text-stone-600">
-                  {isPro ? t('billingProBody') : t('billingFreeBody')}
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
-                  <span
-                    className={cn(
-                      'rounded-full border px-3 py-1',
-                      isPro
-                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                        : 'border-stone-200 bg-stone-50 text-stone-600',
-                    )}
-                  >
-                    {isPro ? t('billingStatusPro') : t('billingStatusFree')}
-                  </span>
-                </div>
-                {currentPeriodEnd ? (
-                  <p className="mt-2 text-xs font-medium text-stone-500">
-                    {t('billingPeriodEnd', {
-                      date: new Date(currentPeriodEnd).toLocaleDateString(),
-                    })}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                {isPro ? (
-                  <PrimaryButton
-                    type="button"
-                    onClick={() => openBilling('/api/billing/portal')}
-                    disabled={billingLoading !== null}
-                    className="h-11 rounded-full px-5"
-                  >
-                    {billingLoading === 'portal' ? t('openingBilling') : t('manageBilling')}
-                  </PrimaryButton>
-                ) : (
-                  <PrimaryButton
-                    type="button"
-                    onClick={() => openBilling('/api/billing/checkout')}
-                    disabled={billingLoading !== null}
-                    className="h-11 rounded-full px-5"
-                  >
-                    {billingLoading === 'checkout' ? t('openingBilling') : t('upgradeToPro')}
-                  </PrimaryButton>
-                )}
-              </div>
-            </div>
-          </section>
-        </DashboardLoadReveal>
 
         <DashboardLoadReveal delayMs={200}>
           <section

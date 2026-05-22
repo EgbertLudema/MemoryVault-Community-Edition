@@ -13,6 +13,20 @@ function toNumberId(value: string) {
   return Number.isFinite(parsed) ? parsed : NaN
 }
 
+function getRelationId(value: unknown) {
+  if (typeof value === 'number') {
+    return value
+  }
+
+  if (typeof value === 'object' && value !== null && 'id' in value) {
+    const id = Number((value as { id?: unknown }).id)
+    return Number.isFinite(id) ? id : null
+  }
+
+  const id = Number(value)
+  return Number.isFinite(id) ? id : null
+}
+
 export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
   const user = await getAppUserFromHeaders(req.headers)
 
@@ -40,6 +54,20 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     }
     const data: Record<string, unknown> = {}
     let selectedTrustedContacts: TrustedContactInviteLovedOne[] = []
+
+    if (typeof body.profileImage === 'number') {
+      const media = await payload.findByID({
+        collection: 'media',
+        id: body.profileImage,
+        overrideAccess: true,
+        depth: 0,
+      })
+      const ownerUserId = getRelationId(media.ownerUser)
+
+      if (ownerUserId !== targetId) {
+        return NextResponse.json({ message: 'Profile image is invalid' }, { status: 400 })
+      }
+    }
 
     if (Array.isArray(body.legacyProtectionContacts) && body.legacyProtectionContacts.length > 0) {
       const contacts = await payload.find({
@@ -105,7 +133,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       collection: 'users',
       id: targetId,
       data,
-      req: { user },
+      overrideAccess: true,
     })
 
     if (Array.isArray(body.legacyProtectionContacts)) {

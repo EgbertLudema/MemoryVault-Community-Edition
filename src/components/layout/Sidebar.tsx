@@ -234,7 +234,7 @@ export function Sidebar(props: {
       // Ignore logout errors
     }
 
-    router.push('/')
+    router.push('/login')
     router.refresh()
   }
 
@@ -370,8 +370,10 @@ export function Sidebar(props: {
         </div>
 
         <div className="space-y-2 px-2 py-4">
-          <Link
-            href="/"
+          <a
+            href="https://memory-vault.app"
+            target="_blank"
+            rel="noreferrer"
             className={cn(
               linkBaseClass,
               'w-full active:scale-[0.98]',
@@ -400,7 +402,7 @@ export function Sidebar(props: {
                 {t('website')}
               </span>
             )}
-          </Link>
+          </a>
 
           {!effectiveCollapsed ? <LanguageSwitcher variant="sidebar" /> : null}
 

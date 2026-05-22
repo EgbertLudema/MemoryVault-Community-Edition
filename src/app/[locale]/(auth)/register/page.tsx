@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { MemoryVaultLogo } from '@/components/ui/MemoryVaultLogo'
 import { PrimaryButton } from '@/components/ui/PrimaryButton'
 import { Link, useRouter } from '@/i18n/navigation'
@@ -140,6 +141,10 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-linear-to-br from-purple-50 via-white to-purple-50">
+      <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
+        <LanguageSwitcher />
+      </div>
+
       <div className="w-full max-w-md">
         <div className="flex flex-row items-center justify-start gap-6 mb-8">
           <div className="h-16 w-16 flex items-center justify-center">

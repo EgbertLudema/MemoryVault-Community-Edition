@@ -107,8 +107,6 @@ function translateToastMessage(message: string, t: ReturnType<typeof useTranslat
     'Valid memoryDate is required': t('validMemoryDateRequired'),
     'Link at least one group or loved one': t('linkGroupOrLovedOne'),
     'Content is required': t('contentRequired'),
-    'Video memories require Pro': t('videoMemoriesProOnly'),
-    'Video uploads require Pro': t('videoUploadsProOnly'),
     'Each memory can only have one note': t('singleNoteOnly'),
     'No valid content items found': t('noValidContent'),
     'One or more groups are invalid': t('invalidGroups'),
@@ -117,7 +115,6 @@ function translateToastMessage(message: string, t: ReturnType<typeof useTranslat
     'Relationship is required': t('relationshipRequired'),
     'Exactly one group is required': t('exactlyOneGroupRequired'),
     'At least one group is required': t('atLeastOneGroupRequired'),
-    'Custom groups require Pro': t('customGroupsProOnly'),
     'Group name is required': t('groupNameRequired'),
     'A group with this name already exists': t('groupNameExists'),
     'A file is required': t('fileRequired'),
@@ -129,9 +126,6 @@ function translateToastMessage(message: string, t: ReturnType<typeof useTranslat
     'Failed to create loved one': t('createLovedOneFailed'),
     'Failed to load groups': t('loadGroupsFailed'),
     'Failed to create group': t('createGroupFailed'),
-    'Failed to submit feature request': t('submitFeatureRequestFailed'),
-    'Failed to save vote': t('saveVoteFailed'),
-    'Failed to remove vote': t('removeVoteFailed'),
   }
 
   return translations[message] ?? message

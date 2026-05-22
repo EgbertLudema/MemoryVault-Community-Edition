@@ -1,6 +1,6 @@
 services:
   payload:
-    image: node:20-alpine
+    image: node:24-alpine
     ports:
       - '3000:3000'
     volumes:
@@ -9,9 +9,10 @@ services:
     working_dir: /home/node/app/
     command: sh -c "npm install && npm run dev"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     env_file:
-      - .env.local
+      - .env
     environment:
       POSTGRES_URL: postgresql://postgres:postgres@postgres:5432/memoryvault
 
@@ -30,8 +31,8 @@ services:
       timeout: 5s
       retries: 10
     volumes:
-      - memoryvault_dev_pgdata:/var/lib/postgresql/data
+      - memoryvault_community_pgdata:/var/lib/postgresql/data
 
 volumes:
-  memoryvault_dev_pgdata:
+  memoryvault_community_pgdata:
   node_modules:

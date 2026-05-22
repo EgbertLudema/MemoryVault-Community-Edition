@@ -26,7 +26,7 @@ See [LICENSE.md](./LICENSE.md) and [NOTICE](./NOTICE).
 
 ## Requirements
 
-- Node.js `18.20.2` or newer
+- Node.js `24.15.0` or newer, below Node `25`
 - npm
 - PostgreSQL
 - S3-compatible object storage for media uploads
@@ -70,19 +70,30 @@ S3_PUBLIC_URL=https://media.example.com
 APP_ENCRYPTION_KEY=replace-with-a-long-random-secret
 ```
 
-5. Run the database migrations:
+5. Make sure Postgres is running.
+
+For the local database from this repository:
+
+```bash
+docker compose up -d postgres
+```
+
+If you use a hosted Postgres database, set `POSTGRES_URL` to the exact
+connection string from that provider.
+
+6. Run the database migrations:
 
 ```bash
 npm run db:migrate
 ```
 
-6. Start the app:
+7. Start the app:
 
 ```bash
 npm run dev
 ```
 
-7. Open:
+8. Open:
 
 ```txt
 http://localhost:3000
@@ -106,6 +117,26 @@ docker compose up
 The compose file provides Postgres to the app container. You still need to set
 secrets and service credentials in `.env`, especially `PAYLOAD_SECRET`,
 `APP_ENCRYPTION_KEY`, and the `S3_*` media storage values.
+
+## Database Connection Errors
+
+If migrations or `npm run dev` fail with:
+
+```txt
+password authentication failed for user 'neondb_owner'
+```
+
+then the app is reaching Postgres, but the username/password in `POSTGRES_URL`
+are not accepted by that database. Replace `POSTGRES_URL` in `.env` with the
+current connection string from your database provider, or use the local Docker
+database URL:
+
+```txt
+POSTGRES_URL=postgresql://postgres:postgres@localhost:5432/memoryvault
+```
+
+If an earlier failed Community Edition migration was run against a throwaway
+database, use a fresh database before retrying migrations.
 
 ## Media Storage
 

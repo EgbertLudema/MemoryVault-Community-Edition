@@ -432,6 +432,7 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [isAddContentModalOpen, setIsAddContentModalOpen] = useState(false)
+  const canUseVideo = true
   const [showMemoryLimitUpgradeCta, setShowMemoryLimitUpgradeCta] = useState(false)
   const imagePickerRef = useRef<HTMLInputElement>(null)
   const videoPickerRef = useRef<HTMLInputElement>(null)
