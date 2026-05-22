@@ -40,6 +40,6 @@
   ],
   "exclude": [
     "node_modules",
-    "oss-overrides"
+    "community-edition-overrides"
   ],
 }
