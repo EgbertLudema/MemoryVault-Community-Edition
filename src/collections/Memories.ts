@@ -66,6 +66,22 @@ export const Memories: CollectionConfig = {
       required: true,
     },
     {
+      name: 'titleCiphertext',
+      type: 'textarea',
+      required: false,
+      admin: {
+        hidden: true,
+      },
+    },
+    {
+      name: 'titleEncryptionMetadata',
+      type: 'json',
+      required: false,
+      admin: {
+        hidden: true,
+      },
+    },
+    {
       name: 'memoryDate',
       type: 'date',
       required: true,

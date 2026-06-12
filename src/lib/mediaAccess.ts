@@ -129,6 +129,70 @@ async function userOwnsMediaViaMemory(mediaId: number, userId: number) {
   return (result.docs?.length ?? 0) > 0
 }
 
+async function userCanAccessMediaViaRecipientDelivery(mediaId: number, userId: number) {
+  const payload = await getPayload({ config })
+  const result = await payload.find({
+    collection: 'legacy-deliveries',
+    overrideAccess: true,
+    depth: 2,
+    limit: 100,
+    where: {
+      and: [{ recipientUser: { equals: userId } }, { status: { equals: 'active' } }],
+    },
+  })
+
+  for (const delivery of result.docs ?? []) {
+    const memories = Array.isArray((delivery as any)?.memories) ? (delivery as any).memories : []
+
+    for (const memory of memories) {
+      const content = Array.isArray(memory?.content) ? memory.content : []
+
+      for (const item of content) {
+        const media = item?.media
+        const id = toNumberId(typeof media === 'object' && media ? media.id : media)
+
+        if (id === mediaId) {
+          return true
+        }
+      }
+    }
+
+    const ownerId =
+      typeof (delivery as any)?.owner === 'object' && (delivery as any).owner
+        ? toNumberId((delivery as any).owner.id)
+        : toNumberId((delivery as any)?.owner)
+    const lovedOneId =
+      typeof (delivery as any)?.lovedOne === 'object' && (delivery as any).lovedOne
+        ? toNumberId((delivery as any).lovedOne.id)
+        : toNumberId((delivery as any)?.lovedOne)
+
+    if (!Number.isFinite(ownerId) || !Number.isFinite(lovedOneId)) {
+      continue
+    }
+
+    const openWhenResult = await payload.find({
+      collection: 'open-when-messages' as any,
+      overrideAccess: true,
+      depth: 1,
+      limit: 100,
+      where: {
+        and: [
+          { owner: { equals: ownerId } },
+          { lovedOnes: { equals: lovedOneId } },
+          { attachments: { equals: mediaId } },
+          { status: { not_equals: 'draft' } },
+        ],
+      },
+    })
+
+    if ((openWhenResult.docs?.length ?? 0) > 0) {
+      return true
+    }
+  }
+
+  return false
+}
+
 export async function getOwnedMediaFromHeaders(
   headers: Headers,
   mediaId: number,
@@ -157,9 +221,12 @@ export async function getOwnedMediaFromHeaders(
       : toNumberId(media?.ownerUser)
 
   if (!Number.isFinite(ownerUserId) || ownerUserId !== Number(user.id)) {
-    const isReferencedByOwnedMemory = await userOwnsMediaViaMemory(mediaId, Number(user.id))
+    const [isReferencedByOwnedMemory, isReferencedByRecipientDelivery] = await Promise.all([
+      userOwnsMediaViaMemory(mediaId, Number(user.id)),
+      userCanAccessMediaViaRecipientDelivery(mediaId, Number(user.id)),
+    ])
 
-    if (!isReferencedByOwnedMemory) {
+    if (!isReferencedByOwnedMemory && !isReferencedByRecipientDelivery) {
       return { error: 'forbidden' }
     }
   }

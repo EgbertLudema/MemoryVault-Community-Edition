@@ -8,6 +8,7 @@ import {
   createRecipientPdf,
   createZip,
 } from '@/lib/exportArchive'
+import { getLovedOneDisplayNote } from '@/lib/encryptedFields'
 import { resolveLegacyRecipients } from '@/lib/legacyDelivery'
 import { buildLegacyDeliveryData } from '@/lib/legacyDeliveryContent'
 import { getOwnedMediaBlobFromHeaders } from '@/lib/mediaAccess'
@@ -114,7 +115,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
     const delivery = buildLegacyDeliveryData({
       recipientName:
         recipient?.recipientName ?? String(lovedOne.nickname ?? lovedOne.fullName ?? 'you'),
-      recipientNote: lovedOne.customNote,
+      recipientNote: getLovedOneDisplayNote(lovedOne),
       ownerProfileImageSrc: getProfileImageSrc(user),
       memories,
       origin: getRequestOrigin(req.headers),

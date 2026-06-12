@@ -138,8 +138,8 @@ function makeTrustedContactEmail(user: LegacyCheckInUser, contactName: string, b
       `The person is healthy: ${healthyUrl}`,
       'The person is not healthy: choose this if they are alive but should not receive the check-ins directly. Future 30-day check-ins will go to trusted contacts instead.',
       `The person is not healthy: ${unhealthyUrl}`,
-      'The person has passed away: choose this only when they have passed away. Memory Vault will start delivery to linked recipients.',
-      `The person has passed away: ${passedUrl}`,
+      'The person has passed away: choose this only when they have passed away. This opens a confirmation page where you must hold the confirm button for 2 seconds before Memory Vault starts delivery to linked recipients.',
+      `Confirm passing: ${passedUrl}`,
     ].join('\n'),
     html: renderBrandedEmail({
       eyebrow: 'Trusted contact check-in',
@@ -163,8 +163,8 @@ function makeTrustedContactEmail(user: LegacyCheckInUser, contactName: string, b
 
         <div style="margin:0;border:1px solid #fecaca;border-radius:8px;background:#fef2f2;padding:16px;">
           <h2 style="margin:0 0 8px;color:#991b1b;font-size:17px;line-height:1.35;">The person has passed away</h2>
-          <p style="margin:0 0 14px;color:#991b1b;">Choose this only when they have passed away. Memory Vault will start delivery to linked recipients.</p>
-          ${emailButton({ href: passedUrl, label: 'The person has passed away', background: '#dc2626' })}
+          <p style="margin:0 0 14px;color:#991b1b;">Choose this only when they have passed away. This opens a confirmation page where you must hold the confirm button for 2 seconds before delivery starts.</p>
+          ${emailButton({ href: passedUrl, label: 'Open confirmation page', background: '#dc2626' })}
         </div>
       `,
     }),

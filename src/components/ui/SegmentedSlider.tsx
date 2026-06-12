@@ -5,6 +5,8 @@ import * as React from 'react'
 type SegmentedOption<T extends string> = {
   label: string
   value: T
+  disabled?: boolean
+  title?: string
 }
 
 function cn(...classes: Array<string | false | null | undefined>) {
@@ -124,6 +126,8 @@ export function SegmentedSlider<T extends string>(props: {
               itemRefs.current[idx] = el
             }}
             type="button"
+            disabled={opt.disabled}
+            title={opt.title}
             onClick={() => onChange(opt.value)}
             className={cn(
               `
@@ -141,7 +145,9 @@ export function SegmentedSlider<T extends string>(props: {
                                 active:scale-[0.99]
                                 whitespace-nowrap
                             `,
-              active ? 'text-neutral-950' : 'text-neutral-600 hover:text-neutral-800',
+              opt.disabled && 'cursor-not-allowed text-neutral-400 opacity-45 hover:text-neutral-400',
+              !opt.disabled && active ? 'text-neutral-950' : null,
+              !opt.disabled && !active ? 'text-neutral-600 hover:text-neutral-800' : null,
             )}
           >
             {opt.label}

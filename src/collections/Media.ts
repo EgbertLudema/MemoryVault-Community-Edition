@@ -70,12 +70,16 @@ export const Media: CollectionConfig = {
       name: 'posterUrl',
       type: 'text',
       required: false,
+      admin: {
+        hidden: true,
+      },
     },
     {
       name: 'posterEncryptionMetadata',
       type: 'json',
       required: false,
       admin: {
+        hidden: true,
         readOnly: true,
       },
     },
@@ -84,6 +88,7 @@ export const Media: CollectionConfig = {
       type: 'checkbox',
       defaultValue: false,
       admin: {
+        hidden: true,
         readOnly: true,
       },
     },
@@ -92,6 +97,7 @@ export const Media: CollectionConfig = {
       type: 'json',
       required: false,
       admin: {
+        hidden: true,
         readOnly: true,
       },
     },

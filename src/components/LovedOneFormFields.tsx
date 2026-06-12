@@ -43,6 +43,8 @@ type LovedOneFormFieldsProps = {
   stickyActions?: boolean
 }
 
+type ValidationTarget = 'fullName' | 'email' | 'relationship' | 'groups'
+
 function normalizeGroupId(id: string | number): string {
   return String(id).trim()
 }
@@ -91,6 +93,14 @@ export function LovedOneFormFields({
   const [loading, setLoading] = React.useState(false)
   const [deleting, setDeleting] = React.useState(false)
   const [showUpgradeCta, setShowUpgradeCta] = React.useState(false)
+  const [validationError, setValidationError] = React.useState<{
+    target: ValidationTarget
+    message: string
+  } | null>(null)
+  const fullNameInputRef = React.useRef<HTMLInputElement>(null)
+  const emailInputRef = React.useRef<HTMLInputElement>(null)
+  const relationshipInputRef = React.useRef<HTMLInputElement>(null)
+  const groupsRef = React.useRef<HTMLDivElement>(null)
 
   const [groups, setGroups] = React.useState<LovedOneGroup[]>([])
   const [groupsLoading, setGroupsLoading] = React.useState(true)
@@ -158,30 +168,60 @@ export function LovedOneFormFields({
     }
   }, [showToast, t])
 
+  function scrollToValidationTarget(target: ValidationTarget) {
+    const node =
+      target === 'fullName'
+        ? fullNameInputRef.current
+        : target === 'email'
+          ? emailInputRef.current
+          : target === 'relationship'
+            ? relationshipInputRef.current
+            : groupsRef.current
+
+    window.requestAnimationFrame(() => {
+      node?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+      if (target === 'fullName') {
+        fullNameInputRef.current?.focus()
+      } else if (target === 'email') {
+        emailInputRef.current?.focus()
+      } else if (target === 'relationship') {
+        relationshipInputRef.current?.focus()
+      }
+    })
+  }
+
+  function showValidationError(target: ValidationTarget, message: string) {
+    setValidationError({ target, message })
+    showToast({ tone: 'error', message })
+    scrollToValidationTarget(target)
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!fullName.trim()) {
-      showToast({ tone: 'error', message: t('fullNameRequired') })
+      showValidationError('fullName', t('fullNameRequired'))
       return
     }
 
     if (!relationship.trim()) {
-      showToast({ tone: 'error', message: t('relationshipRequired') })
+      showValidationError('relationship', t('relationshipRequired'))
       return
     }
 
     if (!email.trim()) {
-      showToast({ tone: 'error', message: t('emailRequired') })
+      showValidationError('email', t('emailRequired'))
       return
     }
 
     if (groupIds.length !== 1) {
-      showToast({ tone: 'error', message: t('groupRequired') })
+      showValidationError('groups', t('groupRequired'))
       return
     }
 
     try {
       setLoading(true)
+      setValidationError(null)
       setShowUpgradeCta(false)
 
       await onSubmit({
@@ -230,11 +270,23 @@ export function LovedOneFormFields({
           <RequiredLabel required>{t('fullName')}</RequiredLabel>
         </label>
         <input
+          ref={fullNameInputRef}
           value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
+          onChange={(e) => {
+            setFullName(e.target.value)
+            if (validationError?.target === 'fullName') {
+              setValidationError(null)
+            }
+          }}
           placeholder={t('fullNamePlaceholder')}
-          className="h-[42px] rounded-xl border border-[#dddddd] bg-white px-3 text-[14px] outline-none"
+          aria-invalid={validationError?.target === 'fullName'}
+          className={`h-[42px] rounded-xl border bg-white px-3 text-[14px] outline-none ${
+            validationError?.target === 'fullName' ? 'border-red-300' : 'border-[#dddddd]'
+          }`}
         />
+        {validationError?.target === 'fullName' ? (
+          <div className="text-xs font-semibold text-red-600">{validationError.message}</div>
+        ) : null}
       </div>
 
       <div className="grid gap-2">
@@ -254,12 +306,24 @@ export function LovedOneFormFields({
           <RequiredLabel required>{t('email')}</RequiredLabel>
         </label>
         <input
+          ref={emailInputRef}
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value)
+            if (validationError?.target === 'email') {
+              setValidationError(null)
+            }
+          }}
           placeholder={t('emailPlaceholder')}
-          className="h-[42px] rounded-xl border border-[#dddddd] bg-white px-3 text-[14px] outline-none"
+          aria-invalid={validationError?.target === 'email'}
+          className={`h-[42px] rounded-xl border bg-white px-3 text-[14px] outline-none ${
+            validationError?.target === 'email' ? 'border-red-300' : 'border-[#dddddd]'
+          }`}
           inputMode="email"
         />
+        {validationError?.target === 'email' ? (
+          <div className="text-xs font-semibold text-red-600">{validationError.message}</div>
+        ) : null}
       </div>
 
       <div className="grid gap-2">
@@ -267,11 +331,23 @@ export function LovedOneFormFields({
           <RequiredLabel required>{t('relationship')}</RequiredLabel>
         </label>
         <input
+          ref={relationshipInputRef}
           value={relationship}
-          onChange={(e) => setRelationship(e.target.value)}
+          onChange={(e) => {
+            setRelationship(e.target.value)
+            if (validationError?.target === 'relationship') {
+              setValidationError(null)
+            }
+          }}
           placeholder={t('relationshipPlaceholder')}
-          className="h-[42px] rounded-xl border border-[#dddddd] bg-white px-3 text-[14px] outline-none"
+          aria-invalid={validationError?.target === 'relationship'}
+          className={`h-[42px] rounded-xl border bg-white px-3 text-[14px] outline-none ${
+            validationError?.target === 'relationship' ? 'border-red-300' : 'border-[#dddddd]'
+          }`}
         />
+        {validationError?.target === 'relationship' ? (
+          <div className="text-xs font-semibold text-red-600">{validationError.message}</div>
+        ) : null}
       </div>
 
       <div className="grid gap-2">
@@ -287,13 +363,15 @@ export function LovedOneFormFields({
         <div className="text-xs text-[#666666]">{t('customNoteHelp')}</div>
       </div>
 
-      <div className="grid gap-2">
+      <div ref={groupsRef} className="grid gap-2">
         <label>
           <RequiredLabel required>{t('groups')}</RequiredLabel>
         </label>
 
         <div
-          className={`flex flex-wrap gap-2 rounded-xl border border-[#dddddd] bg-white p-[10px] ${
+          className={`flex flex-wrap gap-2 rounded-xl border bg-white p-[10px] ${
+            validationError?.target === 'groups' ? 'border-red-300' : 'border-[#dddddd]'
+          } ${
             groupsLoading ? 'opacity-70' : 'opacity-100'
           }`}
           aria-disabled={groupsLoading}
@@ -319,13 +397,22 @@ export function LovedOneFormFields({
                     label={getDefaultGroupLabel(g.defaultKey, g.name, (key) => tGroups(key))}
                     active={selected}
                     colorValue={meta.color.value}
-                    onClick={() => setGroupIds((prev) => (prev.includes(id) ? [] : [id]))}
+                    onClick={() => {
+                      setGroupIds((prev) => (prev.includes(id) ? [] : [id]))
+                      if (validationError?.target === 'groups') {
+                        setValidationError(null)
+                      }
+                    }}
                     icon={<IconComponent className="h-4 w-4 shrink-0" />}
                   />
                 )
               })
             : null}
         </div>
+
+        {validationError?.target === 'groups' ? (
+          <div className="text-xs font-semibold text-red-600">{validationError.message}</div>
+        ) : null}
 
         <div className="text-xs text-[#666666]">
           {t('groupsManagePrefix')}{' '}

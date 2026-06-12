@@ -3,6 +3,11 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getAppUserFromHeaders } from '@/lib/appAuth'
 import {
+  ENCRYPTED_MEMORY_TITLE_PLACEHOLDER,
+  encryptSensitiveText,
+  getMemoryDisplayTitle,
+} from '@/lib/encryptedFields'
+import {
   getMemoryContentItemLimit,
   getMemoryContentLimitMessage,
   isWithinMemoryContentItemLimit,
@@ -55,12 +60,7 @@ function getMediaPosterUrl(value: unknown) {
   return String((value as { posterUrl?: unknown }).posterUrl ?? '').trim()
 }
 
-async function getOwnedMemory(
-  payload: PayloadClient,
-  memoryId: number,
-  userId: number,
-  depth = 2,
-) {
+async function getOwnedMemory(payload: PayloadClient, memoryId: number, userId: number, depth = 2) {
   const result = await payload.find({
     collection: 'memories',
     overrideAccess: true,
@@ -285,7 +285,7 @@ function serializeMemoryForClient(memory: any) {
       })
     : memory?.content
 
-  return { ...memory, content }
+  return { ...memory, title: getMemoryDisplayTitle(memory, ''), content }
 }
 
 export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
@@ -360,6 +360,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
+    const encryptedTitle = encryptSensitiveText(title)
 
     if (!memoryDateRaw || Number.isNaN(memoryDate.getTime())) {
       return NextResponse.json({ error: 'Valid memoryDate is required' }, { status: 400 })
@@ -402,7 +403,10 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
           noteCount += 1
 
           if (noteCount > 1) {
-            return NextResponse.json({ error: 'Each memory can only have one note' }, { status: 400 })
+            return NextResponse.json(
+              { error: 'Each memory can only have one note' },
+              { status: 400 },
+            )
           }
 
           if (note) {
@@ -472,7 +476,9 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       overrideAccess: true,
       depth: 2,
       data: {
-        title,
+        title: ENCRYPTED_MEMORY_TITLE_PLACEHOLDER,
+        titleCiphertext: encryptedTitle.ciphertext,
+        titleEncryptionMetadata: encryptedTitle.metadata,
         memoryDate: memoryDate.toISOString(),
         owner: Number(user.id),
         groups: groupIds,

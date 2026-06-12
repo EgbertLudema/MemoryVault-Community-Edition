@@ -11,8 +11,8 @@ export const FEATURE_GRADIENTS: Record<FeatureGradientKey, FeatureGradient> = {
     backgroundImage: 'linear-gradient(to bottom right, rgb(96 165 250), rgb(99 102 241))',
   },
   photos: {
-    className: 'bg-gradient-to-br from-rose-400 to-pink-500',
-    backgroundImage: 'linear-gradient(to bottom right, rgb(251 113 133), rgb(236 72 153))',
+    className: 'bg-gradient-to-br from-emerald-400 to-green-500',
+    backgroundImage: 'linear-gradient(to bottom right, rgb(52 211 153), rgb(34 197 94))',
   },
   videos: {
     className: 'bg-gradient-to-br from-amber-400 to-orange-500',

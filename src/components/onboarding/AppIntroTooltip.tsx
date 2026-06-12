@@ -31,7 +31,7 @@ export function AppIntroTooltip(props: TooltipRenderProps) {
           : 'w-[min(420px,calc(100vw-30px))] rounded-[30px]',
         'corner-shape-squircle border border-white/80',
         'bg-[linear-gradient(135deg,rgba(255,255,255,0.98),rgba(250,245,255,0.95))]',
-        isWelcomeStep ? 'p-8 sm:p-10' : 'p-7',
+        isWelcomeStep ? 'p-5 sm:p-10' : 'p-5 sm:p-7',
         'text-left shadow-[0_24px_80px_rgba(124,58,237,0.18)] backdrop-blur-xl',
       )}
       aria-labelledby={title ? 'joyride-tooltip-title' : undefined}
@@ -44,7 +44,9 @@ export function AppIntroTooltip(props: TooltipRenderProps) {
             id="joyride-tooltip-title"
             className={cn(
               'font-bold leading-[1.1] tracking-[-0.03em] text-gray-900',
-              isWelcomeStep ? 'mb-4 text-[34px] sm:text-[38px]' : 'mb-2 text-[24px]',
+              isWelcomeStep
+                ? 'mb-3 text-[24px] sm:mb-4 sm:text-[38px]'
+                : 'mb-2 text-[20px] sm:text-[24px]',
             )}
           >
             {title}
@@ -55,7 +57,9 @@ export function AppIntroTooltip(props: TooltipRenderProps) {
           id="joyride-tooltip-content"
           className={cn(
             'text-stone-600',
-            isWelcomeStep ? 'max-w-[42ch] pt-2 pb-6 text-[17px] leading-[1.8]' : 'pt-1 pb-4 text-[15px] leading-[1.65]',
+            isWelcomeStep
+              ? 'max-w-[42ch] pb-4 pt-1 text-[14px] leading-[1.65] sm:pb-6 sm:pt-2 sm:text-[17px] sm:leading-[1.8]'
+              : 'pb-3 pt-1 text-[13px] leading-[1.55] sm:pb-4 sm:text-[15px] sm:leading-[1.65]',
           )}
         >
           {content}
@@ -66,7 +70,7 @@ export function AppIntroTooltip(props: TooltipRenderProps) {
         <div
           className={cn(
             'flex items-center justify-end gap-2 border-t border-purple-200/40',
-            isWelcomeStep ? 'pt-6' : 'pt-4',
+            isWelcomeStep ? 'pt-4 sm:pt-6' : 'pt-3 sm:pt-4',
           )}
         >
           <div className="mr-auto">

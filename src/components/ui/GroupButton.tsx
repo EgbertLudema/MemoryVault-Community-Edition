@@ -9,6 +9,7 @@ type GroupButtonProps = {
   onClick?: () => void
   colorValue?: string | null
   icon?: React.ReactNode
+  suffix?: React.ReactNode
 }
 
 function cn(...classes: Array<string | false | null | undefined>) {
@@ -40,7 +41,7 @@ function hexToRgba(hex: string, alpha: number) {
 }
 
 export function GroupButton(props: GroupButtonProps) {
-  const { label, active = false, onClick, colorValue, icon } = props
+  const { label, active = false, onClick, colorValue, icon, suffix } = props
 
   const hasColor = Boolean(colorValue)
 
@@ -79,6 +80,7 @@ export function GroupButton(props: GroupButtonProps) {
     >
       {icon ? <span className="inline-flex shrink-0 items-center">{icon}</span> : null}
       <span className="block leading-none">{label}</span>
+      {suffix ? <span className="inline-flex shrink-0 items-center">{suffix}</span> : null}
     </button>
   )
 }

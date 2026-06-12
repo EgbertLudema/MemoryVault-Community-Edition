@@ -11,8 +11,16 @@ export function LegacyDeliveryUnlock({ token }: { token: string }) {
   const locale = useLocale()
   const { showToast } = useToast()
   const [password, setPassword] = useState('')
+  const [verifiedPassword, setVerifiedPassword] = useState('')
   const [delivery, setDelivery] = useState<LegacyDeliveryData | null>(null)
   const [loading, setLoading] = useState(false)
+  const [claiming, setClaiming] = useState(false)
+  const [claimForm, setClaimForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    accountPassword: '',
+  })
 
   async function unlockDelivery(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -37,11 +45,44 @@ export function LegacyDeliveryUnlock({ token }: { token: string }) {
       }
 
       setDelivery(data as LegacyDeliveryData)
+      setVerifiedPassword(password)
       setPassword('')
     } catch {
       showToast({ tone: 'error', message: t('unlockError') })
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function claimDelivery(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setClaiming(true)
+
+    try {
+      const response = await fetch(`/api/legacy/${encodeURIComponent(token)}/claim`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          password: verifiedPassword,
+          ...claimForm,
+        }),
+      })
+
+      const data = (await response.json().catch(() => ({}))) as { message?: string }
+
+      if (!response.ok) {
+        showToast({ tone: 'error', message: data.message || t('claimError') })
+        return
+      }
+
+      window.location.href = `/${locale}/recipient`
+    } catch {
+      showToast({ tone: 'error', message: t('claimError') })
+    } finally {
+      setClaiming(false)
     }
   }
 
@@ -92,6 +133,71 @@ export function LegacyDeliveryUnlock({ token }: { token: string }) {
     <LegacyDeliveryView
       delivery={delivery}
       locale={locale}
+      afterHero={
+        <form
+          id="claim-delivery"
+          onSubmit={claimDelivery}
+          className="rounded-[1.5rem] border border-emerald-100 bg-emerald-50/80 p-5 shadow-[0_18px_45px_-30px_rgba(5,150,105,0.35)]"
+        >
+          <div className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
+            {t('claimBadge')}
+          </div>
+          <h2 className="mt-2 text-2xl font-bold tracking-tight text-stone-900">
+            {t('claimTitle')}
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-700">
+            {t('claimBody')}
+          </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <input
+              value={claimForm.firstName}
+              onChange={(event) =>
+                setClaimForm((current) => ({ ...current, firstName: event.target.value }))
+              }
+              placeholder={t('claimFirstName')}
+              className="rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+              required
+            />
+            <input
+              value={claimForm.lastName}
+              onChange={(event) =>
+                setClaimForm((current) => ({ ...current, lastName: event.target.value }))
+              }
+              placeholder={t('claimLastName')}
+              className="rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+              required
+            />
+            <input
+              type="email"
+              value={claimForm.email}
+              onChange={(event) =>
+                setClaimForm((current) => ({ ...current, email: event.target.value }))
+              }
+              placeholder={t('claimEmail')}
+              className="rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+              required
+            />
+            <input
+              type="password"
+              value={claimForm.accountPassword}
+              onChange={(event) =>
+                setClaimForm((current) => ({ ...current, accountPassword: event.target.value }))
+              }
+              placeholder={t('claimPassword')}
+              className="rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100"
+              minLength={8}
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={claiming}
+            className="mt-4 rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {claiming ? t('claimSaving') : t('claimSubmit')}
+          </button>
+        </form>
+      }
       labels={{
         deliveryLabel: t('deliveryLabel'),
         collectionTitle: t('collectionTitle', { name: '{name}' }),
@@ -106,6 +212,15 @@ export function LegacyDeliveryUnlock({ token }: { token: string }) {
         noteTypeLabel: t('noteTypeLabel'),
         photosTypeLabel: t('photosTypeLabel'),
         videoTypeLabel: t('videoTypeLabel'),
+        openWhenMessagesLabel: t('openWhenMessagesLabel'),
+        lockedOpenWhenEyebrow: t('lockedOpenWhenEyebrow'),
+        lockedOpenWhenBody: t('lockedOpenWhenBody'),
+        lockedOpenWhenDialogTitle: t('lockedOpenWhenDialogTitle'),
+        lockedOpenWhenDialogBody: t('lockedOpenWhenDialogBody'),
+        lockedOpenWhenCreateAccount: t('lockedOpenWhenCreateAccount'),
+        lockedOpenWhenClose: t('lockedOpenWhenClose'),
+        lockedOpenWhenFallbackTitle: t('lockedOpenWhenFallbackTitle'),
+        sharedByLabel: t('sharedByLabel', { name: '{name}' }),
       }}
     />
   )

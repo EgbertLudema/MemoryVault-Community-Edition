@@ -9,11 +9,49 @@ import type { GridMode } from '@/components/ui/MemoryFilters'
 
 type MemoriesHelpTourProps = {
   gridMode: GridMode
+  hasMemories: boolean
 }
 
-function getSteps(t: ReturnType<typeof useTranslations>, gridMode: GridMode): Step[] {
+function getSteps(
+  t: ReturnType<typeof useTranslations>,
+  gridMode: GridMode,
+  isDesktop: boolean,
+  hasMemories: boolean,
+): Step[] {
+  if (!isDesktop) {
+    const steps: Step[] = []
+
+    if (hasMemories) {
+      steps.push({
+        target: '[data-tour="memories-scroll-filters"]',
+        placement: 'bottom',
+        skipBeacon: true,
+        title: t('scroll.filtersTitle'),
+        content: t('scroll.filtersBody'),
+      })
+
+      steps.push({
+        target: '[data-tour="memories-first-card"]',
+        placement: 'top',
+        skipBeacon: true,
+        title: t('memoryCardTitle'),
+        content: t('memoryCardBody'),
+      })
+    }
+
+    steps.push({
+      target: '[data-tour="memories-add-memory"]',
+      placement: 'bottom',
+      skipBeacon: true,
+      title: t('scroll.addMemoryTitle'),
+      content: t('scroll.addMemoryBody'),
+    })
+
+    return steps
+  }
+
   if (gridMode === 'drag') {
-    return [
+    const steps: Step[] = [
       {
         target: '[data-tour="memories-view-toggle"]',
         placement: 'bottom',
@@ -21,13 +59,27 @@ function getSteps(t: ReturnType<typeof useTranslations>, gridMode: GridMode): St
         title: t('drag.viewToggleTitle'),
         content: t('drag.viewToggleBody'),
       },
-      {
+    ]
+
+    if (hasMemories) {
+      steps.push({
         target: '[data-tour="memories-drag-filters"]',
         placement: 'bottom',
         skipBeacon: true,
         title: t('drag.filtersTitle'),
         content: t('drag.filtersBody'),
-      },
+      })
+
+      steps.push({
+        target: '[data-tour="memories-first-card"]',
+        placement: 'top',
+        skipBeacon: true,
+        title: t('memoryCardTitle'),
+        content: t('memoryCardBody'),
+      })
+    }
+
+    steps.push(
       {
         target: '[data-tour="memories-add-memory"]',
         placement: 'left',
@@ -35,10 +87,12 @@ function getSteps(t: ReturnType<typeof useTranslations>, gridMode: GridMode): St
         title: t('drag.addMemoryTitle'),
         content: t('drag.addMemoryBody'),
       },
-    ]
+    )
+
+    return steps
   }
 
-  return [
+  const steps: Step[] = [
     {
       target: '[data-tour="memories-view-toggle"]',
       placement: 'bottom',
@@ -46,13 +100,27 @@ function getSteps(t: ReturnType<typeof useTranslations>, gridMode: GridMode): St
       title: t('scroll.viewToggleTitle'),
       content: t('scroll.viewToggleBody'),
     },
-    {
+  ]
+
+  if (hasMemories) {
+    steps.push({
       target: '[data-tour="memories-scroll-filters"]',
       placement: 'bottom',
       skipBeacon: true,
       title: t('scroll.filtersTitle'),
       content: t('scroll.filtersBody'),
-    },
+    })
+
+    steps.push({
+      target: '[data-tour="memories-first-card"]',
+      placement: 'top',
+      skipBeacon: true,
+      title: t('memoryCardTitle'),
+      content: t('memoryCardBody'),
+    })
+  }
+
+  steps.push(
     {
       target: '[data-tour="memories-add-memory"]',
       placement: 'left',
@@ -60,7 +128,9 @@ function getSteps(t: ReturnType<typeof useTranslations>, gridMode: GridMode): St
       title: t('scroll.addMemoryTitle'),
       content: t('scroll.addMemoryBody'),
     },
-  ]
+  )
+
+  return steps
 }
 
 function selectorsExist(steps: Step[]) {
@@ -79,8 +149,24 @@ export function MemoriesHelpTour(props: MemoriesHelpTourProps) {
   const [run, setRun] = React.useState(false)
   const [requestToken, setRequestToken] = React.useState(0)
   const [startedToken, setStartedToken] = React.useState(0)
+  const [isDesktop, setIsDesktop] = React.useState(false)
 
-  const steps = React.useMemo(() => getSteps(t, props.gridMode), [props.gridMode, t])
+  const steps = React.useMemo(
+    () => getSteps(t, props.gridMode, isDesktop, props.hasMemories),
+    [isDesktop, props.gridMode, props.hasMemories, t],
+  )
+
+  React.useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 1024px)')
+    const update = () => setIsDesktop(mediaQuery.matches)
+
+    update()
+    mediaQuery.addEventListener('change', update)
+
+    return () => {
+      mediaQuery.removeEventListener('change', update)
+    }
+  }, [])
 
   React.useEffect(() => {
     const handleOpenHelp = () => {

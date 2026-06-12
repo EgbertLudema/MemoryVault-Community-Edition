@@ -9,6 +9,14 @@ export function MemoryEditModalClient({ memory }: { memory: EditableMemory }) {
   const t = useTranslations('MemoryEditForm')
   const router = useRouter()
 
+  function closeAndRefresh() {
+    router.back()
+
+    setTimeout(() => {
+      router.refresh()
+    }, 50)
+  }
+
   return (
     <Modal
       title={t('modalEditTitle', { title: memory.title || t('modalFallbackTitle') })}
@@ -18,8 +26,8 @@ export function MemoryEditModalClient({ memory }: { memory: EditableMemory }) {
         memory={memory}
         mode="modal"
         onClose={() => router.back()}
-        onSaved={() => router.back()}
-        onDeleted={() => router.back()}
+        onSaved={closeAndRefresh}
+        onDeleted={closeAndRefresh}
       />
     </Modal>
   )

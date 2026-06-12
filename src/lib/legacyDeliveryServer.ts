@@ -46,7 +46,7 @@ export async function createLegacyDeliveriesForUser({
     .map((value) => toNumberId(value))
     .filter((value) => Number.isFinite(value))
 
-  const [lovedOneResult, memoryResult, priorDeliveryResult] = await Promise.all([
+  const [lovedOneResult, memoryResult, openWhenResult, priorDeliveryResult] = await Promise.all([
     payload.find({
       collection: 'loved-ones',
       overrideAccess: true,
@@ -63,6 +63,15 @@ export async function createLegacyDeliveriesForUser({
       limit: 500,
       where: {
         owner: { equals: user.id },
+      },
+    }),
+    payload.find({
+      collection: 'open-when-messages' as any,
+      overrideAccess: true,
+      depth: 1,
+      limit: 500,
+      where: {
+        and: [{ owner: { equals: user.id } }, { status: { not_equals: 'draft' } }],
       },
     }),
     payload.find({
@@ -84,10 +93,27 @@ export async function createLegacyDeliveriesForUser({
     return requestedLovedOneIds.includes(Number(lovedOne.id))
   })
 
-  const recipients = resolveLegacyRecipients(lovedOnes as any[], (memoryResult.docs ?? []) as any[])
+  const openWhenLovedOneCounts = new Map<number, number>()
+  for (const message of (openWhenResult.docs ?? []) as any[]) {
+    const messageLovedOnes = Array.isArray(message?.lovedOnes) ? message.lovedOnes : []
+    for (const lovedOne of messageLovedOnes) {
+      const lovedOneId = toNumberId(
+        typeof lovedOne === 'object' && lovedOne ? lovedOne.id : lovedOne,
+      )
+      if (Number.isFinite(lovedOneId)) {
+        openWhenLovedOneCounts.set(lovedOneId, (openWhenLovedOneCounts.get(lovedOneId) ?? 0) + 1)
+      }
+    }
+  }
+
+  const recipients = resolveLegacyRecipients(
+    lovedOnes as any[],
+    (memoryResult.docs ?? []) as any[],
+    Array.from(openWhenLovedOneCounts.keys()),
+  )
 
   if (recipients.length === 0) {
-    throw new Error('No loved ones with assigned memories were found for delivery.')
+    throw new Error('No loved ones with assigned memories or Open When messages were found for delivery.')
   }
 
   const priorDeliveries = priorDeliveryResult.docs ?? []
@@ -115,6 +141,14 @@ export async function createLegacyDeliveriesForUser({
   const deliveries = []
 
   for (const recipient of recipients) {
+    const openWhenCount = openWhenLovedOneCounts.get(recipient.lovedOneId) ?? 0
+    const hasMemories = recipient.memoryIds.length > 0
+    const accessDescription =
+      hasMemories && openWhenCount > 0
+        ? `${recipient.memoryIds.length} ${recipient.memoryIds.length === 1 ? 'memory' : 'memories'} and ${openWhenCount} Open When ${openWhenCount === 1 ? 'message' : 'messages'}`
+        : openWhenCount > 0
+          ? `${openWhenCount} Open When ${openWhenCount === 1 ? 'message' : 'messages'}`
+          : `${recipient.memoryIds.length} ${recipient.memoryIds.length === 1 ? 'memory' : 'memories'}`
     const { token, tokenHash } = createDeliveryToken()
     const accessPassword = createDeliveryPassword()
     const created = await payload.create({
@@ -150,7 +184,7 @@ export async function createLegacyDeliveriesForUser({
             `Open your private link here: ${deliveryUrl}`,
             `Password: ${accessPassword}`,
             '',
-            `This link and password give you access to ${recipient.memoryIds.length} ${recipient.memoryIds.length === 1 ? 'memory' : 'memories'}.`,
+            `This link and password give you access to ${accessDescription}.`,
           ].join('\n'),
           html: renderBrandedEmail({
             eyebrow: 'Memory delivery',
@@ -165,7 +199,7 @@ export async function createLegacyDeliveriesForUser({
                 <p style="margin:10px 0 0;color:#57534e;font-size:14px;line-height:1.5;">Use this password when the page asks for it.</p>
               </div>
               <p style="margin:0 0 22px;">${emailButton({ href: deliveryUrl, label: 'Open your private memories' })}</p>
-              <p style="margin:0;color:#57534e;">This link and password give you access to ${recipient.memoryIds.length} ${recipient.memoryIds.length === 1 ? 'memory' : 'memories'}.</p>
+              <p style="margin:0;color:#57534e;">This link and password give you access to ${escapeHtml(accessDescription)}.</p>
             `,
           }),
         })

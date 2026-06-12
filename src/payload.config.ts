@@ -13,6 +13,7 @@ import { Media } from './collections/Media'
 import { LovedOnes } from './collections/LovedOnes'
 import { LovedOneGroups } from './collections/LovedOneGroups'
 import { Memories } from './collections/Memories'
+import { OpenWhenMessages } from './collections/OpenWhenMessages'
 import { LegacyDeliveries } from './collections/LegacyDeliveries'
 
 const filename = fileURLToPath(import.meta.url)
@@ -42,6 +43,7 @@ export default buildConfig({
     Users,
     Media,
     Memories,
+    OpenWhenMessages,
     LovedOnes,
     LovedOneGroups,
     LegacyDeliveries,

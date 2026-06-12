@@ -3,6 +3,7 @@ export const FEATURE_KEYS = {
   videoMemories: 'video_memories',
   customLovedOneGroups: 'custom_loved_one_groups',
   legacyDelivery: 'legacy_delivery',
+  openWhenPhotos: 'open_when_photos',
 } as const
 
 export type FeatureKey = (typeof FEATURE_KEYS)[keyof typeof FEATURE_KEYS]
@@ -19,13 +20,15 @@ export function hasFeatureForUser(
   return true
 }
 
-export function getLimit(_limit: 'memoryContentItems' | 'memories' | 'lovedOnes') {
+export function getLimit(
+  _limit: 'memoryContentItems' | 'memories' | 'lovedOnes' | 'storageBytes' | 'openWhenMessages',
+) {
   return null
 }
 
 export function getLimitForUser(
   _user: UserFeatureState | null | undefined,
-  _limit: 'memoryContentItems' | 'memories' | 'lovedOnes',
+  _limit: 'memoryContentItems' | 'memories' | 'lovedOnes' | 'storageBytes' | 'openWhenMessages',
 ) {
   return null
 }

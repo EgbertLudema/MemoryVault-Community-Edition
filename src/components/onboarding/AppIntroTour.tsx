@@ -1,10 +1,11 @@
 'use client'
 
 import * as React from 'react'
-import { Joyride, STATUS, type EventData, type Step } from 'react-joyride'
+import { ACTIONS, EVENTS, Joyride, STATUS, type EventData, type Step } from 'react-joyride'
 import { useTranslations } from 'next-intl'
 import { AppIntroTooltip } from '@/components/onboarding/AppIntroTooltip'
 import { usePathname } from '@/i18n/navigation'
+import { analytics } from '@/lib/analytics'
 
 const DESKTOP_MEDIA_QUERY = '(min-width: 1024px)'
 const TOUR_COMPLETED_KEY = 'ui.onboarding.appIntro.completed'
@@ -65,25 +66,18 @@ function getDesktopSteps(t: TranslateFn, userFullName?: string | null): Step[] {
       content: t('desktop.createMemoryBody'),
     },
     {
+      target: '[data-tour="dashboard-trusted-contact"]',
+      placement: 'bottom',
+      skipBeacon: true,
+      title: t('desktop.trustedContactTitle'),
+      content: t('desktop.trustedContactBody'),
+    },
+    {
       target: '[data-tour="app-sidebar"]',
       placement: 'right',
       skipBeacon: true,
       title: t('desktop.sidebarTitle'),
       content: t('desktop.sidebarBody'),
-    },
-    {
-      target: '[data-tour="sidebar-memories-link"]',
-      placement: 'right',
-      skipBeacon: true,
-      title: t('desktop.memoriesTitle'),
-      content: t('desktop.memoriesBody'),
-    },
-    {
-      target: '[data-tour="sidebar-loved-ones-link"]',
-      placement: 'right',
-      skipBeacon: true,
-      title: t('desktop.lovedOnesTitle'),
-      content: t('desktop.lovedOnesBody'),
     },
     {
       target: '[data-tour="sidebar-account-link"]',
@@ -112,11 +106,18 @@ function getMobileSteps(t: TranslateFn, userFullName?: string | null): Step[] {
       content: t('mobile.welcomeBody'),
     },
     {
-      target: '[data-tour="dashboard-hero"]',
-      placement: 'bottom',
+      target: 'body',
+      placement: 'center',
       skipBeacon: true,
       title: t('mobile.heroTitle'),
       content: t('mobile.heroBody'),
+    },
+    {
+      target: '[data-tour="mobile-bottom-nav"]',
+      placement: 'top',
+      skipBeacon: true,
+      title: t('mobile.navTitle'),
+      content: t('mobile.navBody'),
     },
     {
       target: '[data-tour="dashboard-create-memory"]',
@@ -126,11 +127,25 @@ function getMobileSteps(t: TranslateFn, userFullName?: string | null): Step[] {
       content: t('mobile.createMemoryBody'),
     },
     {
-      target: '[data-tour="dashboard-recent-activity"]',
-      placement: 'top',
+      target: '[data-tour="dashboard-trusted-contact"]',
+      placement: 'bottom',
+      skipBeacon: true,
+      title: t('mobile.trustedContactTitle'),
+      content: t('mobile.trustedContactBody'),
+    },
+    {
+      target: '[data-tour="dashboard-recent-activity-title"]',
+      placement: 'bottom',
       skipBeacon: true,
       title: t('mobile.recentTitle'),
       content: t('mobile.recentBody'),
+    },
+    {
+      target: '[data-tour="app-help-button"]',
+      placement: 'top',
+      skipBeacon: true,
+      title: t('mobile.helpTitle'),
+      content: t('mobile.helpBody'),
     },
   ]
 }
@@ -158,6 +173,8 @@ export function AppIntroTour(props: {
   const [run, setRun] = React.useState(false)
   const [isDesktop, setIsDesktop] = React.useState(false)
   const [restartToken, setRestartToken] = React.useState(0)
+  const hasTrackedStartRef = React.useRef(false)
+  const trackedStepsRef = React.useRef(new Set<number>())
 
   const syncCompleted = React.useCallback(
     (nextCompleted: boolean) => {
@@ -228,7 +245,9 @@ export function AppIntroTour(props: {
   }, [initialCompleted, syncCompleted])
 
   const steps = React.useMemo(() => {
-    return isDesktop ? getDesktopSteps(t, props.userFullName) : getMobileSteps(t, props.userFullName)
+    return isDesktop
+      ? getDesktopSteps(t, props.userFullName)
+      : getMobileSteps(t, props.userFullName)
   }, [isDesktop, props.userFullName, t])
 
   React.useEffect(() => {
@@ -280,10 +299,31 @@ export function AppIntroTour(props: {
 
   const handleCallback = React.useCallback(
     (data: EventData) => {
+      if (data.type === EVENTS.TOUR_START && !hasTrackedStartRef.current) {
+        hasTrackedStartRef.current = true
+        analytics.capture('onboarding_started', { source: 'onboarding' })
+      }
+
+      if (
+        data.type === EVENTS.STEP_AFTER &&
+        data.action === ACTIONS.NEXT &&
+        !trackedStepsRef.current.has(data.index)
+      ) {
+        trackedStepsRef.current.add(data.index)
+        analytics.capture('onboarding_step_completed', {
+          source: 'onboarding',
+          onboarding_step: String(data.index + 1),
+        })
+      }
+
       if (data.status === STATUS.FINISHED || data.status === STATUS.SKIPPED) {
         setRun(false)
         setCompleted(true)
         syncCompleted(true)
+        analytics.capture('onboarding_completed', {
+          source: 'onboarding',
+          completion_status: data.status === STATUS.FINISHED ? 'completed' : 'skipped',
+        })
       }
     },
     [syncCompleted],
@@ -299,7 +339,7 @@ export function AppIntroTour(props: {
       steps={steps}
       onEvent={handleCallback}
       continuous
-      scrollToFirstStep
+      scrollToFirstStep={isDesktop}
       options={{
         backgroundColor: '#ffffff',
         buttons: ['skip', 'back', 'primary'],
@@ -324,6 +364,7 @@ export function AppIntroTour(props: {
         tooltipContent: {},
         tooltipFooter: {},
         tooltipFooterSpacer: {},
+        spotlight: {},
       }}
       locale={{
         back: t('controls.back'),

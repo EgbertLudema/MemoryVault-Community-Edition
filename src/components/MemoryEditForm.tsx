@@ -12,13 +12,19 @@ import { DeleteButton } from './ui/DeleteButton'
 import { useToast } from './ui/ToastProvider'
 import { UpgradeToProLink } from './ui/UpgradeToProLink'
 import { CheckIcon } from './icons/CheckIcon'
+import { EditIcon } from './icons/EditIcon'
 import { NotesIcon } from './icons/NotesIcon'
 import { PhotoIcon } from './icons/PhotoIcon'
 import { PlusIcon } from './icons/PlusIcon'
 import { ArrowRightIcon } from './icons/ArrowRightIcon'
+import { TrashIcon } from './icons/TrashIcon'
+import { TwoPersonsIcon } from './icons/TwoPersonsIcon'
 import { VideoIcon } from './icons/VideoIcon'
 import { buildMediaImageUrl, buildMediaVideoStreamUrl } from '@/lib/mediaBlob'
 import { getMemoryContentItemLimit, isWithinMemoryContentItemLimit } from '@/lib/memoryLimits'
+import { requestModalNavigation } from '@/lib/modalNavigation'
+import { useRouter } from '@/i18n/navigation'
+import { analytics } from '@/lib/analytics'
 import {
   IMAGE_UPLOAD_MAX_LABEL,
   VIDEO_UPLOAD_MAX_LABEL,
@@ -96,9 +102,11 @@ type ContentBlock = NoteBlock | MediaBlock
 type SelectOption = {
   id: string
   label: string
+  groupIds: string[]
 }
 
 type GroupOption = GroupUiOption
+type ValidationTarget = 'title' | 'content' | 'recipients'
 
 type MemoryEditFormProps = {
   memory?: EditableMemory
@@ -166,6 +174,36 @@ function extractRelationIds(values: MemoryRelationValue[] | null | undefined): s
       return value?.id != null ? normalizeId(value.id) : ''
     })
     .filter(Boolean)
+}
+
+function extractLovedOneGroupIds(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value
+    .map((item) => {
+      if (typeof item === 'string' || typeof item === 'number') {
+        return normalizeId(item)
+      }
+
+      if (item && typeof item === 'object' && 'id' in item && item.id != null) {
+        return normalizeId(item.id as string | number)
+      }
+
+      return ''
+    })
+    .filter(Boolean)
+}
+
+function getAnalyticsMemoryType(blocks: Array<{ type: ContentType }>) {
+  const types = new Set(blocks.map((block) => block.type))
+
+  if (types.size > 1) {
+    return 'mixed' as const
+  }
+
+  return (types.values().next().value ?? 'note') as 'note' | 'image' | 'video'
 }
 
 function toDateInputValue(value?: string | null): string {
@@ -407,7 +445,7 @@ async function fetchOptions(url: string): Promise<SelectOption[]> {
     .map((it: any) => {
       const id = String(it.id ?? '')
       const label = String(it.title ?? it.name ?? it.fullName ?? it.label ?? it.slug ?? id)
-      return { id, label }
+      return { id, label, groupIds: extractLovedOneGroupIds(it.groups) }
     })
     .filter((x: SelectOption) => x.id && x.label)
 }
@@ -415,6 +453,7 @@ async function fetchOptions(url: string): Promise<SelectOption[]> {
 export function MemoryEditForm(props: MemoryEditFormProps) {
   const t = useTranslations('MemoryEditForm')
   const tGroups = useTranslations('GroupLabels')
+  const router = useRouter()
   const { showToast } = useToast()
   const { memory, mode = 'page', onClose, onSaved, onDeleted } = props
   const isEditing = Boolean(memory)
@@ -434,8 +473,16 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
   const [isAddContentModalOpen, setIsAddContentModalOpen] = useState(false)
   const canUseVideo = true
   const [showMemoryLimitUpgradeCta, setShowMemoryLimitUpgradeCta] = useState(false)
+  const [validationError, setValidationError] = useState<{
+    target: ValidationTarget
+    message: string
+  } | null>(null)
   const imagePickerRef = useRef<HTMLInputElement>(null)
   const videoPickerRef = useRef<HTMLInputElement>(null)
+  const titleInputRef = useRef<HTMLInputElement>(null)
+  const contentSectionRef = useRef<HTMLElement>(null)
+  const recipientsSectionRef = useRef<HTMLElement>(null)
+  const mediaInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const addContentPanelRef = useRef<HTMLDivElement>(null)
   const addContentBackdropRef = useRef<HTMLDivElement>(null)
   const groupsListRef = useRef<HTMLDivElement>(null)
@@ -446,6 +493,41 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
   const hasNoteBlock = blocks.some((block) => block.type === 'note')
   const hasReachedContentLimit =
     memoryContentItemLimit !== null && blocks.length >= memoryContentItemLimit
+
+  const hasAnyContent = useMemo(
+    () =>
+      blocks.some((block) => {
+        if (block.type === 'note') {
+          return Boolean(block.note.trim())
+        }
+
+        return Boolean(block.file) || Boolean(block.uploadedMediaId)
+      }),
+    [blocks],
+  )
+
+  const lovedOneCountByGroupId = useMemo(() => {
+    const counts = new Map<string, number>()
+
+    for (const lovedOne of lovedOnes) {
+      const uniqueGroupIds = new Set(lovedOne.groupIds)
+
+      for (const groupId of uniqueGroupIds) {
+        counts.set(groupId, (counts.get(groupId) ?? 0) + 1)
+      }
+    }
+
+    return counts
+  }, [lovedOnes])
+
+  const groupsWithLovedOnes = useMemo(
+    () =>
+      groups.filter((group) => {
+        const groupId = normalizeId(group.id)
+        return (lovedOneCountByGroupId.get(groupId) ?? 0) > 0 || groupIds.includes(groupId)
+      }),
+    [groups, groupIds, lovedOneCountByGroupId],
+  )
 
   useEffect(() => {
     let mounted = true
@@ -614,33 +696,55 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
     }
   }, [isAddContentModalOpen])
 
-  const canSubmit = useMemo(() => {
-    if (!title.trim()) {
-      return false
-    }
+  const scrollToValidationTarget = (target: ValidationTarget) => {
+    const node =
+      target === 'title'
+        ? titleInputRef.current
+        : target === 'content'
+          ? contentSectionRef.current
+          : recipientsSectionRef.current
 
-    const hasAnyContent = blocks.some((block) => {
-      if (block.type === 'note') {
-        return Boolean(block.note.trim())
+    window.requestAnimationFrame(() => {
+      node?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+      if (target === 'title') {
+        titleInputRef.current?.focus()
       }
-
-      return Boolean(block.file) || Boolean(block.uploadedMediaId)
     })
+  }
 
-    if (!hasAnyContent) {
-      return false
+  const getValidationError = (): { target: ValidationTarget; message: string } | null => {
+    if (!title.trim()) {
+      return { target: 'title', message: t('titleRequired') }
     }
 
     if (!isWithinMemoryContentItemLimit(blocks.length)) {
-      return false
+      return {
+        target: 'content',
+        message: t('maxContentItems', { max: memoryContentItemLimitLabel }),
+      }
+    }
+
+    if (!hasAnyContent) {
+      return { target: 'content', message: t('contentRequired') }
+    }
+
+    if (!isEditing && !recipientsLoading && lovedOnes.length === 0) {
+      return { target: 'recipients', message: t('lovedOneRequiredFirst') }
     }
 
     if (groupIds.length === 0 && lovedOneIds.length === 0) {
-      return false
+      return { target: 'recipients', message: t('recipientsRequired') }
     }
 
-    return true
-  }, [title, blocks, groupIds, lovedOneIds])
+    return null
+  }
+
+  const openLovedOneModal = () => {
+    if (!requestModalNavigation('/loved-ones/new')) {
+      router.push('/loved-ones/new')
+    }
+  }
 
   const closeAddContentModal = () => {
     if (isClosingAddContentModalRef.current) {
@@ -852,6 +956,44 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
     )
   }
 
+  const clearMediaForBlock = (id: string) => {
+    setBlocks((prev) =>
+      prev.map((block) => {
+        if (block.id !== id || block.type === 'note') {
+          return block
+        }
+
+        if (block.previewUrl && block.shouldRevokePreview) {
+          URL.revokeObjectURL(block.previewUrl)
+        }
+
+        return {
+          ...block,
+          file: null,
+          uploadedMediaId: null,
+          previewUrl: null,
+          shouldRevokePreview: false,
+        }
+      }),
+    )
+
+    const input = mediaInputRefs.current[id]
+    if (input) {
+      input.value = ''
+    }
+  }
+
+  const openMediaPickerForBlock = (id: string) => {
+    const input = mediaInputRefs.current[id]
+
+    if (!input) {
+      return
+    }
+
+    input.value = ''
+    input.click()
+  }
+
   const moveBlock = (id: string, direction: 'up' | 'down') => {
     setBlocks((prev) => {
       const index = prev.findIndex((block) => block.id === id)
@@ -871,16 +1013,16 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
   }
 
   const save = async () => {
-    if (!canSubmit) {
-      showToast({
-        tone: 'error',
-        message: !isWithinMemoryContentItemLimit(blocks.length)
-          ? t('maxContentItems', { max: memoryContentItemLimitLabel })
-          : t('submitValidation'),
-      })
+    const error = getValidationError()
+
+    if (error) {
+      setValidationError(error)
+      showToast({ tone: 'error', message: error.message })
+      scrollToValidationTarget(error.target)
       return
     }
 
+    setValidationError(null)
     setSaving(true)
     setShowMemoryLimitUpgradeCta(false)
 
@@ -968,6 +1110,14 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
       const changedId = String(
         isEditing ? memory!.id : (savedData?.memory?.id ?? savedData?.id ?? ''),
       )
+
+      if (!isEditing) {
+        analytics.capture('memory_created', {
+          source: 'memories',
+          memory_type: getAnalyticsMemoryType(uploadedBlocks),
+          has_loved_one: lovedOneIds.length > 0,
+        })
+      }
 
       window.dispatchEvent(
         new CustomEvent('memories:changed', {
@@ -1070,7 +1220,7 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
 
         <PrimaryButton
           onClick={save}
-          disabled={!canSubmit || saving || deleting}
+          disabled={saving || deleting}
           className="w-full sm:w-auto"
         >
           {saving ? t('saving') : isEditing ? t('saveChanges') : t('saveMemory')}
@@ -1108,11 +1258,25 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
               <label className="grid gap-1.5">
                 <span className="text-xs font-semibold text-slate-700">{t('title')}</span>
                 <input
+                  ref={titleInputRef}
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="h-11 w-full rounded-xl corner-shape-squircle border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
+                  onChange={(e) => {
+                    setTitle(e.target.value)
+                    if (validationError?.target === 'title') {
+                      setValidationError(null)
+                    }
+                  }}
+                  aria-invalid={validationError?.target === 'title'}
+                  className={`h-11 w-full rounded-xl corner-shape-squircle border bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-100 ${
+                    validationError?.target === 'title' ? 'border-red-300' : 'border-slate-200'
+                  }`}
                   placeholder={t('titlePlaceholder')}
                 />
+                {validationError?.target === 'title' ? (
+                  <span className="text-xs font-semibold text-red-600">
+                    {validationError.message}
+                  </span>
+                ) : null}
               </label>
 
               <label className="grid gap-1.5">
@@ -1127,7 +1291,12 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
             </div>
           </section>
 
-          <section className="rounded-2xl corner-shape-squircle border border-slate-200 bg-white p-4 shadow-sm">
+          <section
+            ref={contentSectionRef}
+            className={`rounded-2xl corner-shape-squircle border bg-white p-4 shadow-sm ${
+              validationError?.target === 'content' ? 'border-red-300' : 'border-slate-200'
+            }`}
+          >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="text-base font-bold text-slate-950">{t('contentTitle')}</h2>
@@ -1137,6 +1306,11 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
                     videoLimit: VIDEO_UPLOAD_MAX_LABEL,
                   })}
                 </p>
+                {validationError?.target === 'content' ? (
+                  <p className="mt-2 text-xs font-semibold text-red-600">
+                    {validationError.message}
+                  </p>
+                ) : null}
               </div>
               <span className="rounded-full corner-shape-squircle border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
                 {memoryContentItemLimit === null
@@ -1194,11 +1368,23 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
                           </SecondaryButton>
                         </>
                       ) : null}
+                      {block.type !== 'note' &&
+                      Boolean(block.file || block.uploadedMediaId || block.previewUrl) ? (
+                        <SecondaryButton
+                          type="button"
+                          onClick={() => openMediaPickerForBlock(block.id)}
+                          className="h-9 gap-2 px-3 text-sm"
+                        >
+                          <EditIcon className="h-3.5 w-3.5 shrink-0" />
+                          <span>{t('changeMedia')}</span>
+                        </SecondaryButton>
+                      ) : null}
                       <SecondaryButton
                         onClick={() => removeBlock(block.id)}
-                        className="h-9 border-red-200 px-3 text-sm text-red-700 hover:bg-red-50"
+                        className="h-9 gap-2 border-red-200 px-3 text-sm text-red-700 hover:bg-red-50"
                       >
-                        {t('remove')}
+                        <TrashIcon className="h-3.5 w-3.5 shrink-0" />
+                        <span>{t('remove')}</span>
                       </SecondaryButton>
                     </div>
                   </div>
@@ -1206,13 +1392,26 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
                   {block.type === 'note' ? (
                     <textarea
                       value={block.note}
-                      onChange={(e) => updateNote(block.id, e.target.value)}
+                      onChange={(e) => {
+                        updateNote(block.id, e.target.value)
+                        if (validationError?.target === 'content') {
+                          setValidationError(null)
+                        }
+                      }}
                       className="mt-3 min-h-[180px] w-full resize-y rounded-xl corner-shape-squircle border border-slate-200 bg-white p-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
                       placeholder={t('notePlaceholder')}
                     />
                   ) : (
                     <div className="mt-3 grid gap-3">
+                      {(() => {
+                        const hasMedia = Boolean(block.file || block.uploadedMediaId || block.previewUrl)
+
+                        return (
+                          <>
                       <input
+                        ref={(element) => {
+                          mediaInputRefs.current[block.id] = element
+                        }}
                         type="file"
                         accept={block.type === 'image' ? 'image/*' : 'video/*'}
                         onChange={(e) => {
@@ -1228,9 +1427,19 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
                             }
                           }
                           setFileForBlock(block.id, file)
+                          if (validationError?.target === 'content') {
+                            setValidationError(null)
+                          }
                         }}
-                        className="w-full cursor-pointer rounded-xl corner-shape-squircle border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-slate-700 hover:border-slate-300"
+                        className={
+                          hasMedia
+                            ? 'hidden'
+                            : 'w-full cursor-pointer rounded-xl corner-shape-squircle border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-slate-700 hover:border-slate-300'
+                        }
                       />
+                          </>
+                        )
+                      })()}
                       <p className="text-xs font-medium text-slate-500">
                         {block.type === 'image'
                           ? t('imageUploadHelp', { limit: IMAGE_UPLOAD_MAX_LABEL })
@@ -1259,7 +1468,12 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
 
               <button
                 type="button"
-                onClick={() => setIsAddContentModalOpen(true)}
+                onClick={() => {
+                  setIsAddContentModalOpen(true)
+                  if (validationError?.target === 'content') {
+                    setValidationError(null)
+                  }
+                }}
                 disabled={hasReachedContentLimit}
                 className="group flex min-h-[150px] w-full cursor-pointer flex-col items-center justify-center rounded-2xl corner-shape-squircle border-2 border-dashed border-slate-300 bg-slate-50/70 text-slate-500 transition hover:border-purple-300 hover:bg-purple-50/60 hover:text-purple-700 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400 disabled:hover:border-slate-200 disabled:hover:bg-slate-50 disabled:hover:text-slate-400"
                 aria-label={t('addContentAria')}
@@ -1279,11 +1493,21 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
           {mode !== 'modal' ? actionBar : null}
         </div>
 
-        <aside className="h-fit rounded-2xl corner-shape-squircle border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-0">
+        <aside
+          ref={recipientsSectionRef}
+          className={`h-fit rounded-2xl corner-shape-squircle border bg-white p-4 shadow-sm lg:sticky lg:top-0 ${
+            validationError?.target === 'recipients' ? 'border-red-300' : 'border-slate-200'
+          }`}
+        >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-base font-bold text-slate-950">{t('recipientsTitle')}</h2>
               <p className="mt-1 text-sm text-slate-500">{t('recipientsBody')}</p>
+              {validationError?.target === 'recipients' ? (
+                <p className="mt-2 text-xs font-semibold text-red-600">
+                  {validationError.message}
+                </p>
+              ) : null}
             </div>
             <span className="rounded-full corner-shape-squircle border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
               {t('selectedCount', { count: groupIds.length + lovedOneIds.length })}
@@ -1296,14 +1520,16 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
             <div ref={groupsListRef} className="flex flex-wrap gap-2.5">
               {recipientsLoading ? (
                 <GroupSkeletons />
-              ) : groups.length > 0 ? (
-                groups.map((group) => {
+              ) : groupsWithLovedOnes.length > 0 ? (
+                groupsWithLovedOnes.map((group) => {
                   const label = getDefaultGroupLabel(group.defaultKey, group.name, (key) =>
                     tGroups(key),
                   )
                   const meta = getEffectiveGroupUiMeta(group)
                   const IconComponent = meta.icon.Icon
-                  const active = groupIds.includes(normalizeId(group.id))
+                  const normalizedGroupId = normalizeId(group.id)
+                  const active = groupIds.includes(normalizedGroupId)
+                  const lovedOneCount = lovedOneCountByGroupId.get(normalizedGroupId) ?? 0
 
                   return (
                     <GroupButton
@@ -1311,8 +1537,23 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
                       label={label}
                       active={active}
                       colorValue={meta.color.value}
-                      onClick={() => setGroupIds((prev) => toggleId(prev, group.id))}
+                      onClick={() => {
+                        setGroupIds((prev) => toggleId(prev, group.id))
+                        if (validationError?.target === 'recipients') {
+                          setValidationError(null)
+                        }
+                      }}
                       icon={<IconComponent className="h-4 w-4 shrink-0" />}
+                      suffix={
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] font-bold leading-none ${
+                            active ? 'bg-white/25' : 'bg-black/5'
+                          }`}
+                        >
+                          <TwoPersonsIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                          {lovedOneCount}
+                        </span>
+                      }
                     />
                   )
                 })
@@ -1341,7 +1582,12 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
                       type="button"
                       role="checkbox"
                       aria-checked={selected}
-                      onClick={() => setLovedOneIds((prev) => toggleId(prev, lovedOne.id))}
+                      onClick={() => {
+                        setLovedOneIds((prev) => toggleId(prev, lovedOne.id))
+                        if (validationError?.target === 'recipients') {
+                          setValidationError(null)
+                        }
+                      }}
                       className={`flex w-full cursor-pointer items-center gap-2 rounded-xl corner-shape-squircle border px-3 py-2 text-left text-sm font-semibold transition ${
                         selected
                           ? 'border-green-200 bg-green-50 text-slate-950 shadow-sm'
@@ -1363,7 +1609,16 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
                   )
                 })
               ) : (
-                <div className="px-1 py-2 text-xs text-slate-600">{t('noLovedOnesFound')}</div>
+                <div className="grid gap-2 px-1 py-2 text-xs text-slate-600">
+                  <span>{t('noLovedOnesFound')}</span>
+                  <PrimaryButton
+                    type="button"
+                    onClick={openLovedOneModal}
+                    className="h-9 w-fit px-3 text-xs"
+                  >
+                    {t('addLovedOne')}
+                  </PrimaryButton>
+                </div>
               )}
             </div>
           </div>

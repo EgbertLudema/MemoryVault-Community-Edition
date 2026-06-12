@@ -6,6 +6,7 @@ import config from '@payload-config'
 import { LegacyDeliveryView } from '@/components/LegacyDeliveryView'
 import { defaultLocale } from '@/i18n/locales'
 import { getAppUserFromHeaders } from '@/lib/appAuth'
+import { getLovedOneDisplayNote } from '@/lib/encryptedFields'
 import { resolveLegacyRecipients } from '@/lib/legacyDelivery'
 import { buildLegacyDeliveryData } from '@/lib/legacyDeliveryContent'
 import { getProfileImageSrc } from '@/lib/profileImage'
@@ -50,7 +51,7 @@ export default async function LovedOnePreviewPage({
   }
 
   const payload = await getPayload({ config })
-  const [lovedOneResult, memoryResult] = await Promise.all([
+  const [lovedOneResult, memoryResult, openWhenResult] = await Promise.all([
     payload.find({
       collection: 'loved-ones',
       overrideAccess: true,
@@ -67,6 +68,20 @@ export default async function LovedOnePreviewPage({
       limit: 500,
       where: {
         owner: { equals: user.id },
+      },
+    }),
+    payload.find({
+      collection: 'open-when-messages' as any,
+      overrideAccess: true,
+      depth: 1,
+      limit: 200,
+      sort: 'triggerDate',
+      where: {
+        and: [
+          { owner: { equals: user.id } },
+          { lovedOnes: { equals: lovedOneId } },
+          { status: { not_equals: 'draft' } },
+        ],
       },
     }),
   ])
@@ -94,9 +109,11 @@ export default async function LovedOnePreviewPage({
   const delivery = buildLegacyDeliveryData({
     recipientName:
       recipient?.recipientName ?? String(lovedOne.nickname ?? lovedOne.fullName ?? 'you'),
-    recipientNote: lovedOne.customNote,
+    recipientNote: getLovedOneDisplayNote(lovedOne),
+    owner: user,
     ownerProfileImageSrc: getProfileImageSrc(user),
     memories,
+    openWhenMessages: openWhenResult.docs ?? [],
     origin: getRequestOrigin(headerList),
   })
 
@@ -118,6 +135,15 @@ export default async function LovedOnePreviewPage({
         noteTypeLabel: t('noteTypeLabel'),
         photosTypeLabel: t('photosTypeLabel'),
         videoTypeLabel: t('videoTypeLabel'),
+        openWhenMessagesLabel: t('openWhenMessagesLabel'),
+        lockedOpenWhenEyebrow: t('lockedOpenWhenEyebrow'),
+        lockedOpenWhenBody: t('lockedOpenWhenBody'),
+        lockedOpenWhenDialogTitle: t('lockedOpenWhenDialogTitle'),
+        lockedOpenWhenDialogBody: t('lockedOpenWhenDialogBody'),
+        lockedOpenWhenCreateAccount: t('lockedOpenWhenCreateAccount'),
+        lockedOpenWhenClose: t('lockedOpenWhenClose'),
+        lockedOpenWhenFallbackTitle: t('lockedOpenWhenFallbackTitle'),
+        sharedByLabel: t('sharedByLabel', { name: '{name}' }),
       }}
       exportAction={{
         url: `/api/loved-ones/${encodeURIComponent(String(lovedOneId))}/export`,

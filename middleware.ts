@@ -6,7 +6,7 @@ import { routing } from '@/i18n/routing'
 
 const handleI18nRouting = createMiddleware(routing)
 
-const protectedPrefixes = ['/dashboard', '/memories', '/loved-ones', '/account']
+const protectedPrefixes = ['/dashboard', '/memories', '/loved-ones', '/account', '/trusted-contact']
 const authPrefixes = ['/login', '/register']
 const bypassPrefixes = ['/api', '/_next', '/admin', '/legacy']
 
@@ -54,7 +54,11 @@ export function middleware(req: NextRequest) {
   const normalizedPathname = stripLocalePrefix(pathname)
   const locale = detectLocale(req)
 
-  if (getLocaleFromPathname(pathname) && matchesPrefix(normalizedPathname, protectedPrefixes) && !token) {
+  if (
+    getLocaleFromPathname(pathname) &&
+    matchesPrefix(normalizedPathname, protectedPrefixes) &&
+    !token
+  ) {
     const loginUrl = req.nextUrl.clone()
     loginUrl.pathname = `/${locale}/login`
     loginUrl.searchParams.set('next', `${pathname}${search}`)

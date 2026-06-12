@@ -40,6 +40,7 @@ type MemoryFiltersProps = {
   onCompactOpenChange?: (next: boolean) => void
   hideHeader?: boolean
   dense?: boolean
+  canUseVideo?: boolean
 }
 
 function cn(...classes: Array<string | false | null | undefined>) {
@@ -66,6 +67,7 @@ export function MemoryFilters(props: MemoryFiltersProps) {
     onCompactOpenChange,
     hideHeader = false,
     dense = false,
+    canUseVideo = true,
   } = props
   const [internalIsOpen, setInternalIsOpen] = React.useState(!compact)
   const [resetSpinTick, setResetSpinTick] = React.useState(0)
@@ -101,6 +103,10 @@ export function MemoryFilters(props: MemoryFiltersProps) {
   }
 
   const setType = (type: MemoryTypeFilter) => {
+    if (type === 'videos' && !canUseVideo) {
+      return
+    }
+
     update({ type })
   }
 
@@ -204,7 +210,12 @@ export function MemoryFilters(props: MemoryFiltersProps) {
               { label: t('typeAll'), value: 'all' },
               { label: t('typeNotes'), value: 'notes' },
               { label: t('typeImages'), value: 'images' },
-              { label: t('typeVideos'), value: 'videos' },
+              {
+                label: t('typeVideos'),
+                value: 'videos',
+                disabled: !canUseVideo,
+                title: !canUseVideo ? t('typeVideosProOnly') : undefined,
+              },
             ]}
           />
         </div>

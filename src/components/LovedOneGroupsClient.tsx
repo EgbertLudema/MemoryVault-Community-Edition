@@ -12,15 +12,32 @@ import {
 } from '@/lib/groupMeta'
 import { PrimaryButton } from '@/components/ui/PrimaryButton'
 import { DeleteButton } from '@/components/ui/DeleteButton'
+import { AccountCircleIcon } from './icons/AccountCircleIcon'
 import { FamilyIcon } from './icons/FamilyIcon'
 import { TwoPersonsIcon } from './icons/TwoPersonsIcon'
 import { BabyIcon } from './icons/BabyIcon'
+import { CheckIcon } from './icons/CheckIcon'
+import { CommunityIcon } from './icons/CommunityIcon'
+import { EyeIcon } from './icons/EyeIcon'
 import { ShakeHandsIcon } from './icons/ShakeHandsIcon'
 import { HouseIcon } from './icons/HouseIcon'
+import { InfoRoundIcon } from './icons/InfoRoundIcon'
+import { LightbulbIcon } from './icons/LightbulbIcon'
+import { MemoryBookIcon } from './icons/MemoryBookIcon'
+import { NotesIcon } from './icons/NotesIcon'
+import { OpenBookIcon } from './icons/OpenBookIcon'
+import { OpenStarIcon } from './icons/OpenStarIcon'
+import { PhotoIcon } from './icons/PhotoIcon'
+import { QuestionRoundIcon } from './icons/QuestionRoundIcon'
+import { StarIcon } from './icons/StarIcon'
+import { VideoIcon } from './icons/VideoIcon'
 import { WorldIcon } from './icons/WorldIcon'
 import { FriendsIcon } from './icons/FriendsIcon'
 import { HeartIcon } from './icons/HeartIcon'
 import { LockIcon } from './icons/LockIcon'
+import { UnlockIcon } from './icons/UnlockIcon'
+import { MailIcon } from './icons/MailIcon'
+import { MailboxIcon } from './icons/MailboxIcon'
 import { useToast } from '@/components/ui/ToastProvider'
 import { UpgradeToProLink } from '@/components/ui/UpgradeToProLink'
 
@@ -43,13 +60,31 @@ type GroupColorOption = (typeof GROUP_COLOR_OPTIONS)[number]
 
 export const ICON_OPTIONS: IconOption[] = [
   { key: 'heart', label: 'Heart', Icon: HeartIcon },
+  { key: 'mail', label: 'Mail', Icon: MailIcon },
+  { key: 'mailbox', label: 'Mailbox', Icon: MailboxIcon },
+  { key: 'lock', label: 'Lock', Icon: LockIcon },
+  { key: 'unlock', label: 'Unlock', Icon: UnlockIcon },
+  { key: 'notes', label: 'Notes', Icon: NotesIcon },
+  { key: 'memory-book', label: 'Memory book', Icon: MemoryBookIcon },
+  { key: 'open-book', label: 'Open book', Icon: OpenBookIcon },
+  { key: 'star', label: 'Star', Icon: StarIcon },
+  { key: 'open-star', label: 'Open star', Icon: OpenStarIcon },
+  { key: 'lightbulb', label: 'Idea', Icon: LightbulbIcon },
+  { key: 'question', label: 'Question', Icon: QuestionRoundIcon },
+  { key: 'info', label: 'Info', Icon: InfoRoundIcon },
   { key: 'family', label: 'Family', Icon: FamilyIcon },
   { key: 'children', label: '2 people', Icon: TwoPersonsIcon },
   { key: 'grandchildren', label: 'Baby', Icon: BabyIcon },
   { key: 'friends', label: 'Friends', Icon: FriendsIcon },
+  { key: 'person', label: 'Person', Icon: AccountCircleIcon },
+  { key: 'community', label: 'Community', Icon: CommunityIcon },
   { key: 'handshake', label: 'Handshake', Icon: ShakeHandsIcon },
   { key: 'house', label: 'House', Icon: HouseIcon },
   { key: 'world', label: 'World', Icon: WorldIcon },
+  { key: 'photo', label: 'Photo', Icon: PhotoIcon },
+  { key: 'video', label: 'Video', Icon: VideoIcon },
+  { key: 'eye', label: 'View', Icon: EyeIcon },
+  { key: 'check', label: 'Check', Icon: CheckIcon },
 ]
 
 function cn(...classes: Array<string | false | null | undefined>) {
@@ -248,7 +283,7 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
                     disabled={!canCreateCustomGroups}
                     onClick={() => setColorKey(opt.key)}
                     aria-pressed={active}
-                    title={opt.label}
+                    title={t(`colorLabels.${opt.key}`)}
                     className={cn(
                       'cursor-pointer rounded-xl border px-3 py-2 text-xs font-medium transition duration-150',
                       active && 'ring-2 ring-purple-700 ring-offset-1 ring-offset-white',
@@ -260,7 +295,7 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
                       borderColor: `color-mix(in srgb, ${opt.value} 40%, transparent)`,
                     }}
                   >
-                    <span className="block leading-none">{opt.label}</span>
+                    <span className="block leading-none">{t(`colorLabels.${opt.key}`)}</span>
                   </button>
                 )
               })}
@@ -346,7 +381,7 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
                             borderColor: `color-mix(in srgb, ${meta.color.value} 40%, transparent)`,
                           }}
                         >
-                          {meta.color.label}
+                            {t(`colorLabels.${meta.color.key}`)}
                         </span>
                       </div>
                     </div>

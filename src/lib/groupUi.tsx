@@ -9,6 +9,8 @@ import { HouseIcon } from '@/components/icons/HouseIcon'
 import { WorldIcon } from '@/components/icons/WorldIcon'
 import { FriendsIcon } from '@/components/icons/FriendsIcon'
 import { HeartIcon } from '@/components/icons/HeartIcon'
+import { LockIcon } from '@/components/icons/LockIcon'
+import { UnlockIcon } from '@/components/icons/UnlockIcon'
 
 export type GroupUiOption = {
   id: string
@@ -30,6 +32,8 @@ export type GroupColorOption = (typeof GROUP_COLOR_OPTIONS)[number]
 
 export const GROUP_ICON_OPTIONS: GroupIconOption[] = [
   { key: 'heart', label: 'Heart', Icon: HeartIcon },
+  { key: 'lock', label: 'Lock', Icon: LockIcon },
+  { key: 'unlock', label: 'Unlock', Icon: UnlockIcon },
   { key: 'family', label: 'Family', Icon: FamilyIcon },
   { key: 'children', label: '2 people', Icon: TwoPersonsIcon },
   { key: 'grandchildren', label: 'Baby', Icon: BabyIcon },

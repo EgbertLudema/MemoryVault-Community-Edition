@@ -83,7 +83,9 @@ export function LovedOneCard({
   const primaryColor = primaryGroupMeta?.color.value ?? '#f472b6'
   const note = getEffectiveLovedOneNote(lovedOne.customNote)
   const cardTourId = tourTarget ? 'loved-ones-first-card' : undefined
+  const nameTourId = tourTarget ? 'loved-ones-first-card-name' : undefined
   const editTourId = tourTarget ? 'loved-ones-first-card-edit' : undefined
+  const recipientTourId = tourTarget ? 'loved-ones-first-card-recipient' : undefined
   const cardStyle = {
     borderColor: hexToRgba(primaryColor, 0.26),
     background: `linear-gradient(180deg, rgba(255,255,255,0.99), ${hexToRgba(primaryColor, 0.1)})`,
@@ -106,12 +108,6 @@ export function LovedOneCard({
   const editLinkStyle = {
     color: primaryColor,
   }
-  const previewLinkStyle = {
-    borderColor: hexToRgba(primaryColor, 0.28),
-    backgroundColor: hexToRgba(primaryColor, 0.1),
-    color: primaryColor,
-  }
-
   return (
     <article
       className="rounded-[24px] corner-shape-squircle border p-5 transition-all duration-200 ease-out hover:-translate-y-1"
@@ -133,7 +129,10 @@ export function LovedOneCard({
               {t('lovedOne')}
             </div>
 
-            <h2 className="m-0 mt-4 truncate text-[18px] font-bold tracking-tight text-[#111111]">
+            <h2
+              data-tour={nameTourId}
+              className="m-0 mt-4 truncate text-[18px] font-bold tracking-tight text-[#111111]"
+            >
               {lovedOne.fullName}
             </h2>
 
@@ -219,8 +218,8 @@ export function LovedOneCard({
           prefetch={false}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-semibold no-underline transition"
-          style={previewLinkStyle}
+          className="inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50 px-3.5 py-2 text-sm font-semibold text-purple-700 no-underline transition hover:border-purple-300 hover:bg-purple-100 hover:text-purple-800"
+          data-tour={recipientTourId}
         >
           {t('viewRecipientPage')}
           <RedirectIcon className="h-4 w-4 shrink-0" />

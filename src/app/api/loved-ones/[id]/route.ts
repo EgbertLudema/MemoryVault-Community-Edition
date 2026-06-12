@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getAppUserFromHeaders } from '@/lib/appAuth'
+import { encryptSensitiveText, serializeLovedOneSensitiveFields } from '@/lib/encryptedFields'
 
 function toNumberId(value: string) {
   const raw = String(value ?? '').trim()
@@ -80,7 +81,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 
-    return NextResponse.json(lovedOne, { status: 200 })
+    return NextResponse.json(serializeLovedOneSensitiveFields(lovedOne as any), { status: 200 })
   } catch (error) {
     console.error(error)
     return NextResponse.json({ error: 'Failed to load loved one' }, { status: 500 })
@@ -123,6 +124,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     const email = typeof body.email === 'string' ? body.email.trim() : ''
     const relationship = typeof body.relationship === 'string' ? body.relationship.trim() : ''
     const customNote = typeof body.customNote === 'string' ? body.customNote.trim() : ''
+    const encryptedCustomNote = encryptSensitiveText(customNote)
 
     const rawGroups = Array.isArray(body.groups) ? body.groups : []
     const groups = rawGroups
@@ -161,13 +163,15 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
         nickname: nickname || null,
         email,
         relationship,
-        customNote: customNote || null,
+        customNote: null,
+        customNoteCiphertext: encryptedCustomNote.ciphertext,
+        customNoteEncryptionMetadata: encryptedCustomNote.metadata,
         groups,
         user: Number(user.id),
       },
     })
 
-    return NextResponse.json(updated, { status: 200 })
+    return NextResponse.json(serializeLovedOneSensitiveFields(updated as any), { status: 200 })
   } catch (error) {
     console.error(error)
     const message = error instanceof Error ? error.message : 'Failed to save loved one'

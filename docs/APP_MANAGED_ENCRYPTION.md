@@ -7,6 +7,8 @@ This is intentionally not zero-knowledge end-to-end encryption. Users do not man
 ## Storage
 
 - Notes are encrypted by the API before they are stored in Payload.
+- Memory titles are encrypted by the API before they are stored in Payload. The legacy `title` column is kept as a neutral placeholder for Payload compatibility.
+- Loved-one personal notes are encrypted by the API before they are stored in Payload. The legacy `customNote` column is kept empty for new writes.
 - Uploaded media files are encrypted by the API before they are stored in blob storage.
 - The blob MIME type is stored as `application/octet-stream`; the original content type is kept inside encryption metadata.
 - AES-256-GCM is used by `src/lib/serverEncryption.ts`.

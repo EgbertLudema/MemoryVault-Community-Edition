@@ -15,6 +15,11 @@ declare module 'three' {
     z: number
     set(x: number, y: number, z?: number): this
     setScalar(value: number): this
+    add(vector: Vector3): this
+    applyAxisAngle(axis: Vector3, angle: number): this
+    clone(): Vector3
+    normalize(): this
+    sub(vector: Vector3): this
   }
 
   export class Material {
@@ -26,6 +31,7 @@ declare module 'three' {
   export class Texture {
     minFilter: unknown
     generateMipmaps: boolean
+    needsUpdate: boolean
     dispose(): void
   }
 
@@ -34,8 +40,21 @@ declare module 'three' {
   }
 
   export class BufferGeometry {
+    boundingBox: Box3 | null
+    clone(): this
+    computeBoundingBox(): void
+    computeVertexNormals(): void
     dispose(): void
+    getAttribute(name: string): BufferAttribute | undefined
     setFromPoints(points: unknown[]): this
+  }
+
+  export class BufferAttribute {
+    array: {
+      length: number
+      [index: number]: number
+    }
+    needsUpdate: boolean
   }
 
   export class PlaneGeometry extends BufferGeometry {
@@ -81,10 +100,8 @@ declare module 'three' {
     uniforms: Record<string, { value: any }>
   }
 
-  export class Mesh {
-    constructor(geometry?: BufferGeometry, material?: Material | Material[])
+  export class Object3D {
     geometry: BufferGeometry
-    material: any
     position: Vector3
     rotation: Vector3
     scale: Vector3
@@ -99,6 +116,11 @@ declare module 'three' {
     add(...objects: unknown[]): void
   }
 
+  export class Mesh extends Object3D {
+    constructor(geometry?: BufferGeometry, material?: Material | Material[])
+    material: any
+  }
+
   export class LineSegments extends Mesh {}
   export class Line extends Mesh {}
   export class Sprite extends Mesh {
@@ -110,6 +132,7 @@ declare module 'three' {
     setFromObject(object: Mesh): this
     getCenter(target: Vector3): Vector3
     getSize(target: Vector3): Vector3
+    isEmpty(): boolean
   }
 
   export class Scene {

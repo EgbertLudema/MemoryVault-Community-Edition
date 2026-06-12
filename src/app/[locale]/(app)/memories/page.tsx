@@ -44,6 +44,7 @@ import {
 import { Link } from '@/i18n/navigation'
 
 const SCROLL_ITEM_SIZE_MOBILE_CSS = 'clamp(108px, 34vw, 142px)'
+const SCROLL_ITEM_SIZE_TABLET_CSS = 'clamp(148px, 20vw, 172px)'
 const SCROLL_ITEM_SIZE_DESKTOP_CSS = 'clamp(132px, 42vw, 180px)'
 const SCROLL_ITEM_SIZE_VAR = 'var(--scroll-item-size)'
 
@@ -617,15 +618,28 @@ export default function UserHomePage() {
         : viewportWidth < 1024
           ? Math.min(viewportWidth * 0.68, 520)
           : Math.min(viewportWidth * 0.4, 560)
-    const maxExpandedHeight = viewportHeight - (viewportWidth < 640 ? 112 : 80)
-    const targetWidth = Math.max(240, Math.min(maxExpandedWidth, maxExpandedHeight / 1.2))
+    const expandedTopClearance = viewportWidth >= 1024 ? 88 : viewportWidth < 640 ? 112 : 80
+    const expandedBottomClearance = 24
+    const maxExpandedHeight = viewportHeight - expandedTopClearance - expandedBottomClearance
+    const minExpandedWidth = Math.min(240, Math.max(120, maxExpandedHeight / 1.2))
+    const targetWidth = Math.max(
+      minExpandedWidth,
+      Math.min(maxExpandedWidth, maxExpandedHeight / 1.2),
+    )
     const targetHeight = targetWidth * 1.2
+    const minTargetCenterY = expandedTopClearance + targetHeight / 2
+    const maxTargetCenterY = viewportHeight - expandedBottomClearance - targetHeight / 2
+    const targetCenterY = Math.min(
+      Math.max(viewportHeight / 2, minTargetCenterY),
+      Math.max(minTargetCenterY, maxTargetCenterY),
+    )
 
     const originCenterX = originRect.left + originRect.width / 2
     const originCenterY = originRect.top + originRect.height / 2
 
     const viewportCenterX = viewportWidth / 2
     const viewportCenterY = viewportHeight / 2
+    const targetOffsetY = targetCenterY - viewportCenterY
 
     const fromX = originCenterX - viewportCenterX
     const fromY = originCenterY - viewportCenterY
@@ -650,7 +664,7 @@ export default function UserHomePage() {
         width: targetWidth,
         height: targetHeight,
         x: 0,
-        y: 0,
+        y: targetOffsetY,
         duration: 0.4,
         ease: 'power3.out',
       },
@@ -1254,12 +1268,13 @@ export default function UserHomePage() {
                       style={
                         {
                           '--scroll-item-size': SCROLL_ITEM_SIZE_MOBILE_CSS,
+                          '--scroll-item-size-tablet': SCROLL_ITEM_SIZE_TABLET_CSS,
                           '--scroll-item-size-desktop': SCROLL_ITEM_SIZE_DESKTOP_CSS,
                         } as React.CSSProperties
                       }
                     >
                       <div
-                        className="grid grid-cols-2 justify-items-center gap-x-4 gap-y-10 sm:gap-x-8 sm:gap-y-14 lg:[--scroll-item-size:var(--scroll-item-size-desktop)] lg:[grid-template-columns:repeat(auto-fill,minmax(var(--scroll-item-size),1fr))] xl:gap-x-10 xl:gap-y-16"
+                        className="grid grid-cols-2 justify-items-center gap-x-4 gap-y-10 sm:gap-x-6 sm:gap-y-12 sm:[--scroll-item-size:var(--scroll-item-size-tablet)] sm:[grid-template-columns:repeat(auto-fill,minmax(var(--scroll-item-size),1fr))] lg:[--scroll-item-size:var(--scroll-item-size-desktop)] xl:gap-x-10 xl:gap-y-16"
                       >
                         {filteredAlbums.map((album) => {
                           const isHidden = expandedAlbum && expandedItemId === album.id

@@ -7,26 +7,31 @@
   "HomeHowItWorksDemo": {
     "stepKicker": "Step {step}",
     "demoBadge": "Demo",
+    "compactHint": "Swipe or scroll",
     "steps": [
       {
         "title": "Add a loved one",
-        "description": "Try adding a demo profile for someone important. It only updates this preview in your browser."
+        "description": "Create a profile for each person who matters."
       },
       {
         "title": "Add a memory",
-        "description": "Create a demo memory with sample notes, a placeholder image, and a placeholder video. No upload is requested."
+        "description": "Save a note, photo, or video and link the right loved one(s)."
+      },
+      {
+        "title": "Add an Open When message",
+        "description": "Write a message for a future moment and link the loved one(s)."
       },
       {
         "title": "Set up a trusted contact",
-        "description": "Add a demo trusted contact so there is a clear person who can help release the vault later."
+        "description": "Choose someone who can help confirm the right time."
       },
       {
-        "title": "Confirm monthly check-ins",
-        "description": "Preview the monthly email check-in flow that keeps your vault protected while you are here."
+        "title": "Confirm monthly emails",
+        "description": "Reply once a month so your vault knows you are still here."
       },
       {
         "title": "Rest easy",
-        "description": "See a demo release where the trusted contact confirms the moment and the memories become available."
+        "description": "Your trusted contact confirms when to release your vault."
       }
     ],
     "demoContent": {
@@ -138,6 +143,8 @@
     "dashboard": "Dashboard",
     "myMemories": "My memories",
     "myLovedOnes": "My loved ones",
+    "openWhenMessages": "Open When Messages",
+    "recipient": "Recipient",
     "website": "Website",
     "accountFallback": "Account",
     "viewProfile": "View profile",
@@ -146,13 +153,27 @@
   "MobileNav": {
     "dashboard": "Dashboard",
     "memories": "Memories",
+    "openWhen": "Open When",
+    "recipient": "Recipient",
     "lovedOnes": "People",
     "website": "Website",
-    "account": "Account"
+    "account": "Account",
+    "menu": "Menu",
+    "closeMenu": "Close menu"
   },
   "LogoutButton": {
     "logout": "Logout",
     "loggingOut": "Logging out..."
+  },
+  "MemoryLimitModal": {
+    "title": "You have reached the free memory limit",
+    "showPlans": "Show plans",
+    "close": "Close"
+  },
+  "LovedOneLimitModal": {
+    "title": "You have reached the free loved ones limit",
+    "showPlans": "Show plans",
+    "close": "Close"
   },
   "Toast": {
     "close": "Close notification",
@@ -185,6 +206,7 @@
     "videoPosterImageRequired": "Video poster must be an image file.",
     "memoryLimit": "Your plan can have at most {max} memories.",
     "lovedOneLimit": "Your plan can have at most {max} loved ones.",
+    "openWhenMessageLimit": "Your plan can have at most {max} Open When messages.",
     "loadMemoryFailed": "Failed to load memory.",
     "saveMemoryFailed": "Failed to save memory.",
     "deleteMemoryFailed": "Failed to delete memory.",
@@ -201,7 +223,7 @@
     "escapeToClose": "Press Escape to close"
   },
   "Auth": {
-    "loginTitle": "Welcome back",
+    "loginTitle": "Welcome",
     "forgotPasswordTitle": "Reset your password",
     "forgotPasswordBody": "Enter your account email and we'll send you a short reset code.",
     "resetPasswordTitle": "Enter your reset code",
@@ -305,6 +327,8 @@
       "sidebarBody": "Use the sidebar to move between your dashboard, memories, loved ones, and account settings at any time.",
       "createMemoryTitle": "Create your first memory",
       "createMemoryBody": "Start here to add a note, photo, or video. New memories become part of your collection immediately.",
+      "trustedContactTitle": "Set up trusted contacts",
+      "trustedContactBody": "This block shows whether legacy protection is ready and lets you manage the trusted contact who can help confirm delivery later.",
       "memoriesTitle": "Manage memories",
       "memoriesBody": "Open your memories to browse your collection, review what you have saved, and keep building your vault over time.",
       "lovedOnesTitle": "Manage loved ones",
@@ -320,10 +344,16 @@
       "welcomeBody": "This short intro highlights the key parts of the app you will use first on mobile.",
       "heroTitle": "Your dashboard",
       "heroBody": "This screen is your starting point. It summarizes your vault and shows the next step worth taking.",
+      "navTitle": "Use the app navigation",
+      "navBody": "Use this bottom navigation to move between your dashboard, loved ones, memories, Open When messages, and recipient area on mobile.",
       "createMemoryTitle": "Add a memory",
       "createMemoryBody": "Use this action to quickly save a note, photo, or video while you are in the app.",
+      "trustedContactTitle": "Trusted contact setup",
+      "trustedContactBody": "Use this block to set up or review the person who can help confirm delivery later.",
       "recentTitle": "Review recent activity",
-      "recentBody": "Come back here to revisit the latest memories and loved ones you have added."
+      "recentBody": "Come back here to revisit the latest memories and loved ones you have added.",
+      "helpTitle": "Open help anytime",
+      "helpBody": "Use this button whenever you want to restart page-specific help for the screen you are on."
     }
   },
   "MemoriesHelpTour": {
@@ -351,7 +381,9 @@
       "filtersBody": "This filter section lets you search, filter by memory type, and narrow the page to a specific group.",
       "addMemoryTitle": "Add a memory",
       "addMemoryBody": "Use this button to create a new memory directly from the structured view."
-    }
+    },
+    "memoryCardTitle": "Open and edit a memory",
+    "memoryCardBody": "Click a memory to view it up close. From there you can review the content and edit the memory when something needs to change."
   },
   "LovedOnesHelpTour": {
     "controls": {
@@ -367,10 +399,52 @@
     "cardBody": "Each loved one card gives you a quick overview of their details, groups, contact info, and personal note.",
     "editTitle": "Edit loved one details",
     "editBody": "Use this Edit details action to open that loved one and update their information, note, relationship, and linked details.",
+    "recipientTitle": "Preview the recipient page",
+    "recipientBody": "Open this page to see what this loved one will receive when shared memories become available.",
     "addTitle": "Add loved one",
     "addBody": "Use this button to add a new loved one so you can connect memories and keep their details organized.",
     "groupsTitle": "Manage groups",
     "groupsBody": "Groups help you organize loved ones into meaningful categories so memories are easier to link and browse."
+  },
+  "OpenWhenMessagesHelpTour": {
+    "controls": {
+      "back": "Back",
+      "close": "Close",
+      "finish": "Done",
+      "next": "Next",
+      "nextWithProgress": "Next ({current} of {total})",
+      "open": "Open",
+      "skip": "Close help"
+    },
+    "heroTitle": "Open When overview",
+    "heroBody": "This page is where you write messages for specific future moments, such as birthdays, hard days, or moments when someone needs encouragement.",
+    "listTitle": "Saved messages",
+    "listBody": "Your Open When messages appear here. You can review, edit, or delete them before they are shared.",
+    "formTitle": "Write or edit a message",
+    "formBody": "Use this form to choose the prompt, write the message, select recipients, add optional photos, and set an optional date."
+  },
+  "RecipientHelpTour": {
+    "controls": {
+      "back": "Back",
+      "close": "Close",
+      "finish": "Done",
+      "next": "Next",
+      "nextWithProgress": "Next ({current} of {total})",
+      "open": "Open",
+      "skip": "Close help"
+    },
+    "dashboardHeroTitle": "Recipient area",
+    "dashboardHeroBody": "This page summarizes the memories and Open When messages that have been shared with your recipient account.",
+    "statsTitle": "Shared content totals",
+    "statsBody": "These counters show how many memories and Open When messages are available across your saved collections.",
+    "collectionsTitle": "Shared collections",
+    "collectionsBody": "Open a collection to browse the memories and messages shared by that person.",
+    "detailHeroTitle": "Collection overview",
+    "detailHeroBody": "This section shows who the collection is for, who shared it, and what part of the collection you are viewing.",
+    "subnavTitle": "Recipient sections",
+    "subnavBody": "Use these tabs to move between the collection overview, memories, and Open When messages.",
+    "contentTitle": "Shared content",
+    "contentBody": "The content for the selected section appears here, including messages, memories, photos, and videos when available."
   },
   "AccountHelpTour": {
     "controls": {
@@ -423,13 +497,180 @@
     "sharedMemoryAlt": "Shared memory",
     "noteTypeLabel": "Note",
     "photosTypeLabel": "Photos",
-    "videoTypeLabel": "Video"
+    "videoTypeLabel": "Video",
+    "sharedByLabel": "Shared by {name}",
+    "openWhenMessagesLabel": "Open When Messages",
+    "lockedOpenWhenEyebrow": "Locked message",
+    "lockedOpenWhenBody": "Open this when you feel you need it, or when its title or date says the moment is right. Create an account below to open it in the app.",
+    "lockedOpenWhenDialogTitle": "Are you sure you want to open this?",
+    "lockedOpenWhenDialogBody": "Open When messages are meant to be opened when you feel you need them, or when the title or date tells you the moment is right. They are not opened from this recipient page. Create an account first, then you can open and keep this message in your Memory Vault app.",
+    "lockedOpenWhenCreateAccount": "Create account to unlock",
+    "lockedOpenWhenClose": "Not now",
+    "lockedOpenWhenFallbackTitle": "Locked Open When message",
+    "claimBadge": "Keep this in the app",
+    "claimTitle": "Create an account to keep this content available.",
+    "claimBody": "The recipient page stays here, and your saved copy will also appear in your Memory Vault app.",
+    "claimFirstName": "First name",
+    "claimLastName": "Last name",
+    "claimEmail": "Email",
+    "claimPassword": "Password",
+    "claimSaving": "Saving...",
+    "claimSubmit": "Create account and save",
+    "claimError": "Could not save this delivery"
+  },
+  "OpenWhenMessagesPage": {
+    "hero": {
+      "badge": "For later",
+      "title": "Open When Messages",
+      "body": "Write a personal note for a future birthday, difficult day, or special moment."
+    },
+    "templates": {
+      "missMe": "Open when you miss me",
+      "advice": "Open when you need advice",
+      "birthday": "Open on your birthday",
+      "alone": "Open when you feel alone",
+      "parent": "Open when you become a parent",
+      "difficult": "Open when life feels difficult",
+      "laugh": "Open when you need to laugh"
+    },
+    "dateReached": {
+      "title": "A selected date has arrived",
+      "one": "One Open When message has reached its date, but it has not been shared because your vault is still active.",
+      "many": "{count} Open When messages have reached their dates, but they have not been shared because your vault is still active."
+    },
+    "empty": {
+      "title": "Start with one message for someone you love.",
+      "body": "Write a message for a moment when your loved one may need it most."
+    },
+    "form": {
+      "kicker": "Personal message",
+      "createTitle": "Write an Open When message",
+      "editTitle": "Edit message",
+      "template": "Template",
+      "templateHelp": "Templates fill in the prompt, color, and icon. You can still rewrite the Open when text below.",
+      "chooseTemplate": "Choose a template",
+      "openWhen": "Open when...",
+      "openWhenPlaceholder": "Open when you need to laugh",
+      "colorIcon": "Color and icon",
+      "colorIconHelp": "Use this to visually group the kind of message.",
+      "color": "Color",
+      "icon": "Icon",
+      "title": "Title",
+      "titlePlaceholder": "A note for a hard day",
+      "message": "Message",
+      "messagePlaceholder": "Write the words you want them to have when the time comes.",
+      "photos": "Photos",
+      "photosHelp": "{count}/{max} photos added. You can add up to {max} photos.",
+      "lovedOnes": "For your loved ones",
+      "noLovedOnes": "Add a loved one before creating an Open When message.",
+      "optionalDate": "Optional date",
+      "allowSendTitle": "Send on this date even if I am still active",
+      "allowSendHelp": "If enabled, this message can be shared with the selected loved one(s) on the chosen date, even while your vault is still active."
+    },
+    "colorLabels": {
+      "gray": "Gray",
+      "red": "Red",
+      "blue": "Blue",
+      "purple": "Purple",
+      "yellow": "Yellow",
+      "green": "Green",
+      "cyan": "Cyan",
+      "orange": "Orange",
+      "pink": "Pink"
+    },
+    "badges": {
+      "dateReached": "Date reached, not shared",
+      "canSendWhileActive": "Can send while active"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "saveChanges": "Save changes",
+      "create": "Create message",
+      "addPhotos": "Add photos",
+      "removePhoto": "Remove photo",
+      "editAria": "Edit Open When message",
+      "deleteAria": "Delete Open When message"
+    },
+    "fallback": {
+      "openWhen": "Open when...",
+      "untitled": "Untitled message",
+      "thisMessage": "this message"
+    },
+    "loading": "Loading Open When messages...",
+    "deleteConfirm": "Delete \"{title}\"? This cannot be undone.",
+    "toasts": {
+      "created": "Open When message created",
+      "updated": "Open When message updated",
+      "deleted": "Open When message deleted"
+    },
+    "errors": {
+      "loadMessages": "Failed to load Open When messages",
+      "loadLovedOnes": "Failed to load loved ones",
+      "couldNotLoad": "Could not load Open When messages",
+      "save": "Failed to save Open When message",
+      "delete": "Failed to delete Open When message",
+      "maxPhotos": "You can add at most 4 photos to an Open When message.",
+      "messageLimit": "Your plan can have at most {max} Open When messages.",
+      "photosOnly": "Choose image files only.",
+      "uploadFailed": "Failed to upload photo",
+      "uploadTooLarge": "This photo is too large.",
+      "uploadNoMediaId": "The uploaded photo did not return a media id."
+    }
+  },
+  "RecipientPages": {
+    "breadcrumbs": {
+      "aria": "Breadcrumb",
+      "root": "Recipient",
+      "forRecipient": "For {name}"
+    },
+    "subnav": {
+      "aria": "Recipient sections",
+      "dashboard": "Dashboard",
+      "memories": "Memories",
+      "openWhen": "Open When Messages"
+    },
+    "labels": {
+      "memories": "Memories",
+      "openWhen": "Open When Messages",
+      "undated": "Undated",
+      "sharedBy": "Shared by {name}"
+    },
+    "forRecipient": "For {name}",
+    "dashboard": {
+      "badge": "Recipient dashboard",
+      "title": "Content shared with you",
+      "body": "Memories and Open When Messages you saved from recipient links stay available here.",
+      "empty": "No recipient content has been saved to this account yet.",
+      "sharedCollection": "Shared collection",
+      "recentlyShared": "Recently shared",
+      "memoryCount": "{count, plural, one {# memory} other {# memories}}",
+      "openWhenCount": "{count} Open When"
+    },
+    "collection": {
+      "title": "Recipient dashboard",
+      "body": "A saved overview of the content shared with you.",
+      "memoriesBody": "Browse {count, plural, one {# shared memory} other {# shared memories}}.",
+      "openWhenBody": "Read {count, plural, one {# personal message} other {# personal messages}} for specific moments."
+    },
+    "memories": {
+      "title": "Shared memories",
+      "body": "The memories that were made available to you in this collection.",
+      "empty": "No memories were shared in this collection."
+    },
+    "openWhen": {
+      "title": "Open When Messages",
+      "body": "Personal messages for moments when you may need them most.",
+      "empty": "No Open When Messages were shared in this collection.",
+      "fallbackOpenWhen": "Open when...",
+      "fallbackTitle": "Personal message"
+    }
   },
   "DashboardPage": {
     "missingHost": "Missing host headers. Set PAYLOAD_URL in your env.",
     "memoryVaultBadge": "Your Memory Vault",
-    "welcomeTitle": "Welcome back.",
-    "welcomeNamedTitle": "Welcome back, {name}.",
+    "welcomeTitle": "Welcome.",
+    "welcomeNamedTitle": "Welcome, {name}.",
     "welcomeHighlight": "Your story is taking shape beautifully.",
     "welcomeBody": "Keep building a space that feels personal, intentional, and easy to share with the people who matter most.",
     "connectedLovedOnes": "{count, plural, one {# loved one connected} other {# loved ones connected}}",
@@ -441,6 +682,11 @@
     "legacyWarningNoEmailCta": "Add loved one with email",
     "legacyPendingTitle": "Legacy protection is waiting for acceptance",
     "legacyPendingBody": "Your trusted contact invite has been sent. Protection becomes active once that person accepts.",
+    "legacyActiveLabel": "Protected",
+    "legacyActiveTitle": "Trusted contact is set up",
+    "legacyActiveBody": "{count, plural, one {{names} is set as your trusted contact and can help confirm delivery later.} other {{names} are set as trusted contacts and can help confirm delivery later.}}",
+    "legacyActiveGenericBody": "Legacy protection is active and your trusted contact can help confirm delivery later.",
+    "legacyActiveCta": "Manage protection",
     "nextStepLabel": "Next step",
     "nextStepTitle": "Add something meaningful today",
     "nextStepBody": "A short note, a favorite photo, or a quick video can become the moment your loved ones return to most.",
@@ -450,6 +696,12 @@
     "photos": "Photos",
     "videos": "Videos",
     "lovedOnes": "Loved ones",
+    "openWhenMessages": "Open When Messages",
+    "addNoteAction": "Add a note memory",
+    "addPhotoAction": "Add a photo memory",
+    "addVideoAction": "Add a video memory",
+    "addLovedOneAction": "Add a loved one",
+    "writeOpenWhenAction": "Write a message",
     "recentActivityLabel": "Recent activity",
     "recentActivityTitle": "Recently added",
     "recentActivityBody": "A quick look at the latest memories and loved ones you added.",
@@ -647,7 +899,18 @@
     "locked": "Locked",
     "delete": "Delete",
     "deleting": "Deleting...",
-    "deleteConfirm": "Delete group \"{name}\"? This cannot be undone."
+    "deleteConfirm": "Delete group \"{name}\"? This cannot be undone.",
+    "colorLabels": {
+      "gray": "Gray",
+      "red": "Red",
+      "blue": "Blue",
+      "purple": "Purple",
+      "yellow": "Yellow",
+      "green": "Green",
+      "cyan": "Cyan",
+      "orange": "Orange",
+      "pink": "Pink"
+    }
   },
   "MemoryEditForm": {
     "uploadFailed": "Upload failed ({status})",
@@ -661,6 +924,10 @@
     "singleNoteOnly": "Each memory can only have one note",
     "maxContentItems": "Max {max} items per memory",
     "submitValidation": "Fill in title, link at least one group or loved one, and add content",
+    "titleRequired": "Fill in the title before saving.",
+    "contentRequired": "Add at least one note, photo, or video before saving.",
+    "lovedOneRequiredFirst": "Add a loved one before saving your first memory.",
+    "recipientsRequired": "Select at least one group or loved one before saving.",
     "noValidContent": "No valid content blocks",
     "saveFailed": "Failed to save memory ({status})",
     "saveGeneric": "Failed to save",
@@ -684,6 +951,7 @@
     "moveUp": "Move up",
     "moveDown": "Move down",
     "remove": "Remove",
+    "changeMedia": "Change",
     "notePlaceholder": "Write the story here...",
     "previewAlt": "Preview",
     "imageUploadHelp": "Image limit: {limit}.",
@@ -703,6 +971,7 @@
     "noGroupsFound": "No groups found.",
     "lovedOnes": "Loved ones",
     "noLovedOnesFound": "No loved ones found.",
+    "addLovedOne": "Add loved one",
     "chooseContentTitle": "Add content",
     "chooseContentBody": "Choose what you want to add.",
     "image": "Image",

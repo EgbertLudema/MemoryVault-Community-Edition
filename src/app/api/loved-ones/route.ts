@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getAppUserFromHeaders } from '@/lib/appAuth'
+import { encryptSensitiveText, serializeLovedOneSensitiveFields } from '@/lib/encryptedFields'
 import { getLovedOneCountLimit, getLovedOneCountLimitMessage } from '@/lib/lovedOneLimits'
 
 function toNumberId(value: string | number) {
@@ -67,7 +68,17 @@ export async function GET(req: Request) {
       },
     })
 
-    return NextResponse.json(result, { status: 200 })
+    const docs = (result.docs ?? []).map((doc: any) => serializeLovedOneSensitiveFields(doc))
+
+    return NextResponse.json(
+      {
+        ...result,
+        docs,
+        lovedOneCount: result.totalDocs,
+        lovedOneCountLimit: getLovedOneCountLimit(user),
+      },
+      { status: 200 },
+    )
   } catch (err) {
     console.error(err)
     return NextResponse.json({ error: 'Failed to load loved ones' }, { status: 500 })
@@ -90,6 +101,7 @@ export async function POST(req: Request) {
     const email = typeof body.email === 'string' ? body.email.trim() : ''
     const relationship = typeof body.relationship === 'string' ? body.relationship.trim() : ''
     const customNote = typeof body.customNote === 'string' ? body.customNote.trim() : ''
+    const encryptedCustomNote = encryptSensitiveText(customNote)
 
     const rawGroups = Array.isArray(body.groups) ? body.groups : []
     const groups = rawGroups
@@ -143,13 +155,17 @@ export async function POST(req: Request) {
         nickname: nickname || undefined,
         email,
         relationship,
-        customNote: customNote || undefined,
+        customNote: null,
+        customNoteCiphertext: encryptedCustomNote.ciphertext,
+        customNoteEncryptionMetadata: encryptedCustomNote.metadata,
         groups,
         user: user.id,
       },
     })
 
-    return NextResponse.json(createdLovedOne, { status: 201 })
+    return NextResponse.json(serializeLovedOneSensitiveFields(createdLovedOne as any), {
+      status: 201,
+    })
   } catch (err) {
     console.error(err)
     return NextResponse.json({ error: 'Failed to create loved one' }, { status: 500 })

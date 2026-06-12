@@ -123,7 +123,10 @@ export function toAbsoluteAssetUrl(origin: string, url: string | null | undefine
 export function resolveLegacyRecipients(
   lovedOnes: LegacyRecipientInput[],
   memories: LegacyMemoryInput[],
+  lovedOneIdsWithOpenWhenMessages: number[] = [],
 ): ResolvedLegacyRecipient[] {
+  const openWhenRecipientIds = new Set(lovedOneIdsWithOpenWhenMessages)
+
   return lovedOnes
     .map((lovedOne) => {
       const lovedOneId = toNumberId(lovedOne.id)
@@ -145,7 +148,7 @@ export function resolveLegacyRecipients(
         .map((memory) => toNumberId(memory.id))
         .filter((value) => Number.isFinite(value))
 
-      if (memoryIds.length === 0) {
+      if (memoryIds.length === 0 && !openWhenRecipientIds.has(lovedOneId)) {
         return null
       }
 

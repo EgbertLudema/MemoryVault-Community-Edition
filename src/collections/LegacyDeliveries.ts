@@ -75,6 +75,15 @@ export const LegacyDeliveries: CollectionConfig = {
       required: true,
     },
     {
+      name: 'recipientUser',
+      type: 'relationship',
+      relationTo: 'users',
+      required: false,
+      admin: {
+        description: 'Optional app account that claimed this recipient delivery.',
+      },
+    },
+    {
       name: 'memories',
       type: 'relationship',
       relationTo: 'memories',

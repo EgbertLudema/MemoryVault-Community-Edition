@@ -16,6 +16,7 @@ import {
   getUploadKindForMimeType,
   getUploadLimitForMimeType,
 } from '@/lib/uploadLimits'
+import { analytics } from '@/lib/analytics'
 
 type LovedOneOption = {
   id: number
@@ -25,6 +26,7 @@ type LovedOneOption = {
 }
 
 type AccountPageClientProps = {
+  variant?: 'full' | 'legacy'
   userId: number
   locale: string
   initialFirstName: string
@@ -42,6 +44,7 @@ function cn(...classes: Array<string | false | null | undefined>) {
 }
 
 export function AccountPageClient({
+  variant = 'full',
   userId,
   locale,
   initialFirstName,
@@ -56,6 +59,7 @@ export function AccountPageClient({
   const t = useTranslations('AccountPage')
   const router = useRouter()
   const { showToast } = useToast()
+  const isLegacyOnly = variant === 'legacy'
 
   const [firstName, setFirstName] = useState(initialFirstName)
   const [lastName, setLastName] = useState(initialLastName)
@@ -269,6 +273,9 @@ export function AccountPageClient({
       const nextPending = Boolean(body?.user?.legacyProtectionPendingEnable)
       setLegacyProtectionEnabled(nextEnabled)
       setLegacyProtectionPendingEnable(nextPending)
+      if (nextValue) {
+        analytics.capture('check_in_enabled', { source: 'account' })
+      }
       showToast({
         tone: nextPending ? 'warning' : nextEnabled ? 'success' : 'info',
         message: nextPending
@@ -322,6 +329,15 @@ export function AccountPageClient({
       const nextPending = Boolean(body?.user?.legacyProtectionPendingEnable)
       setLegacyProtectionEnabled(nextEnabled)
       setLegacyProtectionPendingEnable(nextPending)
+      if (checked) {
+        analytics.capture('trusted_contact_selected', { source: 'account' })
+      }
+      if (nextShouldEnableProtection) {
+        analytics.capture('trusted_contact_setup_completed', {
+          source: 'account',
+          completion_status: nextEnabled ? 'completed' : 'skipped',
+        })
+      }
 
       showToast({
         tone: nextPending ? 'warning' : nextEnabled ? 'success' : 'info',
@@ -384,10 +400,14 @@ export function AccountPageClient({
   async function handleLogout() {
     try {
       setLogoutLoading(true)
-      await fetch('/api/app-auth/logout', {
+      const response = await fetch('/api/app-auth/logout', {
         method: 'POST',
         credentials: 'include',
       })
+      if (response.ok) {
+        analytics.capture('logout_completed', { source: 'account' })
+        analytics.reset()
+      }
     } catch {
       // Ignore logout errors and continue to the website.
     } finally {
@@ -399,164 +419,244 @@ export function AccountPageClient({
 
   return (
     <div className="relative max-h-full overflow-x-hidden overflow-y-auto">
-      <AccountHelpTour />
+      {!isLegacyOnly ? <AccountHelpTour /> : null}
+      {!isLegacyOnly ? (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 h-[520px] animate-dashboard-ambient bg-[radial-gradient(circle_at_top_left,rgba(216,180,254,0.38),transparent_35%),radial-gradient(circle_at_top_right,rgba(251,207,232,0.42),transparent_32%),linear-gradient(180deg,rgba(243,232,255,0.74)_0%,rgba(247,239,252,0.46)_42%,rgba(249,250,251,0.12)_78%,rgba(249,250,251,0)_100%)] [mask-image:linear-gradient(to_bottom,rgba(0,0,0,1)_0%,rgba(0,0,0,0.94)_62%,rgba(0,0,0,0.45)_84%,transparent_100%)]"
+        />
+      ) : null}
+
       <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-[520px] animate-dashboard-ambient bg-[radial-gradient(circle_at_top_left,rgba(216,180,254,0.38),transparent_35%),radial-gradient(circle_at_top_right,rgba(251,207,232,0.42),transparent_32%),linear-gradient(180deg,rgba(243,232,255,0.74)_0%,rgba(247,239,252,0.46)_42%,rgba(249,250,251,0.12)_78%,rgba(249,250,251,0)_100%)] [mask-image:linear-gradient(to_bottom,rgba(0,0,0,1)_0%,rgba(0,0,0,0.94)_62%,rgba(0,0,0,0.45)_84%,transparent_100%)]"
-      />
-
-      <div className="relative grid gap-4 p-3 pb-6 sm:gap-6 sm:p-6 lg:pb-24">
-        <DashboardLoadReveal delayMs={40}>
-          <section
-            data-tour="account-profile"
-            className="rounded-[28px] corner-shape-squircle border border-white/70 bg-white/80 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:rounded-[32px] sm:p-7"
-          >
-            <div className="mb-6">
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
-                {t('profileLabel')}
+        className={cn(
+          'relative grid gap-4',
+          isLegacyOnly ? 'p-0 pb-4 sm:gap-4' : 'p-3 pb-6 sm:gap-6 sm:p-6 lg:pb-24',
+        )}
+      >
+        {!isLegacyOnly ? (
+          <DashboardLoadReveal delayMs={40}>
+            <section
+              data-tour="account-profile"
+              className="rounded-[28px] corner-shape-squircle border border-white/70 bg-white/80 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:rounded-[32px] sm:p-7"
+            >
+              <div className="mb-6">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
+                  {t('profileLabel')}
+                </div>
+                <h2 className="mt-2 text-[26px] font-bold tracking-tight text-gray-900">
+                  {t('profileTitle')}
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-stone-600">{t('profileBody')}</p>
               </div>
-              <h2 className="mt-2 text-[26px] font-bold tracking-tight text-gray-900">
-                {t('profileTitle')}
-              </h2>
-              <p className="mt-1 text-sm leading-6 text-stone-600">{t('profileBody')}</p>
-            </div>
 
-            <form onSubmit={handleProfileSubmit} className="grid gap-4 md:max-w-2xl">
-              <div>
-                <label className="mb-3 block text-sm font-medium text-stone-700">
-                  {t('profilePicture')}
-                </label>
-                <div className="flex items-center gap-5">
-                  <div className="relative shrink-0">
-                    <button
-                      type="button"
-                      onClick={openProfileImagePicker}
-                      className="group flex h-24 w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-stone-200 bg-stone-100 shadow-sm transition hover:border-purple-300 sm:h-28 sm:w-28"
-                      aria-label={t('editProfilePicture')}
-                    >
-                      {pendingProfilePreview.trim() ? (
-                        <img
-                          src={pendingProfilePreview.trim()}
-                          alt={t('profilePictureAlt')}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-3xl font-semibold text-stone-500">
-                          {(
-                            firstName.trim().charAt(0) ||
-                            email.trim().charAt(0) ||
-                            '?'
-                          ).toUpperCase()}
-                        </span>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={openProfileImagePicker}
-                      className="absolute -bottom-1 -right-1 inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-purple-600 text-white shadow-[0_12px_30px_rgba(109,40,217,0.3)] transition hover:bg-purple-700"
-                      aria-label={t('editProfilePicture')}
-                    >
-                      <EditIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <p className="max-w-sm text-xs leading-5 text-stone-500">
-                    {t('profilePictureHelp', { limit: PROFILE_IMAGE_UPLOAD_MAX_LABEL })}
-                  </p>
-                  <input
-                    ref={profileImageInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="sr-only"
-                    onChange={(event) => {
-                      const nextFile = event.target.files?.[0] ?? null
-                      if (nextFile) {
-                        const validationError = getProfileImageValidationError(nextFile)
+              <form onSubmit={handleProfileSubmit} className="grid gap-4 md:max-w-2xl">
+                <div>
+                  <label className="mb-3 block text-sm font-medium text-stone-700">
+                    {t('profilePicture')}
+                  </label>
+                  <div className="flex items-center gap-5">
+                    <div className="relative shrink-0">
+                      <button
+                        type="button"
+                        onClick={openProfileImagePicker}
+                        className="group flex h-24 w-24 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-stone-200 bg-stone-100 shadow-sm transition hover:border-purple-300 sm:h-28 sm:w-28"
+                        aria-label={t('editProfilePicture')}
+                      >
+                        {pendingProfilePreview.trim() ? (
+                          <img
+                            src={pendingProfilePreview.trim()}
+                            alt={t('profilePictureAlt')}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-3xl font-semibold text-stone-500">
+                            {(
+                              firstName.trim().charAt(0) ||
+                              email.trim().charAt(0) ||
+                              '?'
+                            ).toUpperCase()}
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={openProfileImagePicker}
+                        className="absolute -bottom-1 -right-1 inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-purple-600 text-white shadow-[0_12px_30px_rgba(109,40,217,0.3)] transition hover:bg-purple-700"
+                        aria-label={t('editProfilePicture')}
+                      >
+                        <EditIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <p className="max-w-sm text-xs leading-5 text-stone-500">
+                      {t('profilePictureHelp', { limit: PROFILE_IMAGE_UPLOAD_MAX_LABEL })}
+                    </p>
+                    <input
+                      ref={profileImageInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={(event) => {
+                        const nextFile = event.target.files?.[0] ?? null
+                        if (nextFile) {
+                          const validationError = getProfileImageValidationError(nextFile)
 
-                        if (validationError) {
-                          setProfileImageFile(null)
-                          setRemoveProfileImage(false)
-                          showToast({ tone: 'error', message: validationError })
-                          event.currentTarget.value = ''
-                          return
+                          if (validationError) {
+                            setProfileImageFile(null)
+                            setRemoveProfileImage(false)
+                            showToast({ tone: 'error', message: validationError })
+                            event.currentTarget.value = ''
+                            return
+                          }
                         }
-                      }
 
-                      setProfileImageFile(nextFile)
-                      setRemoveProfileImage(false)
-                    }}
-                  />
+                        setProfileImageFile(nextFile)
+                        setRemoveProfileImage(false)
+                      }}
+                    />
+                  </div>
+                  {(profileImageSrc || profileImageFile) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileImageFile(null)
+                        setRemoveProfileImage(true)
+                      }}
+                      className="mt-5 cursor-pointer rounded-full border border-stone-200 px-4 py-2 text-sm font-medium text-stone-700 transition-colors duration-200 hover:bg-stone-50"
+                    >
+                      {t('removeProfilePicture')}
+                    </button>
+                  )}
                 </div>
-                {(profileImageSrc || profileImageFile) && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setProfileImageFile(null)
-                      setRemoveProfileImage(true)
-                    }}
-                    className="mt-5 cursor-pointer rounded-full border border-stone-200 px-4 py-2 text-sm font-medium text-stone-700 transition-colors duration-200 hover:bg-stone-50"
+
+                <div data-tour="account-profile-inputs" className="grid gap-4">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-stone-700">
+                      {t('firstName')}
+                    </label>
+                    <input
+                      value={firstName}
+                      onChange={(event) => setFirstName(event.target.value)}
+                      autoComplete="given-name"
+                      className="h-12 w-full rounded-[20px] corner-shape-squircle border border-stone-200/80 bg-white/90 px-4 text-gray-900 outline-none transition placeholder:text-stone-400 focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
+                      placeholder={t('firstNamePlaceholder')}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-stone-700">
+                      {t('lastName')}
+                    </label>
+                    <input
+                      value={lastName}
+                      onChange={(event) => setLastName(event.target.value)}
+                      autoComplete="family-name"
+                      className="h-12 w-full rounded-[20px] corner-shape-squircle border border-stone-200/80 bg-white/90 px-4 text-gray-900 outline-none transition placeholder:text-stone-400 focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
+                      placeholder={t('lastNamePlaceholder')}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-stone-700">
+                      {t('email')}
+                    </label>
+                    <div className="min-h-12 w-full min-w-0 break-all rounded-[20px] corner-shape-squircle border border-stone-200/80 bg-stone-50 px-4 py-3 text-stone-500">
+                      {email}
+                    </div>
+                    <p className="mt-2 text-xs text-stone-500">{t('emailLocked')}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <PrimaryButton
+                    type="submit"
+                    disabled={savingProfile}
+                    className="h-11 rounded-full"
                   >
-                    {t('removeProfilePicture')}
-                  </button>
-                )}
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-stone-700">
-                  {t('firstName')}
-                </label>
-                <input
-                  value={firstName}
-                  onChange={(event) => setFirstName(event.target.value)}
-                  autoComplete="given-name"
-                  className="h-12 w-full rounded-[20px] corner-shape-squircle border border-stone-200/80 bg-white/90 px-4 text-gray-900 outline-none transition placeholder:text-stone-400 focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
-                  placeholder={t('firstNamePlaceholder')}
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-stone-700">
-                  {t('lastName')}
-                </label>
-                <input
-                  value={lastName}
-                  onChange={(event) => setLastName(event.target.value)}
-                  autoComplete="family-name"
-                  className="h-12 w-full rounded-[20px] corner-shape-squircle border border-stone-200/80 bg-white/90 px-4 text-gray-900 outline-none transition placeholder:text-stone-400 focus:border-purple-300 focus:ring-2 focus:ring-purple-200"
-                  placeholder={t('lastNamePlaceholder')}
-                />
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-stone-700">
-                  {t('email')}
-                </label>
-                <div className="min-h-12 w-full min-w-0 break-all rounded-[20px] corner-shape-squircle border border-stone-200/80 bg-stone-50 px-4 py-3 text-stone-500">
-                  {email}
+                    {savingProfile ? t('saving') : t('saveChanges')}
+                  </PrimaryButton>
                 </div>
-                <p className="mt-2 text-xs text-stone-500">{t('emailLocked')}</p>
+              </form>
+            </section>
+          </DashboardLoadReveal>
+        ) : null}
+
+        {!isLegacyOnly ? (
+          <DashboardLoadReveal delayMs={120}>
+            <section
+              id="billing"
+              data-tour="account-billing"
+              className="rounded-[28px] corner-shape-squircle border border-white/70 bg-white/80 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:rounded-[32px] sm:p-7"
+            >
+              <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
+                    {t('billingLabel')}
+                  </div>
+                  <h2 className="mt-2 text-[26px] font-bold tracking-tight text-gray-900">
+                    {isPro ? t('billingProTitle') : t('billingFreeTitle')}
+                  </h2>
+                  <p className="mt-1 max-w-2xl text-sm leading-6 text-stone-600">
+                    {isPro ? t('billingProBody') : t('billingFreeBody')}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
+                    <span
+                      className={cn(
+                        'rounded-full border px-3 py-1',
+                        isPro
+                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                          : 'border-stone-200 bg-stone-50 text-stone-600',
+                      )}
+                    >
+                      {isPro ? t('billingStatusPro') : t('billingStatusFree')}
+                    </span>
+                  </div>
+                  {currentPeriodEnd ? (
+                    <p className="mt-2 text-xs font-medium text-stone-500">
+                      {t('billingPeriodEnd', {
+                        date: new Date(currentPeriodEnd).toLocaleDateString(),
+                      })}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  {isPro ? (
+                    <PrimaryButton
+                      type="button"
+                      onClick={() => openBilling('/api/billing/portal')}
+                      disabled={billingLoading !== null}
+                      className="h-11 rounded-full px-5"
+                    >
+                      {billingLoading === 'portal' ? t('openingBilling') : t('manageBilling')}
+                    </PrimaryButton>
+                  ) : (
+                    <PrimaryButton
+                      type="button"
+                      onClick={() => openBilling('/api/billing/checkout')}
+                      disabled={billingLoading !== null}
+                      className="h-11 rounded-full px-5"
+                    >
+                      {billingLoading === 'checkout' ? t('openingBilling') : t('upgradeToPro')}
+                    </PrimaryButton>
+                  )}
+                </div>
               </div>
+            </section>
+          </DashboardLoadReveal>
+        ) : null}
 
-              <div>
-                <PrimaryButton type="submit" disabled={savingProfile} className="h-11 rounded-full">
-                  {savingProfile ? t('saving') : t('saveChanges')}
-                </PrimaryButton>
-              </div>
-            </form>
-          </section>
-        </DashboardLoadReveal>
-
-
-        <DashboardLoadReveal delayMs={200}>
+        <DashboardLoadReveal delayMs={isLegacyOnly ? 40 : 200}>
           <section
             data-tour="account-legacy"
             className={cn(
-              'rounded-[28px] corner-shape-squircle border p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:rounded-[32px] sm:p-7',
+              'rounded-[28px] corner-shape-squircle border p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:rounded-[32px]',
+              isLegacyOnly ? 'shadow-none sm:p-5' : 'sm:p-7',
               legacyProtectionReady
                 ? 'border-emerald-200 bg-[linear-gradient(135deg,rgba(236,253,245,0.94),rgba(255,255,255,0.9))]'
                 : 'border-amber-200 bg-[linear-gradient(135deg,rgba(255,251,235,0.96),rgba(255,247,237,0.9))]',
             )}
           >
-            <div className="mb-6">
+            <div className="mb-6" data-tour="account-legacy-header">
               <div className="flex flex-wrap items-center gap-3">
                 <div
                   className={cn(
@@ -631,6 +731,12 @@ export function AccountPageClient({
                 <label
                   className={cn(
                     'inline-flex items-center gap-3 rounded-full corner-shape-squircle border px-4 py-2 text-sm font-medium shadow-sm',
+                    savingLegacy ||
+                      (!hasSelectedTrustedContact &&
+                        !legacyProtectionEnabled &&
+                        !legacyProtectionPendingEnable)
+                      ? 'cursor-not-allowed opacity-70'
+                      : 'cursor-pointer',
                     legacyProtectionReady
                       ? 'border-emerald-300 bg-white text-emerald-700'
                       : legacyProtectionNeedsAttention
@@ -642,6 +748,12 @@ export function AccountPageClient({
                     type="checkbox"
                     className={cn(
                       'h-4 w-4',
+                      savingLegacy ||
+                        (!hasSelectedTrustedContact &&
+                          !legacyProtectionEnabled &&
+                          !legacyProtectionPendingEnable)
+                        ? 'cursor-not-allowed'
+                        : 'cursor-pointer',
                       legacyProtectionReady ? 'accent-emerald-600' : 'accent-amber-600',
                     )}
                     checked={legacyProtectionEnabled || legacyProtectionPendingEnable}
@@ -765,33 +877,35 @@ export function AccountPageClient({
           </section>
         </DashboardLoadReveal>
 
-        <DashboardLoadReveal delayMs={280}>
-          <section
-            data-tour="account-actions"
-            className="rounded-[28px] corner-shape-squircle border border-white/70 bg-white/80 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:rounded-[32px] sm:p-7"
-          >
-            <div className="mb-6">
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
-                {t('accountActionsLabel')}
+        {!isLegacyOnly ? (
+          <DashboardLoadReveal delayMs={280}>
+            <section
+              data-tour="account-actions"
+              className="rounded-[28px] corner-shape-squircle border border-white/70 bg-white/80 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:rounded-[32px] sm:p-7"
+            >
+              <div className="mb-6" data-tour="account-actions-header">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
+                  {t('accountActionsLabel')}
+                </div>
+                <h2 className="mt-2 text-[26px] font-bold tracking-tight text-gray-900">
+                  {t('accountActionsTitle')}
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-stone-600">{t('accountActionsBody')}</p>
               </div>
-              <h2 className="mt-2 text-[26px] font-bold tracking-tight text-gray-900">
-                {t('accountActionsTitle')}
-              </h2>
-              <p className="mt-1 text-sm leading-6 text-stone-600">{t('accountActionsBody')}</p>
-            </div>
 
-            <div className="mb-4 lg:hidden">
-              <LanguageSwitcher variant="full" />
-            </div>
+              <div className="mb-4 lg:hidden">
+                <LanguageSwitcher variant="full" />
+              </div>
 
-            <LogoutButton
-              onLogout={handleLogout}
-              loading={logoutLoading}
-              variant="page"
-              className="w-full rounded-[24px]"
-            />
-          </section>
-        </DashboardLoadReveal>
+              <LogoutButton
+                onLogout={handleLogout}
+                loading={logoutLoading}
+                variant="page"
+                className="w-full rounded-[24px]"
+              />
+            </section>
+          </DashboardLoadReveal>
+        ) : null}
       </div>
     </div>
   )

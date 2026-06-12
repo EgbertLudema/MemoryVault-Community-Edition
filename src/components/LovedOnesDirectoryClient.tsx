@@ -1,7 +1,7 @@
 'use client'
 
 import gsap from 'gsap'
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { DashboardLoadReveal } from '@/components/dashboard/DashboardLoadReveal'
 import { SearchIcon } from '@/components/icons/SearchIcon'
@@ -11,6 +11,7 @@ import { getEffectiveGroupUiMeta } from '@/lib/groupUi'
 import { GroupButton } from '@/components/ui/GroupButton'
 import { PrimaryButton } from '@/components/ui/PrimaryButton'
 import { LovedOneCard } from '@/components/ui/LovedOneCard'
+import { LOVED_ONE_DELETED_EVENT, type LovedOneDeletedDetail } from '@/lib/lovedOneEvents'
 
 type LovedOneGroup = {
   id: string
@@ -36,6 +37,7 @@ type LovedOne = {
 export function LovedOnesDirectoryClient({ lovedOnes }: { lovedOnes: LovedOne[] }) {
   const t = useTranslations('LovedOnesPage')
   const tGroups = useTranslations('GroupLabels')
+  const [visibleLovedOnes, setVisibleLovedOnes] = useState(lovedOnes)
   const [query, setQuery] = useState('')
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([])
   const cardRefs = useRef(new Map<string, HTMLDivElement>())
@@ -46,7 +48,7 @@ export function LovedOnesDirectoryClient({ lovedOnes }: { lovedOnes: LovedOne[] 
   const availableGroups = useMemo(() => {
     const groupMap = new Map<string, LovedOneGroup>()
 
-    lovedOnes.forEach((person) => {
+    visibleLovedOnes.forEach((person) => {
       const groups = Array.isArray(person.groups) ? person.groups : []
       groups.forEach((group) => {
         if (typeof group === 'string' || !group?.id || !group?.name) {
@@ -68,12 +70,12 @@ export function LovedOnesDirectoryClient({ lovedOnes }: { lovedOnes: LovedOne[] 
     })
 
     return Array.from(groupMap.values())
-  }, [lovedOnes])
+  }, [visibleLovedOnes])
 
   const filteredLovedOnes = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
 
-    return lovedOnes.filter((person) => {
+    return visibleLovedOnes.filter((person) => {
       const personGroupIds = (Array.isArray(person.groups) ? person.groups : [])
         .filter((group): group is LovedOneGroup => typeof group !== 'string' && Boolean(group?.id))
         .map((group) => String(group.id).trim())
@@ -101,7 +103,7 @@ export function LovedOnesDirectoryClient({ lovedOnes }: { lovedOnes: LovedOne[] 
 
       return haystack.includes(normalizedQuery)
     })
-  }, [lovedOnes, query, selectedGroupIds])
+  }, [visibleLovedOnes, query, selectedGroupIds])
 
   const snapshotLayout = () => {
     const nextRects = new Map<string, DOMRect>()
@@ -115,6 +117,46 @@ export function LovedOnesDirectoryClient({ lovedOnes }: { lovedOnes: LovedOne[] 
     previousRectsRef.current = nextRects
     pendingAnimationRef.current = nextRects.size > 0
   }
+
+  useEffect(() => {
+    setVisibleLovedOnes(lovedOnes)
+  }, [lovedOnes])
+
+  useEffect(() => {
+    function onLovedOneDeleted(event: Event) {
+      const deletedEvent = event as CustomEvent<LovedOneDeletedDetail>
+      const deletedId = deletedEvent.detail?.id
+
+      if (!deletedId) {
+        return
+      }
+
+      const element = cardRefs.current.get(deletedId)
+
+      if (!element) {
+        snapshotLayout()
+        setVisibleLovedOnes((current) => current.filter((person) => person.id !== deletedId))
+        return
+      }
+
+      gsap.killTweensOf(element)
+      gsap.to(element, {
+        autoAlpha: 0,
+        y: 14,
+        scale: 0.96,
+        duration: 0.22,
+        ease: 'power2.in',
+        onComplete: () => {
+          snapshotLayout()
+          setVisibleLovedOnes((current) => current.filter((person) => person.id !== deletedId))
+        },
+      })
+    }
+
+    window.addEventListener(LOVED_ONE_DELETED_EVENT, onLovedOneDeleted)
+
+    return () => window.removeEventListener(LOVED_ONE_DELETED_EVENT, onLovedOneDeleted)
+  }, [])
 
   useLayoutEffect(() => {
     if (!pendingAnimationRef.current) {
@@ -185,7 +227,7 @@ export function LovedOnesDirectoryClient({ lovedOnes }: { lovedOnes: LovedOne[] 
     }
   }, [filteredLovedOnes])
 
-  if (lovedOnes.length === 0) {
+  if (visibleLovedOnes.length === 0) {
     return (
       <div className="mt-6 rounded-[28px] corner-shape-squircle border border-dashed border-rose-200 bg-[linear-gradient(135deg,rgba(255,245,247,0.95),rgba(255,255,255,0.97))] p-8 text-center">
         <div className="mx-auto max-w-md">
@@ -298,9 +340,7 @@ export function LovedOnesDirectoryClient({ lovedOnes }: { lovedOnes: LovedOne[] 
                   colorValue={meta.color.value}
                   onClick={() => {
                     snapshotLayout()
-                    setSelectedGroupIds((current) =>
-                      current.includes(group.id) ? [] : [group.id],
-                    )
+                    setSelectedGroupIds((current) => (current.includes(group.id) ? [] : [group.id]))
                   }}
                   icon={<IconComponent className="h-4 w-4 shrink-0" />}
                 />

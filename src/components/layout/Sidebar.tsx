@@ -8,7 +8,9 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { Link, usePathname, useRouter } from '@/i18n/navigation'
 import { AccountCircleIcon } from '../icons/AccountCircleIcon'
 import { HouseIcon } from '../icons/HouseIcon'
+import { MailIcon } from '../icons/MailIcon'
 import { MemoryBookIcon } from '../icons/MemoryBookIcon'
+import { OpenBookIcon } from '../icons/OpenBookIcon'
 import { TwoPersonsIcon } from '../icons/TwoPersonsIcon'
 import { WorldIcon } from '../icons/WorldIcon'
 import { CollapseButton } from '../ui/CollapseButton'
@@ -127,14 +129,24 @@ export function Sidebar(props: {
       icon: <HouseIcon className={iconSvgClass} />,
     },
     {
+      label: t('myLovedOnes'),
+      href: '/loved-ones',
+      icon: <TwoPersonsIcon className={iconSvgClass} />,
+    },
+    {
       label: t('myMemories'),
       href: '/memories',
       icon: <MemoryBookIcon className={iconSvgClass} />,
     },
     {
-      label: t('myLovedOnes'),
-      href: '/loved-ones',
-      icon: <TwoPersonsIcon className={iconSvgClass} />,
+      label: t('openWhenMessages'),
+      href: '/open-when-messages',
+      icon: <MailIcon className={iconSvgClass} />,
+    },
+    {
+      label: t('recipient'),
+      href: '/recipient',
+      icon: <OpenBookIcon className={iconSvgClass} />,
     },
   ]
 

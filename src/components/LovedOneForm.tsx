@@ -4,6 +4,7 @@
 import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { LovedOneFormFields, type LovedOneFormValues } from '@/components/LovedOneFormFields'
+import { analytics } from '@/lib/analytics'
 
 function toPayloadId(id: string | number): string | number {
   if (typeof id === 'number') {
@@ -56,6 +57,8 @@ export function LovedOneForm() {
       throw new Error(data?.error || t('createFailed', { status: res.status }))
     }
 
+    analytics.capture('loved_one_created', { source: 'loved_ones' })
+
     closeModal()
 
     setTimeout(() => {
@@ -77,6 +80,7 @@ export function LovedOneForm() {
       submittingLabel={t('creating')}
       onSubmit={handleCreate}
       onCancel={closeModal}
+      stickyActions
     />
   )
 }

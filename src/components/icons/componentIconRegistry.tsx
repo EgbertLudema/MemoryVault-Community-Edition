@@ -20,6 +20,7 @@ import { MailIcon } from '@/components/icons/MailIcon'
 import { MemoryBookIcon } from '@/components/icons/MemoryBookIcon'
 import { MinusIcon } from '@/components/icons/MinusIcon'
 import { NotesIcon } from '@/components/icons/NotesIcon'
+import { OpenBookIcon } from '@/components/icons/OpenBookIcon'
 import { OpenStarIcon } from '@/components/icons/OpenStarIcon'
 import { PhotoIcon } from '@/components/icons/PhotoIcon'
 import { PlusIcon } from '@/components/icons/PlusIcon'
@@ -31,6 +32,7 @@ import { ShakeHandsIcon } from '@/components/icons/ShakeHandsIcon'
 import { StarIcon } from '@/components/icons/StarIcon'
 import { TrashIcon } from '@/components/icons/TrashIcon'
 import { TwoPersonsIcon } from '@/components/icons/TwoPersonsIcon'
+import { UnlockIcon } from '@/components/icons/UnlockIcon'
 import { VideoIcon } from '@/components/icons/VideoIcon'
 import { WorldIcon } from '@/components/icons/WorldIcon'
 import type { ComponentIconKey } from '@/lib/iconOptions'
@@ -60,6 +62,7 @@ export const componentIconMap: Record<
   'memory-book': MemoryBookIcon,
   minus: MinusIcon,
   notes: NotesIcon,
+  'open-book': OpenBookIcon,
   'open-star': OpenStarIcon,
   photo: PhotoIcon,
   plus: PlusIcon,
@@ -71,6 +74,7 @@ export const componentIconMap: Record<
   star: StarIcon,
   trash: TrashIcon,
   'two-persons': TwoPersonsIcon,
+  unlock: UnlockIcon,
   video: VideoIcon,
   world: WorldIcon,
 }

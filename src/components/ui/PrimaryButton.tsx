@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { Link } from '@/i18n/navigation'
+import { useMemoryCreationGate } from '@/components/memories/AddMemoryGate'
 
 type PrimaryButtonProps = {
   href?: string
@@ -24,6 +25,7 @@ export function PrimaryButton({
   children,
   className,
 }: PrimaryButtonProps) {
+  const memoryCreationGate = useMemoryCreationGate()
   const baseClasses = cn(
     // Layout
     'inline-flex items-center justify-center px-4 py-2 rounded-xl corner-shape-squircle cursor-pointer',
@@ -44,7 +46,11 @@ export function PrimaryButton({
 
   if (href) {
     return (
-      <Link href={href} className={baseClasses}>
+      <Link
+        href={href}
+        onClick={(event) => memoryCreationGate?.guardAddMemoryClick(event, href)}
+        className={baseClasses}
+      >
         {children}
       </Link>
     )

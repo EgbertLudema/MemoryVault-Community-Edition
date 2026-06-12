@@ -51,6 +51,20 @@ export const LovedOnes: CollectionConfig = {
       },
     },
     {
+      name: 'customNoteCiphertext',
+      type: 'textarea',
+      admin: {
+        hidden: true,
+      },
+    },
+    {
+      name: 'customNoteEncryptionMetadata',
+      type: 'json',
+      admin: {
+        hidden: true,
+      },
+    },
+    {
       name: 'groups',
       type: 'relationship',
       relationTo: 'loved-one-groups',

@@ -3,6 +3,11 @@ import { NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getAppUserFromHeaders } from '@/lib/appAuth'
+import {
+  ENCRYPTED_MEMORY_TITLE_PLACEHOLDER,
+  encryptSensitiveText,
+  getMemoryDisplayTitle,
+} from '@/lib/encryptedFields'
 import { buildMediaImageUrl, buildMediaPosterUrl, buildMediaVideoStreamUrl } from '@/lib/mediaBlob'
 import {
   getMemoryContentItemLimit,
@@ -202,7 +207,9 @@ export async function GET(req: Request) {
             const thumbnailUrl = toStringSafe(media.thumbnailURL ?? '')
             const posterUrl = toStringSafe(media.posterUrl ?? '')
             const imageUrl = id ? buildMediaImageUrl(id) : fullUrl
-            const videoPosterUrl = id ? buildMediaPosterUrl(id) : posterUrl || thumbnailUrl || fullUrl
+            const videoPosterUrl = id
+              ? buildMediaPosterUrl(id)
+              : posterUrl || thumbnailUrl || fullUrl
             const previewUrl = item.type === 'video' ? videoPosterUrl : imageUrl
 
             if (previewUrl) {
@@ -302,7 +309,7 @@ export async function GET(req: Request) {
 
       return {
         id: toStringSafe(memory.id),
-        title: toStringSafe(memory.title ?? ''),
+        title: getMemoryDisplayTitle(memory, ''),
         createdAt: toStringSafe(memory.createdAt),
         keyCiphertext: toStringSafe(memory.keyCiphertext ?? ''),
         keyEncryptionMetadata: memory.keyEncryptionMetadata,
@@ -321,7 +328,16 @@ export async function GET(req: Request) {
 
     const groups = Array.from(groupMap.values()).sort((a, b) => a.name.localeCompare(b.name))
 
-    return NextResponse.json({ albums, groups }, { status: 200 })
+    return NextResponse.json(
+      {
+        albums,
+        groups,
+        memoryCount: result.totalDocs,
+        memoryCountLimit: getMemoryCountLimit(user),
+        canUseVideo: true,
+      },
+      { status: 200 },
+    )
   } catch (err) {
     console.error(err)
     return NextResponse.json({ error: 'Failed to load memories' }, { status: 500 })
@@ -340,8 +356,8 @@ export async function POST(req: Request) {
       title?: string
       memoryDate?: string
       groups?: Array<string | number>
-    lovedOnes?: Array<string | number>
-    content?: IncomingContent[]
+      lovedOnes?: Array<string | number>
+      content?: IncomingContent[]
       keyCiphertext?: string
       keyEncryptionMetadata?: any
     }
@@ -350,6 +366,7 @@ export async function POST(req: Request) {
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
+    const encryptedTitle = encryptSensitiveText(title)
 
     const memoryDateRaw = String(body.memoryDate ?? '').trim()
     const memoryDate = new Date(memoryDateRaw)
@@ -466,7 +483,9 @@ export async function POST(req: Request) {
     const created = await payload.create({
       collection: 'memories',
       data: {
-        title,
+        title: ENCRYPTED_MEMORY_TITLE_PLACEHOLDER,
+        titleCiphertext: encryptedTitle.ciphertext,
+        titleEncryptionMetadata: encryptedTitle.metadata,
         memoryDate: memoryDate.toISOString(),
         owner: user.id,
         groups: groupNumberIds,
@@ -480,7 +499,7 @@ export async function POST(req: Request) {
       {
         memory: {
           id: String(created.id),
-          title: String(created.title ?? ''),
+          title,
           createdAt: String(created.createdAt),
         },
       },

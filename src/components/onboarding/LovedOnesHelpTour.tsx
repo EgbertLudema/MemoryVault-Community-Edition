@@ -10,7 +10,11 @@ type LovedOnesHelpTourProps = {
   hasLovedOnes: boolean
 }
 
-function getSteps(t: ReturnType<typeof useTranslations>, hasLovedOnes: boolean): Step[] {
+function getSteps(
+  t: ReturnType<typeof useTranslations>,
+  hasLovedOnes: boolean,
+  isDesktop: boolean,
+): Step[] {
   const baseSteps: Step[] = [
     {
       target: '[data-tour="loved-ones-add-button"]',
@@ -30,6 +34,33 @@ function getSteps(t: ReturnType<typeof useTranslations>, hasLovedOnes: boolean):
 
   if (!hasLovedOnes) {
     return baseSteps
+  }
+
+  if (!isDesktop) {
+    return [
+      {
+        target: '[data-tour="loved-ones-first-card-name"]',
+        placement: 'bottom',
+        skipBeacon: true,
+        title: t('cardTitle'),
+        content: t('cardBody'),
+      },
+      {
+        target: '[data-tour="loved-ones-first-card-recipient"]',
+        placement: 'top',
+        skipBeacon: true,
+        title: t('recipientTitle'),
+        content: t('recipientBody'),
+      },
+      {
+        target: '[data-tour="loved-ones-first-card-edit"]',
+        placement: 'top',
+        skipBeacon: true,
+        title: t('editTitle'),
+        content: t('editBody'),
+      },
+      ...baseSteps,
+    ]
   }
 
   return [
@@ -67,8 +98,24 @@ export function LovedOnesHelpTour(props: LovedOnesHelpTourProps) {
   const [run, setRun] = React.useState(false)
   const [requestToken, setRequestToken] = React.useState(0)
   const [startedToken, setStartedToken] = React.useState(0)
+  const [isDesktop, setIsDesktop] = React.useState(false)
 
-  const steps = React.useMemo(() => getSteps(t, props.hasLovedOnes), [props.hasLovedOnes, t])
+  const steps = React.useMemo(
+    () => getSteps(t, props.hasLovedOnes, isDesktop),
+    [isDesktop, props.hasLovedOnes, t],
+  )
+
+  React.useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 1024px)')
+    const update = () => setIsDesktop(mediaQuery.matches)
+
+    update()
+    mediaQuery.addEventListener('change', update)
+
+    return () => {
+      mediaQuery.removeEventListener('change', update)
+    }
+  }, [])
 
   React.useEffect(() => {
     const handleOpenHelp = () => {

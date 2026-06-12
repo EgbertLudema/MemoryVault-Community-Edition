@@ -4,6 +4,8 @@
 import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
 import { LovedOneFormFields, type LovedOneFormValues } from '@/components/LovedOneFormFields'
+import { announceLovedOneDeleted } from '@/lib/lovedOneEvents'
+import { requestModalNavigation } from '@/lib/modalNavigation'
 
 type LovedOneGroup = {
   id: string | number
@@ -71,7 +73,13 @@ function extractInitialGroupIds(lovedOne: LovedOne): string[] {
   return []
 }
 
-export function LovedOneEditForm({ lovedOne }: { lovedOne: LovedOne }) {
+export function LovedOneEditForm({
+  lovedOne,
+  mode = 'page',
+}: {
+  lovedOne: LovedOne
+  mode?: 'page' | 'modal'
+}) {
   const t = useTranslations('LovedOneForm')
   const router = useRouter()
 
@@ -124,6 +132,19 @@ export function LovedOneEditForm({ lovedOne }: { lovedOne: LovedOne }) {
     if (!res.ok) {
       const data = await res.json().catch(() => null)
       throw new Error(data?.error || t('deleteFailed', { status: res.status }))
+    }
+
+    if (mode === 'modal') {
+      announceLovedOneDeleted(String(lovedOne.id))
+
+      if (!requestModalNavigation('/loved-ones')) {
+        closeModal()
+      }
+
+      setTimeout(() => {
+        router.refresh()
+      }, 320)
+      return
     }
 
     router.replace('/loved-ones')

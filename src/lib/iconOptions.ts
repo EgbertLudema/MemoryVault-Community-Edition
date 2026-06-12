@@ -20,6 +20,7 @@ export const COMPONENT_ICON_OPTIONS = [
   { value: 'memory-book', label: 'Memory book' },
   { value: 'minus', label: 'Minus' },
   { value: 'notes', label: 'Notes' },
+  { value: 'open-book', label: 'Open book' },
   { value: 'open-star', label: 'Open star' },
   { value: 'photo', label: 'Photo' },
   { value: 'plus', label: 'Plus' },
@@ -31,6 +32,7 @@ export const COMPONENT_ICON_OPTIONS = [
   { value: 'star', label: 'Star' },
   { value: 'trash', label: 'Trash' },
   { value: 'two-persons', label: 'Two persons' },
+  { value: 'unlock', label: 'Unlock' },
   { value: 'video', label: 'Video' },
   { value: 'world', label: 'World' },
 ] as const

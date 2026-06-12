@@ -9,21 +9,21 @@ import { usePathname } from '@/i18n/navigation'
 function getSteps(t: ReturnType<typeof useTranslations>): Step[] {
   return [
     {
-      target: '[data-tour="account-profile"]',
+      target: '[data-tour="account-profile-inputs"]',
       placement: 'bottom',
       skipBeacon: true,
       title: t('profileTitle'),
       content: t('profileBody'),
     },
     {
-      target: '[data-tour="account-legacy"]',
+      target: '[data-tour="account-legacy-header"]',
       placement: 'top',
       skipBeacon: true,
       title: t('legacyTitle'),
       content: t('legacyBody'),
     },
     {
-      target: '[data-tour="account-actions"]',
+      target: '[data-tour="account-actions-header"]',
       placement: 'top',
       skipBeacon: true,
       title: t('actionsTitle'),

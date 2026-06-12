@@ -20,7 +20,7 @@ export function AlbumTile({
   const previewItems = getAlbumPreviewItems(album).slice(0, 3)
   const noteTheme = getNoteThemeForAlbum(album, groups, selectedGroupIds)
 
-  const rotations = [-8, -2, 6]
+  const rotations = [0, 2, 4]
   const offsets = [
     { x: -6, y: 2 },
     { x: 0, y: 0 },
@@ -54,6 +54,7 @@ export function AlbumTile({
                 '--offset-x': `${offset.x}px`,
                 '--offset-y': `${offset.y}px`,
                 transform: `translate(${offset.x}px, ${offset.y}px) rotate(${rotation}deg)`,
+                transformOrigin: 'center center',
                 zIndex,
                 boxShadow: MEMORY_CARD_SHADOW,
               } as React.CSSProperties

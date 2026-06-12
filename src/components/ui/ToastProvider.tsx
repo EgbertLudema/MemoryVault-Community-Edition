@@ -91,6 +91,14 @@ function translateToastMessage(message: string, t: ReturnType<typeof useTranslat
     return t('lovedOneLimit', { max: Number(lovedOneLimitMatch[1]) })
   }
 
+  const openWhenLimitMatch = message.match(
+    /^Your plan can have at most (\d+) Open When messages\.?$/i,
+  )
+
+  if (openWhenLimitMatch) {
+    return t('openWhenMessageLimit', { max: Number(openWhenLimitMatch[1]) })
+  }
+
   const translations: Record<string, string> = {
     'Email and password are required': t('emailPasswordRequired'),
     'Email is required': t('emailRequired'),
