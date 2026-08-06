@@ -2,6 +2,11 @@ import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { AccountPageClient } from '@/components/account/AccountPageClient'
 import { APP_AUTH_COOKIE } from '@/lib/appAuthShared'
+import { getMemoryCountLimit } from '@/lib/memoryLimits'
+import { getOpenWhenMessageCountLimit } from '@/lib/openWhenLimits'
+import { getStorageByteLimit } from '@/lib/storageLimits'
+import { getUserStorageUsageBytes } from '@/lib/storageUsageServer'
+import { getUserMemoryCount, getUserOpenWhenMessageCount } from '@/lib/usageCountsServer'
 
 type MeResponse = {
   user?: {
@@ -118,10 +123,12 @@ function getSelectedContactIds(
 
 export async function AccountPageContent({
   billingResult,
+  billingSessionId,
   locale,
   variant = 'full',
 }: {
   billingResult?: string | null
+  billingSessionId?: string | null
   locale: string
   variant?: 'full' | 'legacy'
 }) {
@@ -135,6 +142,23 @@ export async function AccountPageContent({
     redirect(`/${locale}/login`)
   }
 
+  const billingState = {
+    subscriptionPlan: user.subscriptionPlan,
+    subscriptionStatus: user.subscriptionStatus,
+  }
+  const storageLimitBytes = getStorageByteLimit(billingState)
+  const memoryCountLimit = getMemoryCountLimit(billingState)
+  const openWhenMessageCountLimit = getOpenWhenMessageCountLimit(billingState)
+
+  const [storageUsedBytes, memoryCount, openWhenMessageCount] =
+    variant === 'legacy'
+      ? [0, 0, 0]
+      : await Promise.all([
+          storageLimitBytes === null ? 0 : getUserStorageUsageBytes(user.id),
+          getUserMemoryCount(user.id),
+          getUserOpenWhenMessageCount(user.id),
+        ])
+
   return (
     <AccountPageClient
       variant={variant}
@@ -144,14 +168,16 @@ export async function AccountPageContent({
       initialLastName={user.lastName ?? ''}
       initialProfileImageSrc={user.profileImageSrc ?? ''}
       email={user.email}
-      billingResult={billingResult}
-      subscriptionPlan={user.subscriptionPlan ?? 'free'}
-      subscriptionStatus={user.subscriptionStatus ?? 'inactive'}
-      subscriptionCurrentPeriodEnd={user.subscriptionCurrentPeriodEnd ?? null}
       initialLegacyProtectionEnabled={Boolean(user.enableLegacyProtection)}
       initialLegacyProtectionPendingEnable={Boolean(user.legacyProtectionPendingEnable)}
       lovedOneOptions={lovedOneOptions}
       initialLegacyProtectionContactIds={getSelectedContactIds(user.legacyProtectionContacts)}
+      storageUsedBytes={storageUsedBytes}
+      storageLimitBytes={storageLimitBytes}
+      memoryCount={memoryCount}
+      memoryCountLimit={memoryCountLimit}
+      openWhenMessageCount={openWhenMessageCount}
+      openWhenMessageCountLimit={openWhenMessageCountLimit}
     />
   )
 }

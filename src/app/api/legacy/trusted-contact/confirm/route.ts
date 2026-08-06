@@ -43,7 +43,7 @@ export async function GET(req: Request) {
   }
 
   const payload = await getPayload({ config })
-  const accepted = await acceptTrustedContactInvite(payload, token)
+  const accepted = await acceptTrustedContactInvite(payload, token, url.origin)
 
   if (!accepted) {
     return htmlResponse('Link expired', 'This trusted contact invite is invalid or already used.', 404)

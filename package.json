@@ -19,9 +19,14 @@
     "test": "pnpm run test:int && pnpm run test:e2e",
     "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --no-experimental-strip-types\" pnpm exec playwright test",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
+    "seed:how-it-works": "cross-env NODE_OPTIONS=--no-deprecation tsx src/scripts/updateHomeHowItWorksSteps.ts",
+    "seed:blogs:draft": "cross-env NODE_OPTIONS=--no-deprecation tsx src/scripts/seedDraftBlogs.ts",
+    "seed:blogs:draft:live": "cross-env NODE_ENV=production NODE_OPTIONS=--no-deprecation tsx src/scripts/seedDraftBlogs.ts --live",
     "encrypt:sensitive-content": "cross-env NODE_OPTIONS=--no-deprecation tsx src/scripts/encryptSensitiveContent.ts",
     "encrypt:sensitive-content:live": "cross-env NODE_ENV=production NODE_OPTIONS=--no-deprecation tsx src/scripts/encryptSensitiveContent.ts --live",
     "legacy:checkins": "cross-env NODE_OPTIONS=--no-deprecation tsx src/scripts/runLegacyCheckIns.ts",
+    "digital-legacy:reset": "cross-env NODE_OPTIONS=--no-deprecation tsx src/scripts/resetDigitalLegacyChecklists.ts",
+    "admin-email-campaigns:run": "cross-env NODE_OPTIONS=--no-deprecation tsx src/scripts/runAdminEmailCampaigns.ts",
     "predev": "cross-env NODE_OPTIONS=--no-deprecation tsx src/scripts/prepareCommunityDatabase.ts"
   },
   "dependencies": {

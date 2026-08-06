@@ -45,6 +45,9 @@ type LovedOneFormFieldsProps = {
 
 type ValidationTarget = 'fullName' | 'email' | 'relationship' | 'groups'
 
+const inputBaseClass =
+  'h-[42px] rounded-xl corner-shape-squircle border bg-white px-3 text-[14px] text-stone-900 outline-none transition focus:border-purple-300 focus:ring-4 focus:ring-purple-100'
+
 function normalizeGroupId(id: string | number): string {
   return String(id).trim()
 }
@@ -69,9 +72,9 @@ function RequiredLabel({
   required?: boolean
 }) {
   return (
-    <span className="text-[13px] font-semibold">
+    <span className="text-[13px] font-semibold text-stone-700">
       {children}
-      {required ? <span className="ml-1 text-[#d20c17]">*</span> : null}
+      {required ? <span className="ml-1 text-red-600">*</span> : null}
     </span>
   )
 }
@@ -280,8 +283,8 @@ export function LovedOneFormFields({
           }}
           placeholder={t('fullNamePlaceholder')}
           aria-invalid={validationError?.target === 'fullName'}
-          className={`h-[42px] rounded-xl border bg-white px-3 text-[14px] outline-none ${
-            validationError?.target === 'fullName' ? 'border-red-300' : 'border-[#dddddd]'
+          className={`${inputBaseClass} ${
+            validationError?.target === 'fullName' ? 'border-red-300' : 'border-stone-300'
           }`}
         />
         {validationError?.target === 'fullName' ? (
@@ -297,7 +300,7 @@ export function LovedOneFormFields({
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
           placeholder={t('nicknamePlaceholder')}
-          className="h-[42px] rounded-xl border border-[#dddddd] bg-white px-3 text-[14px] outline-none"
+          className={`${inputBaseClass} border-stone-300`}
         />
       </div>
 
@@ -316,8 +319,8 @@ export function LovedOneFormFields({
           }}
           placeholder={t('emailPlaceholder')}
           aria-invalid={validationError?.target === 'email'}
-          className={`h-[42px] rounded-xl border bg-white px-3 text-[14px] outline-none ${
-            validationError?.target === 'email' ? 'border-red-300' : 'border-[#dddddd]'
+          className={`${inputBaseClass} ${
+            validationError?.target === 'email' ? 'border-red-300' : 'border-stone-300'
           }`}
           inputMode="email"
         />
@@ -341,8 +344,8 @@ export function LovedOneFormFields({
           }}
           placeholder={t('relationshipPlaceholder')}
           aria-invalid={validationError?.target === 'relationship'}
-          className={`h-[42px] rounded-xl border bg-white px-3 text-[14px] outline-none ${
-            validationError?.target === 'relationship' ? 'border-red-300' : 'border-[#dddddd]'
+          className={`${inputBaseClass} ${
+            validationError?.target === 'relationship' ? 'border-red-300' : 'border-stone-300'
           }`}
         />
         {validationError?.target === 'relationship' ? (
@@ -358,9 +361,9 @@ export function LovedOneFormFields({
           value={customNote}
           onChange={(e) => setCustomNote(e.target.value)}
           placeholder={t('customNotePlaceholder')}
-          className="min-h-[110px] rounded-xl border border-[#dddddd] bg-white px-3 py-2.5 text-[14px] outline-none"
+          className="min-h-[110px] rounded-xl corner-shape-squircle border border-stone-300 bg-white px-3 py-2.5 text-[14px] text-stone-900 outline-none transition focus:border-purple-300 focus:ring-4 focus:ring-purple-100"
         />
-        <div className="text-xs text-[#666666]">{t('customNoteHelp')}</div>
+        <div className="text-xs text-stone-500">{t('customNoteHelp')}</div>
       </div>
 
       <div ref={groupsRef} className="grid gap-2">
@@ -369,19 +372,19 @@ export function LovedOneFormFields({
         </label>
 
         <div
-          className={`flex flex-wrap gap-2 rounded-xl border bg-white p-[10px] ${
-            validationError?.target === 'groups' ? 'border-red-300' : 'border-[#dddddd]'
+          className={`flex flex-wrap gap-2 rounded-xl corner-shape-squircle border bg-white p-[10px] ${
+            validationError?.target === 'groups' ? 'border-red-300' : 'border-stone-300'
           } ${
             groupsLoading ? 'opacity-70' : 'opacity-100'
           }`}
           aria-disabled={groupsLoading}
         >
           {groupsLoading ? (
-            <span className="text-[13px] text-[#666666]">{t('loadingGroups')}</span>
+            <span className="text-[13px] text-stone-500">{t('loadingGroups')}</span>
           ) : null}
 
           {!groupsLoading && groups.length === 0 ? (
-            <span className="text-[13px] text-[#666666]">{t('noGroupsFound')}</span>
+            <span className="text-[13px] text-stone-500">{t('noGroupsFound')}</span>
           ) : null}
 
           {!groupsLoading
@@ -414,7 +417,7 @@ export function LovedOneFormFields({
           <div className="text-xs font-semibold text-red-600">{validationError.message}</div>
         ) : null}
 
-        <div className="text-xs text-[#666666]">
+        <div className="text-xs text-stone-500">
           {t('groupsManagePrefix')}{' '}
           <Link
             href="/loved-ones/groups"
@@ -429,8 +432,8 @@ export function LovedOneFormFields({
       <div
         className={
           stickyActions
-            ? 'sticky bottom-0 z-20 -mx-3 mt-1.5 flex flex-wrap justify-between gap-2.5 border-t border-[#eeeeee] bg-white/95 px-3 py-3 shadow-[0_-18px_45px_rgba(15,23,42,0.08)] backdrop-blur sm:-mx-4 sm:px-4'
-            : 'mt-1.5 flex flex-wrap justify-between gap-2.5'
+            ? 'sticky bottom-0 z-20 -mx-3 mt-1.5 flex flex-col gap-2 border-t border-stone-200 bg-white/95 px-3 py-3 shadow-[0_-18px_45px_rgba(15,23,42,0.08)] backdrop-blur sm:-mx-4 sm:flex-row sm:flex-wrap sm:justify-between sm:px-4'
+            : 'mt-1.5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-between'
         }
       >
         {showUpgradeCta ? (
@@ -443,28 +446,22 @@ export function LovedOneFormFields({
         ) : null}
 
         {onDelete ? (
-          <DeleteButton
-            onClick={handleDelete}
-            disabled={deleting || loading}
-            className="h-10 px-[14px]"
-          >
+          <DeleteButton onClick={handleDelete} disabled={deleting || loading} className="w-full sm:w-auto">
             {deleting ? (deletingLabel ?? t('deleting')) : (deleteLabel ?? t('delete'))}
           </DeleteButton>
-        ) : (
-          <div />
-        )}
+        ) : null}
 
-        <div className="flex gap-2.5">
+        <div className="flex flex-col gap-2 sm:ml-auto sm:flex-row">
           <SecondaryButton
             type="button"
             onClick={onCancel}
-            className="h-10 cursor-pointer rounded-[10px] border border-[#dddddd] bg-white px-[14px] disabled:cursor-not-allowed disabled:opacity-80"
+            className="w-full disabled:cursor-not-allowed disabled:opacity-80 sm:w-auto"
             disabled={loading || deleting}
           >
             {t('cancel')}
           </SecondaryButton>
 
-          <PrimaryButton type="submit" disabled={loading || deleting} className="h-10 px-[14px]">
+          <PrimaryButton type="submit" disabled={loading || deleting} className="w-full sm:w-auto">
             {loading ? submittingLabel : submitLabel}
           </PrimaryButton>
         </div>

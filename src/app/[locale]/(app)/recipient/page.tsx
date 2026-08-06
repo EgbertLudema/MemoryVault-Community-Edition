@@ -1,5 +1,6 @@
 import { redirect } from '@/i18n/navigation'
 import { Link } from '@/i18n/navigation'
+import { BulletListIcon } from '@/components/icons/BulletListIcon'
 import { MailIcon } from '@/components/icons/MailIcon'
 import { MemoryBookIcon } from '@/components/icons/MemoryBookIcon'
 import { RecipientHelpTour } from '@/components/onboarding/RecipientHelpTour'
@@ -35,6 +36,10 @@ export default async function RecipientDashboardPage({
   const deliveries = await getRecipientDeliverySummaries(user.id)
   const memoryCount = deliveries.reduce((total, delivery) => total + delivery.memoryCount, 0)
   const openWhenCount = deliveries.reduce((total, delivery) => total + delivery.openWhenCount, 0)
+  const digitalLegacyCount = deliveries.reduce(
+    (total, delivery) => total + delivery.digitalLegacyCount,
+    0,
+  )
 
   return (
     <main className="h-full overflow-y-auto bg-[linear-gradient(180deg,#fafafa_0%,#f8fafc_100%)]">
@@ -42,7 +47,7 @@ export default async function RecipientDashboardPage({
       <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:pb-24">
         <section
           data-tour="recipient-dashboard-hero"
-          className="rounded-[30px] border border-white/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.97),rgba(250,245,255,0.9))] p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] sm:p-8"
+          className="rounded-[30px] corner-shape-squircle border border-white/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.97),rgba(250,245,255,0.9))] p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] sm:p-8"
         >
           <div className="inline-flex rounded-full bg-purple-600/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-purple-700">
             {t('dashboard.badge')}
@@ -54,20 +59,29 @@ export default async function RecipientDashboardPage({
             {t('dashboard.body')}
           </p>
 
-          <div data-tour="recipient-dashboard-stats" className="mt-6 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-purple-100 bg-white/80 p-5">
+          <div data-tour="recipient-dashboard-stats" className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl corner-shape-squircle border border-purple-100 bg-white/80 p-5">
               <div className="flex items-center gap-3">
                 <MemoryBookIcon className="h-5 w-5 text-purple-700" />
                 <div className="text-sm font-semibold text-stone-600">{t('labels.memories')}</div>
               </div>
               <div className="mt-3 text-3xl font-bold text-stone-950">{memoryCount}</div>
             </div>
-            <div className="rounded-2xl border border-purple-100 bg-white/80 p-5">
+            <div className="rounded-2xl corner-shape-squircle border border-purple-100 bg-white/80 p-5">
               <div className="flex items-center gap-3">
                 <MailIcon className="h-5 w-5 text-purple-700" />
                 <div className="text-sm font-semibold text-stone-600">{t('labels.openWhen')}</div>
               </div>
               <div className="mt-3 text-3xl font-bold text-stone-950">{openWhenCount}</div>
+            </div>
+            <div className="rounded-2xl corner-shape-squircle border border-purple-100 bg-white/80 p-5">
+              <div className="flex items-center gap-3">
+                <BulletListIcon className="h-5 w-5 text-purple-700" />
+                <div className="text-sm font-semibold text-stone-600">
+                  {t('labels.digitalLegacy')}
+                </div>
+              </div>
+              <div className="mt-3 text-3xl font-bold text-stone-950">{digitalLegacyCount}</div>
             </div>
           </div>
         </section>
@@ -76,7 +90,7 @@ export default async function RecipientDashboardPage({
           {deliveries.length === 0 ? (
             <div
               data-tour="recipient-dashboard-collection"
-              className="rounded-[28px] border border-dashed border-purple-200 bg-white/80 p-10 text-center text-stone-600"
+              className="rounded-[28px] corner-shape-squircle border border-dashed border-purple-200 bg-white/80 p-10 text-center text-stone-600"
             >
               {t('dashboard.empty')}
             </div>
@@ -87,7 +101,7 @@ export default async function RecipientDashboardPage({
               key={delivery.id}
               href={`/recipient/${delivery.id}`}
               data-tour="recipient-dashboard-collection"
-              className="block rounded-[28px] border border-white/75 bg-white/88 p-5 text-inherit no-underline shadow-[0_16px_45px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:border-purple-200"
+              className="block rounded-[28px] corner-shape-squircle border border-white/75 bg-white/88 p-5 text-inherit no-underline shadow-[0_16px_45px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:border-purple-200"
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
@@ -125,6 +139,11 @@ export default async function RecipientDashboardPage({
                   </span>
                   <span className="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">
                     {t('dashboard.openWhenCount', { count: delivery.openWhenCount })}
+                  </span>
+                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                    {t('dashboard.digitalLegacyCount', {
+                      count: delivery.digitalLegacyCount,
+                    })}
                   </span>
                 </div>
               </div>

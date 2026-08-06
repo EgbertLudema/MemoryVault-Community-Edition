@@ -12,6 +12,7 @@ export type RecipientDeliverySummary = {
   deliveredAt: string
   memoryCount: number
   openWhenCount: number
+  digitalLegacyCount: number
 }
 
 export async function getRequestOriginFromHeaders() {
@@ -52,6 +53,7 @@ export async function getRecipientDeliverySummaries(userId: number | string) {
       deliveredAt: String((delivery as any).deliveredAt ?? (delivery as any).createdAt ?? ''),
       memoryCount: data.memories.length,
       openWhenCount: data.openWhenMessages.length,
+      digitalLegacyCount: data.digitalLegacyItems.length,
     })
   }
 

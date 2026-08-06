@@ -1254,7 +1254,7 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
               <p className="mt-1 text-sm text-slate-500">{t('detailsBody')}</p>
             </div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">
               <label className="grid gap-1.5">
                 <span className="text-xs font-semibold text-slate-700">{t('title')}</span>
                 <input
@@ -1677,7 +1677,7 @@ export function MemoryEditForm(props: MemoryEditFormProps) {
               </SecondaryButton>
             </div>
 
-            <div className="mt-4 grid gap-2.5 sm:grid-cols-3 sm:gap-3">
+            <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-3">
               <ContentTypeOption
                 type="note"
                 label={t('note')}

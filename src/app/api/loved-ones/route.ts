@@ -102,6 +102,7 @@ export async function POST(req: Request) {
     const relationship = typeof body.relationship === 'string' ? body.relationship.trim() : ''
     const customNote = typeof body.customNote === 'string' ? body.customNote.trim() : ''
     const encryptedCustomNote = encryptSensitiveText(customNote)
+    const encryptedEmail = encryptSensitiveText(email)
 
     const rawGroups = Array.isArray(body.groups) ? body.groups : []
     const groups = rawGroups
@@ -153,7 +154,9 @@ export async function POST(req: Request) {
       data: {
         fullName,
         nickname: nickname || undefined,
-        email,
+        email: null,
+        emailCiphertext: encryptedEmail.ciphertext,
+        emailEncryptionMetadata: encryptedEmail.metadata,
         relationship,
         customNote: null,
         customNoteCiphertext: encryptedCustomNote.ciphertext,

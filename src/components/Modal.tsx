@@ -5,17 +5,19 @@ import * as React from 'react'
 import gsap from 'gsap'
 import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/navigation'
+import { XIcon } from '@/components/icons/XIcon'
 import { MODAL_NAVIGATION_EVENT, type ModalNavigationDetail } from '@/lib/modalNavigation'
-import { SecondaryButton } from './ui/SecondairyButton'
 
 export function Modal({
   title,
   children,
   size = 'default',
+  onClose,
 }: {
   title: string
   children: React.ReactNode
   size?: 'default' | 'wide'
+  onClose?: () => void
 }) {
   const router = useRouter()
   const t = useTranslations('Modal')
@@ -33,6 +35,10 @@ export function Modal({
       const panel = panelRef.current
 
       if (!overlay || !panel) {
+        if (!nextHref && onClose) {
+          onClose()
+          return
+        }
         if (nextHref) {
           router.push(nextHref)
         } else {
@@ -47,7 +53,9 @@ export function Modal({
       const timeline = gsap.timeline({
         defaults: { ease: 'power2.in' },
         onComplete: () => {
-          if (nextHref) {
+          if (!nextHref && onClose) {
+            onClose()
+          } else if (nextHref) {
             router.push(nextHref)
           } else {
             router.back()
@@ -58,7 +66,7 @@ export function Modal({
       timeline.to(panel, { autoAlpha: 0, y: 18, scale: 0.985, duration: 0.16 }, 0)
       timeline.to(overlay, { backgroundColor: 'rgba(0,0,0,0)', duration: 0.18 }, 0)
     },
-    [router],
+    [onClose, router],
   )
 
   React.useEffect(() => {
@@ -134,52 +142,46 @@ export function Modal({
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      className="fixed inset-0 z-1000 flex items-stretch justify-center bg-black/35 p-0 sm:items-center sm:p-4"
+      className="fixed inset-0 z-[1000] flex items-stretch justify-center bg-black/35 p-0 sm:items-center sm:p-4"
       onMouseDown={closeFromMouse}
     >
       <div
         ref={panelRef}
         className={
           size === 'wide'
-            ? 'relative flex h-dvh w-full max-w-[980px] flex-col overflow-hidden border border-[#eee] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.18)] sm:h-auto sm:max-h-[calc(100vh_-_32px)] sm:rounded-2xl'
-            : 'relative flex h-dvh w-full max-w-[720px] flex-col overflow-hidden border border-[#eee] bg-white shadow-[0_10px_40px_rgba(0,0,0,0.18)] sm:h-auto sm:max-h-[calc(100vh_-_32px)] sm:rounded-2xl'
+            ? 'relative flex h-dvh w-full max-w-[980px] flex-col overflow-hidden border border-stone-200 bg-white shadow-[0_10px_40px_rgba(0,0,0,0.18)] sm:h-auto sm:max-h-[calc(100vh_-_32px)] sm:rounded-2xl sm:corner-shape-squircle'
+            : 'relative flex h-dvh w-full max-w-[720px] flex-col overflow-hidden border border-stone-200 bg-white shadow-[0_10px_40px_rgba(0,0,0,0.18)] sm:h-auto sm:max-h-[calc(100vh_-_32px)] sm:rounded-2xl sm:corner-shape-squircle'
         }
         onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Sticky header so the X stays visible */}
-        <div className="sticky top-0 z-10 border-b border-[#eee] bg-white px-4 py-4 sm:bg-[#fafafa] sm:px-4 sm:py-[14px]">
+        <div className="sticky top-0 z-10 border-b border-stone-200 bg-white px-4 py-4 sm:bg-stone-50 sm:px-4 sm:py-[14px]">
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col pr-10">
-              <strong className="line-clamp-2 text-[15px] leading-5 text-slate-950 sm:text-[14px]">
+              <strong className="line-clamp-2 text-[15px] leading-5 text-stone-950 sm:text-[14px]">
                 {title}
               </strong>
-              <span className="mt-[2px] hidden text-[12px] text-[#666] sm:block">
+              <span className="mt-[2px] hidden text-[12px] text-stone-500 sm:block">
                 {t('escapeToClose')}
               </span>
             </div>
 
             {/* Always top-right, inside the modal */}
-            <SecondaryButton
+            <button
               type="button"
               onClick={() => close()}
               aria-label={t('close')}
-              className="
-                                absolute right-3 top-1/2
-                                h-9 w-9 -translate-y-1/2
-                                cursor-pointer rounded-[10px]
-                                border border-[#ddd] bg-white
-                                text-[18px] leading-[1]
-                                flex items-center justify-center
-                                sm:top-3 sm:h-[36px] sm:w-[36px] sm:translate-y-0
-                            "
+              className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-xl corner-shape-squircle border border-stone-200 bg-white p-0 text-stone-600 transition hover:bg-stone-50 sm:top-3 sm:h-9 sm:w-9 sm:translate-y-0"
             >
-              &times;
-            </SecondaryButton>
+              <XIcon className="h-5 w-5" />
+            </button>
           </div>
         </div>
 
         {/* Scrollable content area */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-4 sm:px-4">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-3 pt-4 pb-0 sm:px-4">
+          {children}
+        </div>
       </div>
     </div>
   )

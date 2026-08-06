@@ -227,7 +227,10 @@ function buildPdfPages(delivery: LegacyDeliveryData, memoryMediaNames: MemoryMed
 
   delivery.memories.forEach((memory, memoryIndex) => {
     const memoryNotes = memory.content
-      .filter((item): item is Extract<(typeof memory.content)[number], { type: 'note' }> => item.type === 'note')
+      .filter(
+        (item): item is Extract<(typeof memory.content)[number], { type: 'note' }> =>
+          item.type === 'note',
+      )
       .map((item) => item.note.trim())
       .filter(Boolean)
     const mediaNames = memoryMediaNames[String(memory.id)] ?? []
@@ -255,6 +258,18 @@ function buildPdfPages(delivery: LegacyDeliveryData, memoryMediaNames: MemoryMed
     cursorY -= 8
   })
 
+  if (delivery.digitalLegacyItems.length > 0) {
+    pushWrappedBlock('Digital legacy checklist', 'F2', 15, TITLE_COLOR, 42, 20, 5)
+
+    delivery.digitalLegacyItems.forEach((item) => {
+      pushWrappedBlock(item.title, 'F2', 12, TITLE_COLOR, 60, 16, 2)
+      if (item.category) {
+        pushWrappedBlock(item.category, 'F2', 9, DATE_COLOR, 60, 13, 2)
+      }
+      pushWrappedBlock(item.notes || 'No notes provided.', 'F1', 11, BODY_COLOR, 88, 15, 7)
+    })
+  }
+
   if (pages[0].length === 0) {
     pushWrappedBlock('No notes available.', 'F1', 11, MUTED_COLOR, 88, 15, 0)
   }
@@ -265,6 +280,11 @@ function buildPdfPages(delivery: LegacyDeliveryData, memoryMediaNames: MemoryMed
 export function buildRecipientExportFilename(recipientName: string) {
   const base = sanitizeSegment(recipientName.toLowerCase(), 'recipient')
   return `${base}-memory-vault-export.zip`
+}
+
+export function buildVaultOwnerExportFilename(ownerName: string | null | undefined) {
+  const base = sanitizeSegment(String(ownerName ?? '').trim(), 'vault')
+  return `MemoryVault-${base}.zip`
 }
 
 export async function createRecipientPdf(
@@ -362,7 +382,9 @@ export async function createRecipientPdf(
       const y = line.y - Math.max(displayHeight - (line.fontSize + 4), 0)
 
       imageEntries.push(`/${imageName} ${objectRef} 0 R`)
-      contentParts.push(`q ${displayWidth} 0 0 ${displayHeight} ${line.x} ${y} cm /${imageName} Do Q`)
+      contentParts.push(
+        `q ${displayWidth} 0 0 ${displayHeight} ${line.x} ${y} cm /${imageName} Do Q`,
+      )
     })
 
     const content = contentParts.join('\n')
@@ -373,7 +395,9 @@ export async function createRecipientPdf(
     objects.push(
       `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_WIDTH} ${PAGE_HEIGHT}] /Resources ${resources} /Contents ${contentObjectNumber} 0 R >>`,
     )
-    objects.push(`<< /Length ${Buffer.byteLength(content, 'utf8')} >>\nstream\n${content}\nendstream`)
+    objects.push(
+      `<< /Length ${Buffer.byteLength(content, 'utf8')} >>\nstream\n${content}\nendstream`,
+    )
   })
 
   objects[1] = `<< /Type /Pages /Count ${pages.length} /Kids [${pageRefs.join(' ')}] >>`
@@ -437,8 +461,7 @@ function crc32(buffer: Buffer) {
 
 function getDosDateTime(date = new Date()) {
   const year = Math.max(date.getFullYear(), 1980)
-  const dosTime =
-    (date.getSeconds() >> 1) | (date.getMinutes() << 5) | (date.getHours() << 11)
+  const dosTime = (date.getSeconds() >> 1) | (date.getMinutes() << 5) | (date.getHours() << 11)
   const dosDate = date.getDate() | ((date.getMonth() + 1) << 5) | ((year - 1980) << 9)
 
   return { dosDate, dosTime }
@@ -511,10 +534,18 @@ export function buildExportMediaPath(
   filename: string | null | undefined,
   fallbackStem: string,
   usedNames: Set<string>,
+  contentType?: string | null,
 ) {
   const originalName = String(filename ?? '').trim()
-  const ext = path.extname(originalName) || ''
-  const stem = sanitizeSegment(path.basename(originalName, ext), fallbackStem)
+  const originalExt = path.extname(originalName) || ''
+  const derivedExt = getExtensionForContentType(contentType)
+  const ext =
+    !originalExt || originalExt.toLowerCase() === '.bin'
+      ? derivedExt
+        ? `.${derivedExt}`
+        : originalExt
+      : originalExt
+  const stem = sanitizeSegment(path.basename(originalName, originalExt), fallbackStem)
   const safeExt = sanitizeSegment(ext.replace(/^\./, '').toLowerCase(), '').replace(/\./g, '')
   const baseName = safeExt ? `${stem}.${safeExt}` : stem
 
@@ -529,4 +560,41 @@ export function buildExportMediaPath(
 
   usedNames.add(candidate)
   return candidate
+}
+
+function getExtensionForContentType(contentType: string | null | undefined) {
+  const safeType = String(contentType ?? '')
+    .split(';')[0]
+    ?.trim()
+    .toLowerCase()
+
+  switch (safeType) {
+    case 'image/jpeg':
+    case 'image/jpg':
+      return 'jpg'
+    case 'image/png':
+      return 'png'
+    case 'image/webp':
+      return 'webp'
+    case 'image/gif':
+      return 'gif'
+    case 'image/heic':
+      return 'heic'
+    case 'image/heif':
+      return 'heif'
+    case 'image/avif':
+      return 'avif'
+    case 'video/mp4':
+      return 'mp4'
+    case 'video/webm':
+      return 'webm'
+    case 'video/quicktime':
+      return 'mov'
+    case 'video/x-msvideo':
+      return 'avi'
+    case 'text/plain':
+      return 'txt'
+    default:
+      return null
+  }
 }

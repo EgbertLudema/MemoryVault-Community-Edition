@@ -234,7 +234,7 @@ export function LovedOnesDirectoryClient({ lovedOnes }: { lovedOnes: LovedOne[] 
           <div className="text-lg font-semibold text-gray-900">{t('emptyTitle')}</div>
           <p className="mt-2 text-sm leading-6 text-stone-600">{t('emptyBody')}</p>
 
-          <div className="mt-5 flex justify-center">
+          <div className="mt-5 hidden justify-center lg:flex">
             <PrimaryButton href="/loved-ones/new" className="rounded-full px-5 py-3">
               {t('addLovedOne')}
             </PrimaryButton>
@@ -379,7 +379,7 @@ export function LovedOnesDirectoryClient({ lovedOnes }: { lovedOnes: LovedOne[] 
         </div>
       )}
 
-      <div className="mt-6">
+      <div className="mt-6 hidden lg:block">
         <PrimaryButton href="/loved-ones/new" className="rounded-full px-5 py-3">
           {t('addAnother')}
         </PrimaryButton>

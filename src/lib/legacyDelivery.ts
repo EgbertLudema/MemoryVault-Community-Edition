@@ -1,10 +1,13 @@
 import crypto from 'crypto'
+import { getLovedOneDisplayEmail } from '@/lib/encryptedFields'
 
 type LegacyRecipientInput = {
   id: number | string
   fullName?: string | null
   nickname?: string | null
   email?: string | null
+  emailCiphertext?: unknown
+  emailEncryptionMetadata?: unknown
   groups?: Array<number | string | { id?: number | string | null } | null> | null
 }
 
@@ -47,10 +50,10 @@ function pickRecipientName(recipient: LegacyRecipientInput) {
   return `Loved one #${recipient.id}`
 }
 
-function extractIds(values: Array<number | string | { id?: number | string | null } | null> | null | undefined) {
-  return (values ?? [])
-    .map((value) => toNumberId(value))
-    .filter((value) => Number.isFinite(value))
+function extractIds(
+  values: Array<number | string | { id?: number | string | null } | null> | null | undefined,
+) {
+  return (values ?? []).map((value) => toNumberId(value)).filter((value) => Number.isFinite(value))
 }
 
 export function createDeliveryToken() {
@@ -76,12 +79,17 @@ export function createDeliveryPassword() {
 }
 
 function normalizeDeliveryPassword(password: string) {
-  return password.trim().toUpperCase().replace(/[^A-Z0-9]/g, '')
+  return password
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
 }
 
 export function hashDeliveryPassword(password: string) {
   const salt = crypto.randomBytes(16).toString('base64url')
-  const hash = crypto.scryptSync(normalizeDeliveryPassword(password), salt, 64).toString('base64url')
+  const hash = crypto
+    .scryptSync(normalizeDeliveryPassword(password), salt, 64)
+    .toString('base64url')
 
   return `scrypt$${salt}$${hash}`
 }
@@ -124,8 +132,10 @@ export function resolveLegacyRecipients(
   lovedOnes: LegacyRecipientInput[],
   memories: LegacyMemoryInput[],
   lovedOneIdsWithOpenWhenMessages: number[] = [],
+  lovedOneIdsWithDigitalLegacyItems: number[] = [],
 ): ResolvedLegacyRecipient[] {
   const openWhenRecipientIds = new Set(lovedOneIdsWithOpenWhenMessages)
+  const digitalLegacyRecipientIds = new Set(lovedOneIdsWithDigitalLegacyItems)
 
   return lovedOnes
     .map((lovedOne) => {
@@ -148,14 +158,18 @@ export function resolveLegacyRecipients(
         .map((memory) => toNumberId(memory.id))
         .filter((value) => Number.isFinite(value))
 
-      if (memoryIds.length === 0 && !openWhenRecipientIds.has(lovedOneId)) {
+      if (
+        memoryIds.length === 0 &&
+        !openWhenRecipientIds.has(lovedOneId) &&
+        !digitalLegacyRecipientIds.has(lovedOneId)
+      ) {
         return null
       }
 
       return {
         lovedOneId,
         recipientName: pickRecipientName(lovedOne),
-        recipientEmail: String(lovedOne.email ?? '').trim() || null,
+        recipientEmail: getLovedOneDisplayEmail(lovedOne) || null,
         memoryIds: Array.from(new Set(memoryIds)),
       }
     })

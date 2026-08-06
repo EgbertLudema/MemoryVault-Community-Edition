@@ -110,7 +110,7 @@ export function LovedOneCard({
   }
   return (
     <article
-      className="rounded-[24px] corner-shape-squircle border p-5 transition-all duration-200 ease-out hover:-translate-y-1"
+      className="rounded-[24px] corner-shape-squircle border p-4 transition-all duration-200 ease-out hover:-translate-y-1 sm:p-5"
       style={cardStyle}
       data-tour={cardTourId}
     >
@@ -131,13 +131,13 @@ export function LovedOneCard({
 
             <h2
               data-tour={nameTourId}
-              className="m-0 mt-4 truncate text-[18px] font-bold tracking-tight text-[#111111]"
+              className="m-0 mt-3 truncate text-[18px] font-bold tracking-tight text-[#111111] sm:mt-4"
             >
               {lovedOne.fullName}
             </h2>
 
             {lovedOne.nickname ? (
-              <p className="mb-0 mt-1.5 truncate text-[14px] text-[#666666]">
+              <p className="mb-0 mt-1 truncate text-[14px] text-[#666666] sm:mt-1.5">
                 &quot;{lovedOne.nickname}&quot;
               </p>
             ) : null}
@@ -175,7 +175,7 @@ export function LovedOneCard({
           ) : null}
         </div>
 
-        <div className="mt-4 space-y-2">
+        <div className="mt-4 hidden space-y-2 sm:block">
           <p className="m-0 text-[14px] text-[#444444]">
             <span className="font-semibold">{t('relationship')}:</span> {lovedOne.relationship}
           </p>
@@ -187,7 +187,7 @@ export function LovedOneCard({
           ) : null}
         </div>
 
-        <div className="mt-4 rounded-[18px] border p-3" style={noteStyle}>
+        <div className="mt-4 hidden rounded-[18px] border p-3 sm:block" style={noteStyle}>
           <p
             className="m-0 text-[12px] font-semibold uppercase tracking-[0.14em]"
             style={noteLabelStyle}
@@ -200,7 +200,7 @@ export function LovedOneCard({
         </div>
       </Link>
 
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 sm:mt-5">
         <Link
           href={`/loved-ones/person/${lovedOne.id}`}
           scroll={false}

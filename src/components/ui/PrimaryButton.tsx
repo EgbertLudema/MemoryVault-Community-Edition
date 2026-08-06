@@ -6,6 +6,8 @@ import { useMemoryCreationGate } from '@/components/memories/AddMemoryGate'
 
 type PrimaryButtonProps = {
   href?: string
+  rel?: string
+  target?: React.HTMLAttributeAnchorTarget
   onClick?: () => void
   type?: 'button' | 'submit' | 'reset'
   disabled?: boolean
@@ -19,6 +21,8 @@ function cn(...classes: Array<string | false | null | undefined>) {
 
 export function PrimaryButton({
   href,
+  rel,
+  target,
   onClick,
   type = 'button',
   disabled = false,
@@ -48,6 +52,8 @@ export function PrimaryButton({
     return (
       <Link
         href={href}
+        rel={rel}
+        target={target}
         onClick={(event) => memoryCreationGate?.guardAddMemoryClick(event, href)}
         className={baseClasses}
       >

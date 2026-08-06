@@ -12,7 +12,7 @@ export default async function LovedOnesNewModalPage({
   const t = await getTranslations({ locale, namespace: 'LovedOneForm' })
   return (
     <Modal title={t('modalCreateTitle')}>
-      <LovedOneForm />
+      <LovedOneForm mode="modal" />
     </Modal>
   )
 }

@@ -1,8 +1,8 @@
-export function getMemoryContentItemLimit() {
+export function getMemoryContentItemLimit(_user?: unknown) {
   return null
 }
 
-export function getMemoryCountLimit() {
+export function getMemoryCountLimit(_user?: unknown) {
   return null
 }
 

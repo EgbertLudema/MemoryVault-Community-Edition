@@ -5,6 +5,8 @@ import { Link } from '@/i18n/navigation'
 
 type SecondaryButtonProps = {
   href?: string
+  rel?: string
+  target?: React.HTMLAttributeAnchorTarget
   onClick?: () => void
   type?: 'button' | 'submit' | 'reset'
   disabled?: boolean
@@ -18,6 +20,8 @@ function cn(...classes: Array<string | false | null | undefined>) {
 
 export function SecondaryButton({
   href,
+  rel,
+  target,
   onClick,
   type = 'button',
   disabled = false,
@@ -30,10 +34,10 @@ export function SecondaryButton({
     // Typography
     'text-md font-medium',
     // Colors
-    'bg-white text-black border border-neutral-300',
+    'bg-white text-stone-900 border border-stone-300',
     // Effects
     'transition-all duration-200',
-    'hover:bg-neutral-100',
+    'hover:bg-stone-100',
     'active:scale-[0.95]',
     'focus:outline-none focus:ring-2 focus:ring-purple-300/70',
     // Disabled state
@@ -44,7 +48,7 @@ export function SecondaryButton({
 
   if (href) {
     return (
-      <Link href={href} className={baseClasses}>
+      <Link href={href} rel={rel} target={target} className={baseClasses}>
         {children}
       </Link>
     )

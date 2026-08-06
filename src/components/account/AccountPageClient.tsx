@@ -6,11 +6,15 @@ import { useRouter } from '@/i18n/navigation'
 import { DashboardLoadReveal } from '@/components/dashboard/DashboardLoadReveal'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { AccountHelpTour } from '@/components/onboarding/AccountHelpTour'
+import { CheckIcon } from '@/components/icons/CheckIcon'
 import { EditIcon } from '@/components/icons/EditIcon'
+import { WorldIcon } from '@/components/icons/WorldIcon'
 import { LogoutButton } from '@/components/ui/LogoutButton'
 import { PrimaryButton } from '@/components/ui/PrimaryButton'
+import { SecondaryButton } from '@/components/ui/SecondairyButton'
 import { useToast } from '@/components/ui/ToastProvider'
 import { buildMediaImageUrl } from '@/lib/mediaBlob'
+import { formatStorageBytes } from '@/lib/storageLimits'
 import {
   PROFILE_IMAGE_UPLOAD_MAX_LABEL,
   getUploadKindForMimeType,
@@ -37,6 +41,12 @@ type AccountPageClientProps = {
   initialLegacyProtectionPendingEnable: boolean
   lovedOneOptions: LovedOneOption[]
   initialLegacyProtectionContactIds: number[]
+  storageUsedBytes?: number
+  storageLimitBytes?: number | null
+  memoryCount?: number
+  memoryCountLimit?: number | null
+  openWhenMessageCount?: number
+  openWhenMessageCountLimit?: number | null
 }
 
 function cn(...classes: Array<string | false | null | undefined>) {
@@ -55,6 +65,12 @@ export function AccountPageClient({
   initialLegacyProtectionPendingEnable,
   lovedOneOptions,
   initialLegacyProtectionContactIds,
+  storageUsedBytes = 0,
+  storageLimitBytes = null,
+  memoryCount = 0,
+  memoryCountLimit = null,
+  openWhenMessageCount = 0,
+  openWhenMessageCountLimit = null,
 }: AccountPageClientProps) {
   const t = useTranslations('AccountPage')
   const router = useRouter()
@@ -93,6 +109,14 @@ export function AccountPageClient({
   const hasAcceptedTrustedContact = acceptedSelectedContactIds.length > 0
   const legacyProtectionReady = legacyProtectionEnabled && hasAcceptedTrustedContact
   const legacyProtectionNeedsAttention = !legacyProtectionReady
+  const storagePercent =
+    storageLimitBytes && storageLimitBytes > 0
+      ? Math.min(100, Math.round((storageUsedBytes / storageLimitBytes) * 100))
+      : 0
+  const storageLimitReached = Boolean(storageLimitBytes) && storageUsedBytes >= storageLimitBytes!
+  const memoryLimitReached = memoryCountLimit !== null && memoryCount >= memoryCountLimit
+  const openWhenLimitReached =
+    openWhenMessageCountLimit !== null && openWhenMessageCount >= openWhenMessageCountLimit
   const selectedContactLabel = useMemo(() => {
     return lovedOneOptions
       .filter((option) => selectedContactIds.includes(option.id))
@@ -580,70 +604,6 @@ export function AccountPageClient({
           </DashboardLoadReveal>
         ) : null}
 
-        {!isLegacyOnly ? (
-          <DashboardLoadReveal delayMs={120}>
-            <section
-              id="billing"
-              data-tour="account-billing"
-              className="rounded-[28px] corner-shape-squircle border border-white/70 bg-white/80 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:rounded-[32px] sm:p-7"
-            >
-              <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
-                    {t('billingLabel')}
-                  </div>
-                  <h2 className="mt-2 text-[26px] font-bold tracking-tight text-gray-900">
-                    {isPro ? t('billingProTitle') : t('billingFreeTitle')}
-                  </h2>
-                  <p className="mt-1 max-w-2xl text-sm leading-6 text-stone-600">
-                    {isPro ? t('billingProBody') : t('billingFreeBody')}
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
-                    <span
-                      className={cn(
-                        'rounded-full border px-3 py-1',
-                        isPro
-                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                          : 'border-stone-200 bg-stone-50 text-stone-600',
-                      )}
-                    >
-                      {isPro ? t('billingStatusPro') : t('billingStatusFree')}
-                    </span>
-                  </div>
-                  {currentPeriodEnd ? (
-                    <p className="mt-2 text-xs font-medium text-stone-500">
-                      {t('billingPeriodEnd', {
-                        date: new Date(currentPeriodEnd).toLocaleDateString(),
-                      })}
-                    </p>
-                  ) : null}
-                </div>
-
-                <div className="flex flex-wrap gap-3">
-                  {isPro ? (
-                    <PrimaryButton
-                      type="button"
-                      onClick={() => openBilling('/api/billing/portal')}
-                      disabled={billingLoading !== null}
-                      className="h-11 rounded-full px-5"
-                    >
-                      {billingLoading === 'portal' ? t('openingBilling') : t('manageBilling')}
-                    </PrimaryButton>
-                  ) : (
-                    <PrimaryButton
-                      type="button"
-                      onClick={() => openBilling('/api/billing/checkout')}
-                      disabled={billingLoading !== null}
-                      className="h-11 rounded-full px-5"
-                    >
-                      {billingLoading === 'checkout' ? t('openingBilling') : t('upgradeToPro')}
-                    </PrimaryButton>
-                  )}
-                </div>
-              </div>
-            </section>
-          </DashboardLoadReveal>
-        ) : null}
 
         <DashboardLoadReveal delayMs={isLegacyOnly ? 40 : 200}>
           <section
@@ -893,16 +853,28 @@ export function AccountPageClient({
                 <p className="mt-1 text-sm leading-6 text-stone-600">{t('accountActionsBody')}</p>
               </div>
 
-              <div className="mb-4 lg:hidden">
-                <LanguageSwitcher variant="full" />
+              <div className="mb-4">
+                <LanguageSwitcher variant="full" fullWidth={false} />
               </div>
 
-              <LogoutButton
-                onLogout={handleLogout}
-                loading={logoutLoading}
-                variant="page"
-                className="w-full rounded-[24px]"
-              />
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <LogoutButton
+                  onLogout={handleLogout}
+                  loading={logoutLoading}
+                  variant="page"
+                  className="w-full rounded-[24px] sm:w-auto"
+                />
+
+                <SecondaryButton
+                  href="https://memory-vault.app"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="h-11 w-full gap-1.5 rounded-[24px] px-5 text-sm font-bold sm:w-auto"
+                >
+                  <WorldIcon className="h-4 w-4" />
+                  {t('websiteLink')}
+                </SecondaryButton>
+              </div>
             </section>
           </DashboardLoadReveal>
         ) : null}

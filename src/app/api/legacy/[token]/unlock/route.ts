@@ -41,11 +41,17 @@ export async function POST(req: Request, props: { params: Promise<{ token: strin
   const origin = getRequestOrigin(req)
   const memories = Array.isArray(delivery.memories) ? delivery.memories : []
   const ownerId =
-    typeof delivery.owner === 'object' && delivery.owner ? Number(delivery.owner.id) : Number(delivery.owner)
+    typeof delivery.owner === 'object' && delivery.owner
+      ? Number(delivery.owner.id)
+      : Number(delivery.owner)
   const lovedOneId =
     typeof delivery.lovedOne === 'object' && delivery.lovedOne
       ? Number(delivery.lovedOne.id)
       : Number(delivery.lovedOne)
+  const isOpenWhenDelivery = String(delivery.deliveryKind ?? '').trim() === 'open_when'
+  const deliveryDigitalLegacyItems = Array.isArray(delivery.digitalLegacyItems)
+    ? delivery.digitalLegacyItems
+    : []
   const openWhenResult =
     Number.isFinite(ownerId) && Number.isFinite(lovedOneId)
       ? await payload.find({
@@ -59,6 +65,26 @@ export async function POST(req: Request, props: { params: Promise<{ token: strin
               { owner: { equals: ownerId } },
               { lovedOnes: { equals: lovedOneId } },
               { status: { not_equals: 'draft' } },
+              ...(isOpenWhenDelivery ? [{ sentAt: { exists: true } }] : []),
+            ],
+          },
+        })
+      : { docs: [] }
+  const digitalLegacyResult =
+    deliveryDigitalLegacyItems.length === 0 &&
+    Number.isFinite(ownerId) &&
+    Number.isFinite(lovedOneId)
+      ? await payload.find({
+          collection: 'digital-legacy-items' as any,
+          overrideAccess: true,
+          depth: 0,
+          limit: 500,
+          sort: 'sortOrder',
+          where: {
+            and: [
+              { owner: { equals: ownerId } },
+              { lovedOnes: { equals: lovedOneId } },
+              { checked: { equals: true } },
             ],
           },
         })
@@ -86,6 +112,9 @@ export async function POST(req: Request, props: { params: Promise<{ token: strin
         : null,
     memories,
     openWhenMessages: openWhenResult.docs ?? [],
+    digitalLegacyItems: deliveryDigitalLegacyItems.length
+      ? deliveryDigitalLegacyItems
+      : (digitalLegacyResult.docs ?? []),
     origin,
   })
 

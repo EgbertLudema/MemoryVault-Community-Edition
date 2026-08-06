@@ -1,14 +1,11 @@
 'use client'
 
 import { useState, type ReactNode } from 'react'
-import { AlbumCarousel } from '@/components/memories/AlbumCarousel'
-import { AlbumTile } from '@/components/memories/AlbumTile'
-import { ITEM_HEIGHT, ITEM_WIDTH } from '@/components/memories/constants'
 import { ExportFileIcon } from '@/components/icons/ExportFileIcon'
 import { LockIcon } from '@/components/icons/LockIcon'
 import { UnlockIcon } from '@/components/icons/UnlockIcon'
-import type { Album } from '@/components/memories/types'
-import type { LegacyDeliveryData, LegacyMemory, LegacyOpenWhenMessage } from '@/lib/legacyDeliveryContent'
+import { RecipientMemoryAlbums } from '@/components/recipient/RecipientMemoryAlbums'
+import type { LegacyDeliveryData, LegacyOpenWhenMessage } from '@/lib/legacyDeliveryContent'
 import { PrimaryButton } from '@/components/ui/PrimaryButton'
 import { useToast } from '@/components/ui/ToastProvider'
 import { analytics } from '@/lib/analytics'
@@ -16,6 +13,7 @@ import { analytics } from '@/lib/analytics'
 type LegacyDeliveryViewProps = {
   delivery: LegacyDeliveryData
   locale: string
+  headerAction?: ReactNode
   afterHero?: ReactNode
   labels: {
     deliveryLabel: string
@@ -32,6 +30,8 @@ type LegacyDeliveryViewProps = {
     photosTypeLabel: string
     videoTypeLabel: string
     openWhenMessagesLabel: string
+    digitalLegacyLabel: string
+    noDigitalLegacyItems: string
     lockedOpenWhenEyebrow: string
     lockedOpenWhenBody: string
     lockedOpenWhenDialogTitle: string
@@ -47,21 +47,6 @@ type LegacyDeliveryViewProps = {
     exportingLabel: string
     errorLabel: string
   }
-}
-
-type TimelineGroup = {
-  key: string
-  label: string
-  memories: LegacyMemory[]
-}
-
-function getMemoryTime(value: string | null) {
-  if (!value) {
-    return Number.POSITIVE_INFINITY
-  }
-
-  const time = new Date(value).getTime()
-  return Number.isFinite(time) ? time : Number.POSITIVE_INFINITY
 }
 
 function formatMemoryDate(value: string | null, locale: string, undatedLabel: string) {
@@ -81,135 +66,22 @@ function formatMemoryDate(value: string | null, locale: string, undatedLabel: st
   }).format(date)
 }
 
-function getDateGroupKey(value: string | null) {
-  if (!value) {
-    return 'undated'
-  }
-
-  const date = new Date(value)
-  if (!Number.isFinite(date.getTime())) {
-    return 'undated'
-  }
-
-  return date.toISOString().slice(0, 10)
-}
-
-function sortMemoriesByDate(memories: LegacyMemory[]) {
-  return [...memories].sort((a, b) => {
-    const aTime = getMemoryTime(a.memoryDate)
-    const bTime = getMemoryTime(b.memoryDate)
-
-    if (aTime === bTime) {
-      return String(a.title ?? '').localeCompare(String(b.title ?? ''))
-    }
-
-    return aTime - bTime
-  })
-}
-
-function groupMemoriesByDate(
-  memories: LegacyMemory[],
-  locale: string,
-  undatedLabel: string,
-): TimelineGroup[] {
-  const groups = new Map<string, TimelineGroup>()
-
-  for (const memory of sortMemoriesByDate(memories)) {
-    const key = getDateGroupKey(memory.memoryDate)
-    const existing = groups.get(key)
-
-    if (existing) {
-      existing.memories.push(memory)
-      continue
-    }
-
-    groups.set(key, {
-      key,
-      label: formatMemoryDate(memory.memoryDate, locale, undatedLabel),
-      memories: [memory],
-    })
-  }
-
-  return Array.from(groups.values())
-}
-
-function buildAlbumFromLegacyMemory(memory: LegacyMemory): Album {
-  const contentItems: NonNullable<Album['contentItems']> = []
-
-  memory.content.forEach((item, index) => {
-    if (item.type === 'note') {
-      const note = item.note.trim()
-
-      if (note) {
-        contentItems.push({
-          id: `${memory.id}-note-${index}`,
-          kind: 'note',
-          note,
-        })
-      }
-
-      return
-    }
-
-    const url = String(item.media?.url ?? '').trim()
-    const previewUrl =
-      item.type === 'video' ? String(item.media?.posterUrl ?? '').trim() || url : url
-
-    if (!previewUrl) {
-      return
-    }
-
-    contentItems.push({
-      id: `${memory.id}-${item.type}-${index}`,
-      kind: 'media',
-      mediaType: item.type,
-      url: previewUrl,
-      fullUrl: url,
-      isEncrypted: Boolean(item.media?.isEncrypted),
-      encryptionMetadata: item.media?.encryptionMetadata,
-      posterEncryptionMetadata: item.media?.posterEncryptionMetadata,
-    })
-  })
-
-  return {
-    id: String(memory.id),
-    title: memory.title,
-    createdAt: memory.memoryDate ?? new Date(0).toISOString(),
-    photos: [],
-    contentItems,
-    hasNote: memory.content.some((item) => item.type === 'note' && item.note.trim()),
-    hasImage: memory.content.some((item) => item.type === 'image' && item.media?.url),
-    hasVideo: memory.content.some((item) => item.type === 'video' && item.media?.url),
-  }
-}
-
 export function LegacyDeliveryView({
   delivery,
   locale,
+  headerAction,
   afterHero,
   labels,
   exportAction,
 }: LegacyDeliveryViewProps) {
-  const timelineGroups = groupMemoriesByDate(delivery.memories, locale, labels.undated)
-  const openWhenMessages = Array.isArray(delivery.openWhenMessages)
-    ? delivery.openWhenMessages
+  const openWhenMessages = Array.isArray(delivery.openWhenMessages) ? delivery.openWhenMessages : []
+  const digitalLegacyItems = Array.isArray(delivery.digitalLegacyItems)
+    ? delivery.digitalLegacyItems
     : []
-  const [expandedAlbum, setExpandedAlbum] = useState<Album | null>(null)
   const [selectedLockedOpenWhen, setSelectedLockedOpenWhen] =
     useState<LegacyOpenWhenMessage | null>(null)
-  const [activePhotoIndex, setActivePhotoIndex] = useState(0)
   const [isExporting, setIsExporting] = useState(false)
   const { showToast } = useToast()
-
-  function openAlbum(album: Album) {
-    setExpandedAlbum(album)
-    setActivePhotoIndex(0)
-  }
-
-  function closeAlbum() {
-    setExpandedAlbum(null)
-    setActivePhotoIndex(0)
-  }
 
   async function handleExport() {
     if (!exportAction || isExporting) {
@@ -255,6 +127,7 @@ export function LegacyDeliveryView({
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#faf5ff_0%,#ffffff_45%,#fff7ed_100%)] px-4 py-8 sm:px-6 sm:py-10">
       <div className="mx-auto max-w-6xl">
+        {headerAction ? <div className="mb-4 flex justify-end sm:mb-6">{headerAction}</div> : null}
         <div className="rounded-[2rem] border border-white/70 bg-white/85 p-7 shadow-[0_25px_80px_-35px_rgba(109,40,217,0.35)] backdrop-blur-xl sm:p-8 md:p-10">
           {delivery.ownerProfileImageSrc ? (
             <img
@@ -283,9 +156,7 @@ export function LegacyDeliveryView({
               delivery.recipientName || labels.collectionFallbackName,
             )}
           </h1>
-          <p className="mt-4 max-w-3xl text-lg leading-8 text-stone-600">
-            {labels.collectionBody}
-          </p>
+          <p className="mt-4 max-w-3xl text-lg leading-8 text-stone-600">{labels.collectionBody}</p>
 
           {exportAction ? (
             <div className="mt-6 flex flex-col items-start gap-3">
@@ -296,7 +167,9 @@ export function LegacyDeliveryView({
               >
                 <span className="inline-flex items-center gap-2">
                   <ExportFileIcon className="h-4 w-4 shrink-0" />
-                  <span>{isExporting ? exportAction.exportingLabel : exportAction.buttonLabel}</span>
+                  <span>
+                    {isExporting ? exportAction.exportingLabel : exportAction.buttonLabel}
+                  </span>
                 </span>
               </PrimaryButton>
             </div>
@@ -355,88 +228,50 @@ export function LegacyDeliveryView({
             </div>
           ) : null}
 
-          {timelineGroups.length === 0 && openWhenMessages.length === 0 ? (
-            <div className="rounded-[2rem] border border-dashed border-purple-200 bg-white/80 px-7 py-10 text-center text-stone-600 shadow-[0_18px_50px_-30px_rgba(24,24,27,0.12)]">
-              {labels.noMemoriesAssigned}
-            </div>
-          ) : timelineGroups.length > 0 ? (
-            <div className="relative">
-              <div className="absolute bottom-12 left-[0.45rem] top-4 w-px bg-purple-200 sm:left-[0.55rem]" />
-
-              <div className="space-y-12">
-                {timelineGroups.map((group) => (
+          {digitalLegacyItems.length > 0 ? (
+            <div className="mb-10 rounded-[2rem] border border-purple-100/80 bg-white/90 p-7 shadow-[0_20px_60px_-34px_rgba(109,40,217,0.28)] backdrop-blur-xl sm:p-8">
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-purple-500">
+                {labels.digitalLegacyLabel}
+              </p>
+              <div className="mt-5 grid gap-4">
+                {digitalLegacyItems.map((item) => (
                   <article
-                    key={group.key}
-                    className="relative grid gap-4 pl-8 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-8 sm:pl-0"
+                    key={String(item.id)}
+                    className="rounded-[1.35rem] border border-stone-200 bg-white p-5 shadow-[0_12px_34px_rgba(15,23,42,0.05)]"
                   >
-                    <div className="absolute left-0 top-1.5 z-10 h-4 w-4 rounded-full border-4 border-white bg-purple-500 shadow-[0_0_0_1px_rgba(168,85,247,0.35),0_10px_25px_rgba(126,34,206,0.22)] sm:left-0" />
-
-                    <div className="sm:pl-8">
-                      <time className="text-sm font-semibold uppercase tracking-[0.16em] text-purple-700">
-                        {group.label}
-                      </time>
+                    <div className="text-xs font-semibold uppercase tracking-[0.18em] text-purple-500">
+                      {item.category}
                     </div>
-
-                    <div className="rounded-[30px] corner-shape-squircle border border-white/75 bg-white/65 p-7 shadow-[0_18px_50px_rgba(15,23,42,0.05)] backdrop-blur-sm sm:p-8">
-                      <div
-                        className="grid justify-items-center gap-x-10 gap-y-14"
-                        style={{
-                          gridTemplateColumns: `repeat(auto-fill, minmax(${ITEM_WIDTH}px, 1fr))`,
-                        }}
-                      >
-                        {group.memories.map((memory) => {
-                          const album = buildAlbumFromLegacyMemory(memory)
-
-                          return (
-                            <button
-                              key={String(memory.id)}
-                              type="button"
-                              aria-label={memory.title || labels.untitledMemory}
-                              className="group relative cursor-pointer border-0 bg-transparent p-0 text-left outline-none transition duration-200 hover:-translate-y-1 focus-visible:ring-4 focus-visible:ring-purple-200"
-                              style={{
-                                width: `${ITEM_WIDTH}px`,
-                                height: `${ITEM_HEIGHT}px`,
-                              }}
-                              onClick={() => openAlbum(album)}
-                            >
-                              <AlbumTile
-                                album={album}
-                                groups={[]}
-                                selectedGroupIds={[]}
-                              />
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
+                    <h2 className="mt-2 text-xl font-bold tracking-tight text-stone-900">
+                      {item.title}
+                    </h2>
+                    {item.notes ? (
+                      <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-stone-700">
+                        {item.notes}
+                      </p>
+                    ) : null}
                   </article>
                 ))}
               </div>
             </div>
           ) : null}
+
+          {delivery.memories.length === 0 &&
+          openWhenMessages.length === 0 &&
+          digitalLegacyItems.length === 0 ? (
+            <div className="rounded-[2rem] border border-dashed border-purple-200 bg-white/80 px-7 py-10 text-center text-stone-600 shadow-[0_18px_50px_-30px_rgba(24,24,27,0.12)]">
+              {labels.noMemoriesAssigned}
+            </div>
+          ) : delivery.memories.length > 0 ? (
+            <div className="rounded-[30px] corner-shape-squircle border border-white/75 bg-white/65 p-7 shadow-[0_18px_50px_rgba(15,23,42,0.05)] backdrop-blur-sm sm:p-8">
+              <RecipientMemoryAlbums
+                memories={delivery.memories}
+                labels={{ noMemories: labels.noMemoriesAssigned }}
+              />
+            </div>
+          ) : null}
         </section>
       </div>
-
-      {expandedAlbum ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 px-4 py-8"
-          onClick={closeAlbum}
-        >
-          <div
-            className="relative h-[min(78svh,720px)] w-[min(86vw,560px)]"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <AlbumCarousel
-              album={expandedAlbum}
-              activeIndex={activePhotoIndex}
-              setActiveIndex={setActivePhotoIndex}
-              groups={[]}
-              selectedGroupIds={[]}
-              controlsVisible
-            />
-          </div>
-        </div>
-      ) : null}
 
       {selectedLockedOpenWhen ? (
         <div

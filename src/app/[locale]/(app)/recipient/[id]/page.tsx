@@ -1,4 +1,5 @@
 import { Link } from '@/i18n/navigation'
+import { BulletListIcon } from '@/components/icons/BulletListIcon'
 import { MailIcon } from '@/components/icons/MailIcon'
 import { MemoryBookIcon } from '@/components/icons/MemoryBookIcon'
 import { RecipientPageShell } from '@/components/recipient/RecipientPageShell'
@@ -21,10 +22,10 @@ export default async function RecipientCollectionPage({
       body={t('collection.body')}
     >
       {(delivery) => (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-3">
           <Link
             href={`/recipient/${delivery.id}/memories`}
-            className="rounded-[28px] border border-white/75 bg-white/88 p-6 text-inherit no-underline shadow-[0_16px_45px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:border-purple-200"
+            className="rounded-[28px] corner-shape-squircle border border-white/75 bg-white/88 p-6 text-inherit no-underline shadow-[0_16px_45px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:border-purple-200"
           >
             <MemoryBookIcon className="h-6 w-6 text-purple-700" />
             <h2 className="mt-4 text-2xl font-bold tracking-tight text-stone-950">
@@ -36,7 +37,7 @@ export default async function RecipientCollectionPage({
           </Link>
           <Link
             href={`/recipient/${delivery.id}/open-when-messages`}
-            className="rounded-[28px] border border-white/75 bg-white/88 p-6 text-inherit no-underline shadow-[0_16px_45px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:border-purple-200"
+            className="rounded-[28px] corner-shape-squircle border border-white/75 bg-white/88 p-6 text-inherit no-underline shadow-[0_16px_45px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:border-purple-200"
           >
             <MailIcon className="h-6 w-6 text-purple-700" />
             <h2 className="mt-4 text-2xl font-bold tracking-tight text-stone-950">
@@ -44,6 +45,20 @@ export default async function RecipientCollectionPage({
             </h2>
             <p className="mt-2 text-sm leading-6 text-stone-600">
               {t('collection.openWhenBody', { count: delivery.data.openWhenMessages.length })}
+            </p>
+          </Link>
+          <Link
+            href={`/recipient/${delivery.id}/digital-legacy`}
+            className="rounded-[28px] corner-shape-squircle border border-white/75 bg-white/88 p-6 text-inherit no-underline shadow-[0_16px_45px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:border-purple-200"
+          >
+            <BulletListIcon className="h-6 w-6 text-purple-700" />
+            <h2 className="mt-4 text-2xl font-bold tracking-tight text-stone-950">
+              {t('labels.digitalLegacy')}
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-stone-600">
+              {t('collection.digitalLegacyBody', {
+                count: delivery.data.digitalLegacyItems.length,
+              })}
             </p>
           </Link>
         </div>

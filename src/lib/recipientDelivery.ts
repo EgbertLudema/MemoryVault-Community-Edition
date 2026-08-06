@@ -25,11 +25,14 @@ export async function getRecipientDeliveryData({
   origin: string
 }): Promise<LegacyDeliveryData> {
   const ownerId =
-    typeof delivery.owner === 'object' && delivery.owner ? Number(delivery.owner.id) : Number(delivery.owner)
+    typeof delivery.owner === 'object' && delivery.owner
+      ? Number(delivery.owner.id)
+      : Number(delivery.owner)
   const lovedOneId =
     typeof delivery.lovedOne === 'object' && delivery.lovedOne
       ? Number(delivery.lovedOne.id)
       : Number(delivery.lovedOne)
+  const isOpenWhenDelivery = String(delivery.deliveryKind ?? '').trim() === 'open_when'
 
   const openWhenResult =
     Number.isFinite(ownerId) && Number.isFinite(lovedOneId)
@@ -44,6 +47,29 @@ export async function getRecipientDeliveryData({
               { owner: { equals: ownerId } },
               { lovedOnes: { equals: lovedOneId } },
               { status: { not_equals: 'draft' } },
+              ...(isOpenWhenDelivery ? [{ sentAt: { exists: true } }] : []),
+            ],
+          },
+        })
+      : { docs: [] }
+  const deliveryDigitalLegacyItems = Array.isArray(delivery.digitalLegacyItems)
+    ? delivery.digitalLegacyItems
+    : []
+  const digitalLegacyResult =
+    deliveryDigitalLegacyItems.length === 0 &&
+    Number.isFinite(ownerId) &&
+    Number.isFinite(lovedOneId)
+      ? await payload.find({
+          collection: 'digital-legacy-items' as any,
+          overrideAccess: true,
+          depth: 0,
+          limit: 500,
+          sort: 'sortOrder',
+          where: {
+            and: [
+              { owner: { equals: ownerId } },
+              { lovedOnes: { equals: lovedOneId } },
+              { checked: { equals: true } },
             ],
           },
         })
@@ -57,9 +83,14 @@ export async function getRecipientDeliveryData({
         : null,
     owner: typeof delivery.owner === 'object' && delivery.owner ? delivery.owner : null,
     ownerProfileImageSrc:
-      typeof delivery.owner === 'object' && delivery.owner ? getProfileImageSrc(delivery.owner) : null,
+      typeof delivery.owner === 'object' && delivery.owner
+        ? getProfileImageSrc(delivery.owner)
+        : null,
     memories: Array.isArray(delivery.memories) ? delivery.memories : [],
     openWhenMessages: openWhenResult.docs ?? [],
+    digitalLegacyItems: deliveryDigitalLegacyItems.length
+      ? deliveryDigitalLegacyItems
+      : (digitalLegacyResult.docs ?? []),
     origin,
   })
 }

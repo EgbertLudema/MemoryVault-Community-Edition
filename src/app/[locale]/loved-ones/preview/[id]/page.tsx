@@ -51,7 +51,7 @@ export default async function LovedOnePreviewPage({
   }
 
   const payload = await getPayload({ config })
-  const [lovedOneResult, memoryResult, openWhenResult] = await Promise.all([
+  const [lovedOneResult, memoryResult, openWhenResult, digitalLegacyResult] = await Promise.all([
     payload.find({
       collection: 'loved-ones',
       overrideAccess: true,
@@ -84,6 +84,20 @@ export default async function LovedOnePreviewPage({
         ],
       },
     }),
+    payload.find({
+      collection: 'digital-legacy-items' as any,
+      overrideAccess: true,
+      depth: 0,
+      limit: 500,
+      sort: 'sortOrder',
+      where: {
+        and: [
+          { owner: { equals: user.id } },
+          { lovedOnes: { equals: lovedOneId } },
+          { checked: { equals: true } },
+        ],
+      },
+    }),
   ])
 
   const lovedOne = lovedOneResult.docs?.[0] as any
@@ -91,9 +105,12 @@ export default async function LovedOnePreviewPage({
     notFound()
   }
 
-  const recipient = resolveLegacyRecipients([lovedOne], (memoryResult.docs ?? []) as any[]).find(
-    (item) => item.lovedOneId === lovedOneId,
-  )
+  const recipient = resolveLegacyRecipients(
+    [lovedOne],
+    (memoryResult.docs ?? []) as any[],
+    [],
+    (digitalLegacyResult.docs ?? []).length > 0 ? [lovedOneId] : [],
+  ).find((item) => item.lovedOneId === lovedOneId)
 
   const memories = recipient?.memoryIds.length
     ? (memoryResult.docs ?? []).filter((memory: any) =>
@@ -114,6 +131,7 @@ export default async function LovedOnePreviewPage({
     ownerProfileImageSrc: getProfileImageSrc(user),
     memories,
     openWhenMessages: openWhenResult.docs ?? [],
+    digitalLegacyItems: digitalLegacyResult.docs ?? [],
     origin: getRequestOrigin(headerList),
   })
 
@@ -136,6 +154,8 @@ export default async function LovedOnePreviewPage({
         photosTypeLabel: t('photosTypeLabel'),
         videoTypeLabel: t('videoTypeLabel'),
         openWhenMessagesLabel: t('openWhenMessagesLabel'),
+        digitalLegacyLabel: t('digitalLegacyLabel'),
+        noDigitalLegacyItems: t('noDigitalLegacyItems'),
         lockedOpenWhenEyebrow: t('lockedOpenWhenEyebrow'),
         lockedOpenWhenBody: t('lockedOpenWhenBody'),
         lockedOpenWhenDialogTitle: t('lockedOpenWhenDialogTitle'),

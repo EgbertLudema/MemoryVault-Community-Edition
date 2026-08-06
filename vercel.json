@@ -3,6 +3,14 @@
     {
       "path": "/api/legacy/check-ins/run",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/open-when-messages/send-due",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/admin-email-campaigns/run",
+      "schedule": "15 7 * * *"
     }
   ]
 }

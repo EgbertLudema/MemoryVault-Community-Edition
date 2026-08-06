@@ -23,13 +23,11 @@ function getSteps(t: ReturnType<typeof useTranslations>, isDesktop: boolean): St
       content: t('listBody'),
     },
     {
-      target: isDesktop
-        ? '[data-tour="open-when-form"]'
-        : '[data-tour="open-when-form-header"]',
+      target: isDesktop ? '[data-tour="open-when-form"]' : '[data-tour="open-when-create-button"]',
       placement: isDesktop ? 'left' : 'top',
       skipBeacon: true,
-      title: t('formTitle'),
-      content: t('formBody'),
+      title: isDesktop ? t('formTitle') : t('createButtonTitle'),
+      content: isDesktop ? t('formBody') : t('createButtonBody'),
     },
   ]
 }

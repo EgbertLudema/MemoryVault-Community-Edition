@@ -1,5 +1,6 @@
 'use client'
 
+import gsap from 'gsap'
 import { useLocale, useTranslations } from 'next-intl'
 import { usePathname as useRawPathname, useSearchParams } from 'next/navigation'
 import * as React from 'react'
@@ -9,6 +10,8 @@ import { localeCookieName, locales } from '@/i18n/locales'
 type LanguageSwitcherProps = {
   className?: string
   variant?: 'header' | 'sidebar' | 'full'
+  preserveUnlocalizedPath?: boolean
+  fullWidth?: boolean
 }
 
 function cn(...classes: Array<string | false | null | undefined>) {
@@ -28,7 +31,7 @@ const headerButtonClass =
   'inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-stone-200 bg-white/90 px-2.5 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-stone-600 shadow-sm transition hover:border-purple-200 hover:bg-purple-50 hover:text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-300/70'
 
 const fullButtonClass =
-  'inline-flex w-full cursor-pointer items-center justify-between gap-3 rounded-[20px] corner-shape-squircle border border-stone-200/80 bg-white/90 px-4 py-3 text-sm font-medium text-stone-700 shadow-sm transition hover:border-purple-200 hover:bg-purple-50 hover:text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-300/70'
+  'inline-flex cursor-pointer items-center justify-between gap-3 rounded-[20px] corner-shape-squircle border border-stone-200/80 bg-white/90 px-4 py-3 text-sm font-medium text-stone-700 shadow-sm transition hover:border-purple-200 hover:bg-purple-50 hover:text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-300/70'
 
 function getLocaleFromPathname(pathname: string) {
   const segment = pathname.split('/')[1]
@@ -63,7 +66,12 @@ function buildLocalizedPath(pathname: string, locale: string, search: string) {
   return search ? `${basePath}?${search}` : basePath
 }
 
-export function LanguageSwitcher({ className, variant = 'header' }: LanguageSwitcherProps) {
+export function LanguageSwitcher({
+  className,
+  variant = 'header',
+  preserveUnlocalizedPath = false,
+  fullWidth = true,
+}: LanguageSwitcherProps) {
   const t = useTranslations('LanguageSwitcher')
   const locale = useLocale()
   const rawPathname = useRawPathname()
@@ -73,6 +81,9 @@ export function LanguageSwitcher({ className, variant = 'header' }: LanguageSwit
   const isFull = variant === 'full'
   const [open, setOpen] = React.useState(false)
   const rootRef = React.useRef<HTMLDivElement | null>(null)
+  const buttonRef = React.useRef<HTMLButtonElement | null>(null)
+  const menuRef = React.useRef<HTMLDivElement | null>(null)
+  const optionRefs = React.useRef<HTMLButtonElement[]>([])
 
   const languages = React.useMemo(
     () => [
@@ -85,6 +96,20 @@ export function LanguageSwitcher({ className, variant = 'header' }: LanguageSwit
   const otherLanguages = languages.filter((language) => language.code !== effectiveLocale)
   const currentLanguage = languages.find((language) => language.code === effectiveLocale)
 
+  const playButtonAnimation = React.useCallback(() => {
+    const button = buttonRef.current
+
+    if (!button || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return
+    }
+
+    gsap.killTweensOf(button)
+    gsap
+      .timeline({ defaults: { ease: 'power3.out' } })
+      .to(button, { y: 1, duration: 0.08 })
+      .to(button, { y: 0, duration: 0.18 })
+  }, [])
+
   const switchLanguage = React.useCallback(
     (nextLocale: string) => {
       if (nextLocale === effectiveLocale) {
@@ -93,13 +118,42 @@ export function LanguageSwitcher({ className, variant = 'header' }: LanguageSwit
 
       const pathname = getUnlocalizedPathname(rawPathname)
       const search = searchParams.toString()
-      const target = buildLocalizedPath(pathname, nextLocale, search)
+      const target = preserveUnlocalizedPath
+        ? `${rawPathname}${search ? `?${search}` : ''}`
+        : buildLocalizedPath(pathname, nextLocale, search)
 
       document.cookie = `${localeCookieName}=${nextLocale}; Path=/; Max-Age=31536000; SameSite=Lax`
       window.location.assign(target)
     },
-    [effectiveLocale, rawPathname, searchParams],
+    [effectiveLocale, preserveUnlocalizedPath, rawPathname, searchParams],
   )
+
+  React.useEffect(() => {
+    if (!open || !menuRef.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return
+    }
+
+    const menu = menuRef.current
+    const options = optionRefs.current
+    const delayedOptions = options.slice(1)
+
+    gsap.killTweensOf([menu, ...options])
+    gsap.set(options[0], { autoAlpha: 1, y: 0 })
+    gsap
+      .timeline({ defaults: { ease: 'power2.out' } })
+      .fromTo(
+        menu,
+        { autoAlpha: 0, y: isSidebar ? 8 : -6, clipPath: 'inset(0 0 100% 0)' },
+        { autoAlpha: 1, y: 0, clipPath: 'inset(0 0 0% 0)', duration: 0.24 },
+      )
+    if (delayedOptions.length > 0) {
+      gsap.fromTo(
+        delayedOptions,
+        { autoAlpha: 0, y: -4 },
+        { autoAlpha: 1, y: 0, duration: 0.16, stagger: 0.035, delay: 0.18, ease: 'power2.out' },
+      )
+    }
+  }, [isSidebar, open])
 
   React.useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
@@ -126,15 +180,26 @@ export function LanguageSwitcher({ className, variant = 'header' }: LanguageSwit
   return (
     <div
       ref={rootRef}
-      className={cn('relative inline-flex', (isSidebar || isFull) && 'block w-full', className)}
+      className={cn(
+        'relative inline-flex',
+        (isSidebar || (isFull && fullWidth)) && 'block w-full',
+        className,
+      )}
     >
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => {
+          playButtonAnimation()
+          setOpen((current) => !current)
+        }}
         title={t('label')}
         aria-label={t('label')}
         aria-expanded={open}
-        className={isSidebar ? sidebarButtonClass : isFull ? fullButtonClass : headerButtonClass}
+        className={cn(
+          isSidebar ? sidebarButtonClass : isFull ? fullButtonClass : headerButtonClass,
+          isFull && fullWidth && 'w-full',
+        )}
       >
         {isSidebar ? (
           <>
@@ -169,47 +234,56 @@ export function LanguageSwitcher({ className, variant = 'header' }: LanguageSwit
 
       {open ? (
         <div
+          ref={menuRef}
           className={cn(
-            'absolute z-50 rounded-2xl border border-stone-200 bg-white p-1.5 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.25)]',
+            'absolute z-50 rounded-2xl border border-stone-200 bg-white p-1.5 shadow-[0_14px_32px_rgba(15,23,42,0.12)]',
             !isSidebar && !isFull && 'right-0 top-full mt-2 min-w-[8rem]',
-            isFull && 'left-0 right-0 top-full mt-2 w-full',
+            isFull && fullWidth && 'left-0 right-0 top-full mt-2 w-full',
+            isFull && !fullWidth && 'left-0 top-full mt-2 min-w-[12rem]',
             isSidebar &&
-              'bottom-full left-0 right-0 mb-2 min-w-full overflow-hidden rounded-xl border-0 bg-white p-0 shadow-[0_20px_45px_-26px_rgba(15,23,42,0.28)] ring-1 ring-stone-200',
+              'bottom-full left-0 right-0 mb-2 min-w-full rounded-xl border-0 bg-white p-0 shadow-[0_14px_32px_rgba(15,23,42,0.12)] ring-1 ring-stone-200',
           )}
         >
-          {otherLanguages.map((language) => (
-            <button
-              key={language.code}
-              type="button"
-              onClick={() => {
-                setOpen(false)
-                switchLanguage(language.code)
-              }}
-              className={cn(
-                'flex w-full cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium text-stone-700 transition hover:bg-purple-50 hover:text-purple-700',
-                isSidebar &&
-                  'group gap-3 rounded-none px-4 py-3 text-stone-500 hover:bg-stone-50 hover:text-stone-700',
-              )}
-            >
-              {isSidebar ? (
-                <>
-                  <span className={cn(sidebarIconWrapperClass, 'group-hover:text-stone-700')}>
-                    <span className={sidebarIconMotionClass}>
-                      <LanguagesIcon className="block h-[18px] w-[18px] pointer-events-none" />
+          <div className={cn(isSidebar && 'overflow-hidden rounded-xl')}>
+            {otherLanguages.map((language, index) => (
+              <button
+                ref={(element) => {
+                  if (element) {
+                    optionRefs.current[index] = element
+                  }
+                }}
+                key={language.code}
+                type="button"
+                onClick={() => {
+                  setOpen(false)
+                  switchLanguage(language.code)
+                }}
+                className={cn(
+                  'flex w-full cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium text-stone-700 transition hover:bg-purple-50 hover:text-purple-700',
+                  isSidebar &&
+                    'group gap-3 rounded-none px-4 py-3 text-stone-500 hover:bg-stone-50 hover:text-stone-700',
+                )}
+              >
+                {isSidebar ? (
+                  <>
+                    <span className={cn(sidebarIconWrapperClass, 'group-hover:text-stone-700')}>
+                      <span className={sidebarIconMotionClass}>
+                        <LanguagesIcon className="block h-[18px] w-[18px] pointer-events-none" />
+                      </span>
                     </span>
-                  </span>
-                  <span className="min-w-0 flex-1 truncate">{language.label}</span>
-                </>
-              ) : (
-                <>
-                  <span>{language.label}</span>
-                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-400">
-                    {language.code}
-                  </span>
-                </>
-              )}
-            </button>
-          ))}
+                    <span className="min-w-0 flex-1 truncate">{language.label}</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{language.label}</span>
+                    <span className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-400">
+                      {language.code}
+                    </span>
+                  </>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       ) : null}
     </div>

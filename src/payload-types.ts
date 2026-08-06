@@ -76,6 +76,7 @@ export interface Config {
     'loved-ones': LovedOne;
     'loved-one-groups': LovedOneGroup;
     'legacy-deliveries': LegacyDelivery;
+    'digital-legacy-items': DigitalLegacyItem;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -91,6 +92,7 @@ export interface Config {
     'loved-ones': LovedOnesSelect<false> | LovedOnesSelect<true>;
     'loved-one-groups': LovedOneGroupsSelect<false> | LovedOneGroupsSelect<true>;
     'legacy-deliveries': LegacyDeliveriesSelect<false> | LegacyDeliveriesSelect<true>;
+    'digital-legacy-items': DigitalLegacyItemsSelect<false> | DigitalLegacyItemsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -183,6 +185,7 @@ export interface User {
   lastName?: string | null;
   profileImageUrl?: string | null;
   profileImage?: (number | null) | Media;
+  appIntroCompleted?: boolean | null;
   enableLegacyProtection?: boolean | null;
   /**
    * The account owner asked to enable legacy protection, but selected trusted contacts still need to accept their invite.
@@ -266,7 +269,17 @@ export interface LovedOne {
   id: number;
   fullName: string;
   nickname?: string | null;
-  email: string;
+  email?: string | null;
+  emailCiphertext?: string | null;
+  emailEncryptionMetadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   relationship: string;
   /**
    * Optional personal note for this loved one. Leave blank to use the shared default note.
@@ -433,6 +446,7 @@ export interface OpenWhenMessage {
 export interface LegacyDelivery {
   id: number;
   status: 'active' | 'revoked';
+  deliveryKind: 'legacy' | 'open_when';
   tokenHash: string;
   accessPasswordHash?: string | null;
   recipientName: string;
@@ -445,6 +459,51 @@ export interface LegacyDelivery {
    */
   recipientUser?: (number | null) | User;
   memories: (number | Memory)[];
+  digitalLegacyItems?: (number | DigitalLegacyItem)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "digital-legacy-items".
+ */
+export interface DigitalLegacyItem {
+  id: number;
+  title: string;
+  titleCiphertext?: string | null;
+  titleEncryptionMetadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  category: string;
+  notes?: string | null;
+  /**
+   * Checklist priority: high, normal, or low.
+   */
+  priority?: string | null;
+  notesCiphertext?: string | null;
+  notesEncryptionMetadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  checked?: boolean | null;
+  isDefault?: boolean | null;
+  sortOrder?: number | null;
+  owner: number | User;
+  /**
+   * Loved ones who should receive this item when the vault is released.
+   */
+  lovedOnes?: (number | LovedOne)[] | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -503,6 +562,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'legacy-deliveries';
         value: number | LegacyDelivery;
+      } | null)
+    | ({
+        relationTo: 'digital-legacy-items';
+        value: number | DigitalLegacyItem;
       } | null);
   globalSlug?: string | null;
   user:
@@ -587,6 +650,7 @@ export interface UsersSelect<T extends boolean = true> {
   lastName?: T;
   profileImageUrl?: T;
   profileImage?: T;
+  appIntroCompleted?: T;
   enableLegacyProtection?: T;
   legacyProtectionPendingEnable?: T;
   legacyProtectionContacts?: T;
@@ -702,6 +766,8 @@ export interface LovedOnesSelect<T extends boolean = true> {
   fullName?: T;
   nickname?: T;
   email?: T;
+  emailCiphertext?: T;
+  emailEncryptionMetadata?: T;
   relationship?: T;
   customNote?: T;
   customNoteCiphertext?: T;
@@ -735,6 +801,7 @@ export interface LovedOneGroupsSelect<T extends boolean = true> {
  */
 export interface LegacyDeliveriesSelect<T extends boolean = true> {
   status?: T;
+  deliveryKind?: T;
   tokenHash?: T;
   accessPasswordHash?: T;
   recipientName?: T;
@@ -744,6 +811,28 @@ export interface LegacyDeliveriesSelect<T extends boolean = true> {
   lovedOne?: T;
   recipientUser?: T;
   memories?: T;
+  digitalLegacyItems?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "digital-legacy-items_select".
+ */
+export interface DigitalLegacyItemsSelect<T extends boolean = true> {
+  title?: T;
+  titleCiphertext?: T;
+  titleEncryptionMetadata?: T;
+  category?: T;
+  notes?: T;
+  priority?: T;
+  notesCiphertext?: T;
+  notesEncryptionMetadata?: T;
+  checked?: T;
+  isDefault?: T;
+  sortOrder?: T;
+  owner?: T;
+  lovedOnes?: T;
   updatedAt?: T;
   createdAt?: T;
 }

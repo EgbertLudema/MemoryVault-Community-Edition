@@ -20,7 +20,7 @@ function toPayloadId(id: string | number): string | number {
   return trimmed
 }
 
-export function LovedOneForm() {
+export function LovedOneForm({ mode = 'page' }: { mode?: 'page' | 'modal' } = {}) {
   const t = useTranslations('LovedOneForm')
   const router = useRouter()
 
@@ -80,7 +80,7 @@ export function LovedOneForm() {
       submittingLabel={t('creating')}
       onSubmit={handleCreate}
       onCancel={closeModal}
-      stickyActions
+      stickyActions={mode === 'modal'}
     />
   )
 }

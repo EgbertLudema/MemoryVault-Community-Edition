@@ -7,16 +7,13 @@ export const FEATURE_KEYS = {
 } as const
 
 export type FeatureKey = (typeof FEATURE_KEYS)[keyof typeof FEATURE_KEYS]
-export type UserFeatureState = Record<string, unknown>
+export type UserFeatureState = unknown
 
 export function hasFeature(_feature: FeatureKey) {
   return true
 }
 
-export function hasFeatureForUser(
-  _user: UserFeatureState | null | undefined,
-  _feature: FeatureKey,
-) {
+export function hasFeatureForUser(_user: UserFeatureState, _feature: FeatureKey) {
   return true
 }
 
@@ -27,7 +24,7 @@ export function getLimit(
 }
 
 export function getLimitForUser(
-  _user: UserFeatureState | null | undefined,
+  _user: UserFeatureState,
   _limit: 'memoryContentItems' | 'memories' | 'lovedOnes' | 'storageBytes' | 'openWhenMessages',
 ) {
   return null

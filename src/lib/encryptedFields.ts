@@ -54,9 +54,18 @@ export function getLovedOneDisplayNote(lovedOne: any) {
   })
 }
 
+export function getLovedOneDisplayEmail(lovedOne: any) {
+  return decryptSensitiveText({
+    ciphertext: lovedOne?.emailCiphertext,
+    metadata: lovedOne?.emailEncryptionMetadata,
+    fallback: lovedOne?.email,
+  })
+}
+
 export function serializeLovedOneSensitiveFields<T extends Record<string, any>>(lovedOne: T): T {
   return {
     ...lovedOne,
     customNote: getLovedOneDisplayNote(lovedOne),
+    email: getLovedOneDisplayEmail(lovedOne),
   }
 }

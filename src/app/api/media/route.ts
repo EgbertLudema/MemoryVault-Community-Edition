@@ -11,6 +11,7 @@ import {
 } from '@/lib/uploadLimits'
 
 const payloadPost = REST_POST(config)
+const PAYLOAD_AUTH_COOKIE = 'payload-token'
 
 function toEncryptedBlobName(fileName: string) {
   const safeName = fileName.trim() || 'upload'
@@ -35,15 +36,35 @@ function uploadLimitError(file: File) {
   }
 }
 
+function hasPayloadAuthCookie(headers: Headers) {
+  const cookieHeader = headers.get('cookie') ?? headers.get('Cookie')
+
+  if (!cookieHeader) {
+    return false
+  }
+
+  return cookieHeader
+    .split(';')
+    .some((part) => part.trim().split('=')[0] === PAYLOAD_AUTH_COOKIE)
+}
+
+function postToPayloadMedia(req: Request) {
+  return payloadPost(req, {
+    params: Promise.resolve({
+      slug: ['media'],
+    }),
+  } as any)
+}
+
 export async function POST(req: Request) {
+  if (hasPayloadAuthCookie(req.headers)) {
+    return postToPayloadMedia(req)
+  }
+
   const user = await getAppUserFromHeaders(req.headers)
 
   if (!user) {
-    return payloadPost(req, {
-      params: Promise.resolve({
-        slug: ['media'],
-      }),
-    } as any)
+    return postToPayloadMedia(req)
   }
 
   try {

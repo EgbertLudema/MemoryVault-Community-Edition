@@ -5,6 +5,7 @@ import { DashboardLoadReveal } from '@/components/dashboard/DashboardLoadReveal'
 import { LovedOnesDirectoryClient } from '@/components/LovedOnesDirectoryClient'
 import { LovedOnesHelpTour } from '@/components/onboarding/LovedOnesHelpTour'
 import { EditIcon } from '@/components/icons/EditIcon'
+import { PlusIcon } from '@/components/icons/PlusIcon'
 import { PrimaryButton } from '@/components/ui/PrimaryButton'
 import { SecondaryButton } from '@/components/ui/SecondairyButton'
 
@@ -100,7 +101,7 @@ export default async function LovedOnesPage({
         className="pointer-events-none absolute inset-x-0 top-0 h-[440px] animate-dashboard-ambient bg-[radial-gradient(circle_at_top_left,rgba(251,207,232,0.35),transparent_34%),radial-gradient(circle_at_top_right,rgba(216,180,254,0.28),transparent_30%),linear-gradient(180deg,rgba(255,245,247,0.72)_0%,rgba(253,241,247,0.44)_44%,rgba(249,250,251,0.12)_78%,rgba(249,250,251,0)_100%)] [mask-image:linear-gradient(to_bottom,rgba(0,0,0,1)_0%,rgba(0,0,0,0.94)_60%,rgba(0,0,0,0.45)_84%,transparent_100%)]"
       />
 
-      <div className="relative grid gap-6 p-6">
+      <div className="relative grid gap-6 p-6 pb-40 lg:pb-24">
         <DashboardLoadReveal delayMs={40}>
           <section className="relative overflow-hidden rounded-[32px] corner-shape-squircle border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,0.97),rgba(255,245,247,0.92))] p-7 shadow-[0_22px_70px_rgba(244,114,182,0.12)] sm:p-8">
             <div
@@ -173,6 +174,17 @@ export default async function LovedOnesPage({
           <LovedOnesDirectoryClient lovedOnes={lovedOnes} />
           </section>
         </DashboardLoadReveal>
+      </div>
+      <div className="pointer-events-none fixed bottom-[calc(4.85rem+env(safe-area-inset-bottom))] left-4 z-40 lg:hidden">
+        <div className="pointer-events-auto rounded-2xl border border-white/80 bg-white/90 p-2 shadow-[0_18px_50px_rgba(15,23,42,0.14)] backdrop-blur-xl">
+          <PrimaryButton
+            href="/loved-ones/new"
+            className="h-12 w-12 rounded-xl corner-shape-squircle p-0"
+          >
+            <PlusIcon className="h-5 w-5" />
+            <span className="sr-only">{t('addLovedOne')}</span>
+          </PrimaryButton>
+        </div>
       </div>
     </main>
   )

@@ -7,7 +7,6 @@
   "HomeHowItWorksDemo": {
     "stepKicker": "Step {step}",
     "demoBadge": "Demo",
-    "compactHint": "Swipe or scroll",
     "steps": [
       {
         "title": "Add a loved one",
@@ -16,6 +15,10 @@
       {
         "title": "Add a memory",
         "description": "Save a note, photo, or video and link the right loved one(s)."
+      },
+      {
+        "title": "Complete the digital checklist",
+        "description": "Record important accounts, wishes, and practical details for the right loved one(s)."
       },
       {
         "title": "Add an Open When message",
@@ -144,8 +147,17 @@
     "myMemories": "My memories",
     "myLovedOnes": "My loved ones",
     "openWhenMessages": "Open When Messages",
+    "digitalLegacy": "Digital checklist",
     "recipient": "Recipient",
-    "website": "Website",
+    "sharedVaults": "Shared vaults",
+    "modeToggleLabel": "Switch between own vault and recipient",
+    "modeOwnVault": "My vault",
+    "planFree": "Free",
+    "planPro": "Pro",
+    "planCommunity": "Community",
+    "storageUnlimited": "Unlimited storage",
+    "memoriesShort": "Memories",
+    "openWhenShort": "Open When",
     "accountFallback": "Account",
     "viewProfile": "View profile",
     "actionNeeded": "Action needed"
@@ -154,9 +166,8 @@
     "dashboard": "Dashboard",
     "memories": "Memories",
     "openWhen": "Open When",
-    "recipient": "Recipient",
     "lovedOnes": "People",
-    "website": "Website",
+    "digitalLegacy": "Checklist",
     "account": "Account",
     "menu": "Menu",
     "closeMenu": "Close menu"
@@ -345,7 +356,7 @@
       "heroTitle": "Your dashboard",
       "heroBody": "This screen is your starting point. It summarizes your vault and shows the next step worth taking.",
       "navTitle": "Use the app navigation",
-      "navBody": "Use this bottom navigation to move between your dashboard, loved ones, memories, Open When messages, and recipient area on mobile.",
+      "navBody": "Use this bottom navigation to move between your dashboard, loved ones, memories, Digital checklist, and Open When messages. Recipient area is in the menu.",
       "createMemoryTitle": "Add a memory",
       "createMemoryBody": "Use this action to quickly save a note, photo, or video while you are in the app.",
       "trustedContactTitle": "Trusted contact setup",
@@ -420,6 +431,8 @@
     "heroBody": "This page is where you write messages for specific future moments, such as birthdays, hard days, or moments when someone needs encouragement.",
     "listTitle": "Saved messages",
     "listBody": "Your Open When messages appear here. You can review, edit, or delete them before they are shared.",
+    "createButtonTitle": "Add a new message",
+    "createButtonBody": "Use the plus button to create a new Open When message on mobile. The form opens in a modal after that.",
     "formTitle": "Write or edit a message",
     "formBody": "Use this form to choose the prompt, write the message, select recipients, add optional photos, and set an optional date."
   },
@@ -466,12 +479,14 @@
     "actionsBody": "Use this section for account-level actions such as logging out."
   },
   "LovedOneDetail": {
+    "label": "Loved ones",
     "notFoundTitle": "Not found",
     "notFoundBody": "This loved one does not exist or you do not have access.",
     "backToLovedOnes": "Back to Loved Ones",
     "subtitle": "Edit details or remove this person.",
     "back": "Back",
-    "currentNote": "Current note"
+    "currentNote": "Current note",
+    "editModalTitle": "Edit: {name}"
   },
   "LegacyDelivery": {
     "undated": "Undated",
@@ -500,6 +515,8 @@
     "videoTypeLabel": "Video",
     "sharedByLabel": "Shared by {name}",
     "openWhenMessagesLabel": "Open When Messages",
+    "digitalLegacyLabel": "Digital checklist",
+    "noDigitalLegacyItems": "No digital checklist items are linked to this loved one.",
     "lockedOpenWhenEyebrow": "Locked message",
     "lockedOpenWhenBody": "Open this when you feel you need it, or when its title or date says the moment is right. Create an account below to open it in the app.",
     "lockedOpenWhenDialogTitle": "Are you sure you want to open this?",
@@ -508,14 +525,24 @@
     "lockedOpenWhenClose": "Not now",
     "lockedOpenWhenFallbackTitle": "Locked Open When message",
     "claimBadge": "Keep this in the app",
-    "claimTitle": "Create an account to keep this content available.",
-    "claimBody": "The recipient page stays here, and your saved copy will also appear in your Memory Vault app.",
+    "claimTitle": "Create an account or log in to keep this content available.",
+    "claimBody": "Create an account or log in to save this in your Memory Vault account. You can also export it as a ZIP file.",
     "claimFirstName": "First name",
     "claimLastName": "Last name",
     "claimEmail": "Email",
     "claimPassword": "Password",
     "claimSaving": "Saving...",
     "claimSubmit": "Create account and save",
+    "createAccountTab": "Create account",
+    "loginTab": "Log in",
+    "loginPassword": "Account password",
+    "loginSaving": "Logging in...",
+    "loginAndSave": "Log in and save",
+    "loginError": "Could not log in",
+    "saveToCurrentAccount": "Save to my account",
+    "signedInAs": "Signed in as {email}",
+    "continueWithGoogle": "Continue with Google",
+    "or": "or",
     "claimError": "Could not save this delivery"
   },
   "OpenWhenMessagesPage": {
@@ -628,15 +655,23 @@
       "aria": "Recipient sections",
       "dashboard": "Dashboard",
       "memories": "Memories",
-      "openWhen": "Open When Messages"
+      "openWhen": "Open When Messages",
+      "digitalLegacy": "Digital checklist"
     },
     "labels": {
       "memories": "Memories",
       "openWhen": "Open When Messages",
+      "digitalLegacy": "Digital checklist",
       "undated": "Undated",
       "sharedBy": "Shared by {name}"
     },
     "forRecipient": "For {name}",
+    "ownDashboard": {
+      "badge": "Your dashboard",
+      "title": "Recipient dashboard",
+      "body": "This will soon become your own space as a recipient, for example to invite people. For now you'll find the content shared with you under Shared vaults.",
+      "comingSoon": "More options are coming soon, like inviting people."
+    },
     "dashboard": {
       "badge": "Recipient dashboard",
       "title": "Content shared with you",
@@ -645,13 +680,15 @@
       "sharedCollection": "Shared collection",
       "recentlyShared": "Recently shared",
       "memoryCount": "{count, plural, one {# memory} other {# memories}}",
-      "openWhenCount": "{count} Open When"
+      "openWhenCount": "{count} Open When",
+      "digitalLegacyCount": "{count, plural, one {# checklist item} other {# checklist items}}"
     },
     "collection": {
       "title": "Recipient dashboard",
       "body": "A saved overview of the content shared with you.",
       "memoriesBody": "Browse {count, plural, one {# shared memory} other {# shared memories}}.",
-      "openWhenBody": "Read {count, plural, one {# personal message} other {# personal messages}} for specific moments."
+      "openWhenBody": "Read {count, plural, one {# personal message} other {# personal messages}} for specific moments.",
+      "digitalLegacyBody": "Review {count, plural, one {# digital checklist item} other {# digital checklist items}} intended for you."
     },
     "memories": {
       "title": "Shared memories",
@@ -664,6 +701,11 @@
       "empty": "No Open When Messages were shared in this collection.",
       "fallbackOpenWhen": "Open when...",
       "fallbackTitle": "Personal message"
+    },
+    "digitalLegacy": {
+      "title": "Digital checklist",
+      "body": "Checklist items and instructions that were shared specifically with you.",
+      "empty": "No digital checklist items were shared in this collection."
     }
   },
   "DashboardPage": {
@@ -687,6 +729,13 @@
     "legacyActiveBody": "{count, plural, one {{names} is set as your trusted contact and can help confirm delivery later.} other {{names} are set as trusted contacts and can help confirm delivery later.}}",
     "legacyActiveGenericBody": "Legacy protection is active and your trusted contact can help confirm delivery later.",
     "legacyActiveCta": "Manage protection",
+    "digitalChecklistLabel": "Digital checklist",
+    "digitalChecklistNotStartedTitle": "Start your digital checklist",
+    "digitalChecklistNotStartedBody": "Arrange access, money, and memories so the people you trust know exactly what to do.",
+    "digitalChecklistNotStartedCta": "Start checklist",
+    "digitalChecklistAllDoneTitle": "Your checklist is all arranged!",
+    "digitalChecklistAllDoneBody": "Nice work. Review it once a year to keep it current.",
+    "digitalChecklistCta": "Open checklist",
     "nextStepLabel": "Next step",
     "nextStepTitle": "Add something meaningful today",
     "nextStepBody": "A short note, a favorite photo, or a quick video can become the moment your loved ones return to most.",
@@ -749,6 +798,19 @@
     "pending": "pending",
     "disabled": "disabled",
     "manageLovedOnes": "Manage loved ones",
+    "usageStorageLabel": "Storage",
+    "usageMemoriesLabel": "Memories",
+    "usageOpenWhenLabel": "Open When messages",
+    "usageUnlimited": "Unlimited",
+    "proFeaturesTitle": "What you get with Pro",
+    "proFeaturesList": [
+      "Video memories",
+      "Custom loved-one groups",
+      "Up to 500 memories (vs. 12)",
+      "10 GB of storage (vs. 250 MB)",
+      "Up to 200 Open When messages (vs. 6)",
+      "Add photos to Open When messages"
+    ],
     "profileLabel": "Profile",
     "profileTitle": "Your account details",
     "profileBody": "Keep your personal information up to date.",
@@ -798,9 +860,156 @@
     "accountActionsLabel": "Account Actions",
     "accountActionsTitle": "Session controls",
     "accountActionsBody": "Use these actions to manage your session.",
+    "websiteLink": "Go to website",
     "vaultLabel": "Your Vault",
     "vaultTitle": "Built to last",
     "vaultBody": "You're preserving precious memories that will bring comfort and joy to your loved ones for years to come."
+  },
+  "DigitalLegacyChecklist": {
+    "heroTitle": "Arrange what helps later",
+    "heroBody": "Start with access, trusted people, and key papers. Then calmly work through money matters, memories, wishes, and personal instructions.",
+    "stats": {
+      "priorityOpen": "Priority open",
+      "done": "Done",
+      "linked": "Linked"
+    },
+    "steps": {
+      "priorityTitle": "1. Start with priority",
+      "priorityBody": "Arrange access, your trusted person, and key documents first. This prevents the most stress later.",
+      "linkTitle": "2. Link per person",
+      "linkBody": "Not everyone needs everything. Link sensitive items only to the right loved ones.",
+      "maintainTitle": "3. Keep it current",
+      "maintainBody": "Plan a yearly review. Remove old accounts and add new important details right away."
+    },
+    "languageChoice": {
+      "title": "Choose your checklist language",
+      "body": "We will fill your default checklist items in the language you choose. You can still edit every item afterwards.",
+      "dutch": "Dutch",
+      "english": "English"
+    },
+    "intake": {
+      "title": "Tailor your checklist first",
+      "body": "Answer a few short questions. Then we only show the sections that make sense for you.",
+      "kicker": "Short intro",
+      "introTitle": "We will tailor your checklist first",
+      "introBody": "We ask a few short questions first. After that, you get a simple checklist with only the parts that are relevant to you.",
+      "stepCounter": "Question {current} of {total}",
+      "ownBusiness": "Do you own a business?",
+      "businessType": "What kind of business is it?",
+      "hasEmployees": "Do you have employees?",
+      "hasWebsite": "Do you use a business website, domain, or hosting?",
+      "hasCrypto": "Do you use cryptocurrency or other digital assets?",
+      "usesSocialMedia": "Do you use social media such as Facebook, Instagram, or LinkedIn?",
+      "storesPhotosOnline": "Do you use online storage for photos and videos?",
+      "hasExtraDevices": "Do you still have old devices or hard drives lying around?",
+      "yes": "Yes",
+      "no": "No",
+      "unknown": "I don't know",
+      "later": "Answer later",
+      "zzp": "Sole trader",
+      "company": "Company",
+      "back": "Back",
+      "continue": "Continue",
+      "footer": "You can still edit, remove, or add anything afterwards.",
+      "startChecklist": "Create checklist",
+      "trustTitle": "Your information always stays safe!",
+      "trustBody": "Everything you enter here is stored encrypted and only visible to you."
+    },
+    "help": {
+      "languageTitle": "Choose the language first",
+      "languageBody": "This fills the default checklist in the right language. After that, the short intro starts.",
+      "intakeTitle": "Short intro questions",
+      "intakeBody": "Answer a few short questions. This keeps the checklist smaller and more relevant to your situation.",
+      "heroTitle": "Overview",
+      "heroBody": "At the top you can see how many important points are still open and how much is done or linked.",
+      "categoryTitle": "Categories",
+      "categoryBody": "Click a category to open its page with all its items.",
+      "detailItemsTitle": "Manage items",
+      "detailItemsBody": "Check items off, edit them, or link them to loved ones.",
+      "addItemTitle": "Add your own item",
+      "addItemBody": "Missing something in this category? Type a title here and add it to the list.",
+      "saveTitle": "Save",
+      "saveBody": "Changes are visible locally, but use this button to save them permanently.",
+      "controls": {
+        "back": "Back",
+        "close": "Close",
+        "finish": "Done",
+        "next": "Next",
+        "nextWithProgress": "Next ({current} of {total})",
+        "open": "Open",
+        "skip": "Skip"
+      }
+    },
+    "categories": {
+      "access": {
+        "title": "Your most important access",
+        "body": "Who you trust, how they get in, and what should happen next."
+      },
+      "government": {
+        "title": "Government and administration",
+        "body": "Government login, taxes, insurance, and official documents loved ones will need."
+      },
+      "money": {
+        "title": "Money and digital assets",
+        "body": "Banks, investments, and other belongings of value."
+      },
+      "cloud": {
+        "title": "Email, cloud, and files",
+        "body": "Where your mail, files, and backups live, and who should be able to reach them."
+      },
+      "memories": {
+        "title": "Photos, videos, and memories",
+        "body": "The moments you want to keep, and who should get access to them."
+      },
+      "social": {
+        "title": "Social media and communication",
+        "body": "What should happen to your profiles and conversations."
+      },
+      "business": {
+        "title": "Business matters",
+        "body": "Business access, clients, domains, hosting, and administration."
+      }
+    },
+    "priority": {
+      "high": "Priority",
+      "normal": "Normal",
+      "low": "Low"
+    },
+    "validation": {
+      "titleRequired": "Enter a title first."
+    },
+    "status": {
+      "unsaved": "Not saved",
+      "saved": "Checklist saved"
+    },
+    "errors": {
+      "loadFailed": "Failed to load checklist",
+      "saveFailed": "Failed to save checklist"
+    },
+    "addPlaceholder": "New step for {category}",
+    "addItem": "Add item",
+    "continueKicker": "Next step",
+    "continueIn": "in {category}",
+    "categoryProgress": "{done} of {total} arranged",
+    "priorityOpenCount": "{count} priority open",
+    "linkedCount": "{count} linked",
+    "loading": "Loading checklist...",
+    "emptyCategories": "No checklist categories found.",
+    "emptyCategory": "No items in this category.",
+    "unnamedItem": "Untitled item",
+    "deleteConfirm": "Delete \"{title}\"? This cannot be undone.",
+    "editTitle": "Edit title",
+    "notesPlaceholder": "What should someone know? Think location, order, contact person, wish, or payment method. Prefer storing passwords in your password manager.",
+    "noLovedOnesLinked": "Not linked to a loved one yet.",
+    "clear": "Clear",
+    "chooseLovedOnes": "Choose loved ones",
+    "save": "Save",
+    "saveSmall": "Save",
+    "saving": "Saving...",
+    "close": "Close",
+    "noneSelected": "No loved ones selected",
+    "selectedCount": "{count} selected",
+    "done": "Done"
   },
   "LovedOnesPage": {
     "badge": "Loved Ones",
@@ -858,6 +1067,7 @@
     "noGroupsFound": "No groups found",
     "groupsManagePrefix": "Manage groups at",
     "back": "Back",
+    "label": "Loved ones",
     "createPageTitle": "Add loved one",
     "createPageBody": "Create a person to link memories to.",
     "modalCreateTitle": "Add loved one"
@@ -879,6 +1089,8 @@
     "general": "General"
   },
   "GroupsPage": {
+    "label": "Loved ones",
+    "back": "Back to loved ones",
     "title": "Groups",
     "body": "Create your own groups and organize loved ones.",
     "modalTitle": "Groups",

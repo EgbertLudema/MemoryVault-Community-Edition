@@ -35,7 +35,20 @@ export const LovedOnes: CollectionConfig = {
     {
       name: 'email',
       type: 'email',
-      required: true,
+    },
+    {
+      name: 'emailCiphertext',
+      type: 'text',
+      admin: {
+        hidden: true,
+      },
+    },
+    {
+      name: 'emailEncryptionMetadata',
+      type: 'json',
+      admin: {
+        hidden: true,
+      },
     },
     {
       name: 'relationship',

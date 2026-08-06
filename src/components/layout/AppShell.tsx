@@ -7,16 +7,18 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { AppHelpButton } from '@/components/onboarding/AppHelpButton'
 import { AppIntroTour } from '@/components/onboarding/AppIntroTour'
 import { AccountCircleIcon } from '@/components/icons/AccountCircleIcon'
+import { BulletListIcon } from '@/components/icons/BulletListIcon'
 import { HouseIcon } from '@/components/icons/HouseIcon'
+import { LockIcon } from '@/components/icons/LockIcon'
 import { MailIcon } from '@/components/icons/MailIcon'
 import { MemoryBookIcon } from '@/components/icons/MemoryBookIcon'
 import { OpenBookIcon } from '@/components/icons/OpenBookIcon'
 import { TwoPersonsIcon } from '@/components/icons/TwoPersonsIcon'
-import { WorldIcon } from '@/components/icons/WorldIcon'
 import { XIcon } from '@/components/icons/XIcon'
 import { LogoutButton } from '@/components/ui/LogoutButton'
 import { Link, usePathname, useRouter } from '@/i18n/navigation'
 import { analytics } from '@/lib/analytics'
+import { formatStorageBytes } from '@/lib/storageLimits'
 
 function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ')
@@ -24,10 +26,29 @@ function cn(...classes: Array<string | false | null | undefined>) {
 
 const mobileIconClass = 'h-[20px] w-[20px]'
 
+const OWN_VAULT_PREFIXES = [
+  '/dashboard',
+  '/loved-ones',
+  '/digital-legacy',
+  '/open-when-messages',
+  '/memories',
+]
+
+function matchesPrefix(pathname: string, prefixes: string[]) {
+  return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
+}
+
 function MobileBottomNav(props: {
   userFullName?: string | null
   userProfileImageSrc?: string | null
   legacyProtectionNeedsAttention?: boolean
+  plan?: 'free' | 'pro' | 'community'
+  storageUsedBytes?: number
+  storageLimitBytes?: number | null
+  memoryCount?: number
+  memoryCountLimit?: number | null
+  openWhenMessageCount?: number
+  openWhenMessageCountLimit?: number | null
 }) {
   const t = useTranslations('MobileNav')
   const sidebarT = useTranslations('Sidebar')
@@ -36,7 +57,45 @@ function MobileBottomNav(props: {
   const [menuOpen, setMenuOpen] = React.useState(false)
   const displayName = props.userFullName?.trim() || sidebarT('accountFallback')
 
-  const navItems = [
+  const [sidebarMode, setSidebarMode] = React.useState<'own' | 'recipient'>(() =>
+    pathname?.startsWith('/recipient') ? 'recipient' : 'own',
+  )
+
+  React.useEffect(() => {
+    if (pathname?.startsWith('/recipient')) {
+      setSidebarMode('recipient')
+    } else if (matchesPrefix(pathname, OWN_VAULT_PREFIXES)) {
+      setSidebarMode('own')
+    }
+    // Neutral pages shared between both modes (e.g. /feature-ideas, /account)
+    // intentionally leave the current mode untouched.
+  }, [pathname])
+
+  const isRecipientMode = sidebarMode === 'recipient'
+
+  const planLabel =
+    props.plan === 'pro'
+      ? sidebarT('planPro')
+      : props.plan === 'community'
+        ? sidebarT('planCommunity')
+        : sidebarT('planFree')
+  const storageLimitBytes = props.storageLimitBytes
+  const storageUsedBytes = props.storageUsedBytes ?? 0
+  const storagePercent =
+    storageLimitBytes && storageLimitBytes > 0
+      ? Math.min(100, Math.round((storageUsedBytes / storageLimitBytes) * 100))
+      : 0
+  const storageLimitReached = Boolean(storageLimitBytes) && storageUsedBytes >= storageLimitBytes!
+  const memoryLimitReached =
+    props.memoryCountLimit != null &&
+    props.memoryCount !== undefined &&
+    props.memoryCount >= props.memoryCountLimit
+  const openWhenLimitReached =
+    props.openWhenMessageCountLimit != null &&
+    props.openWhenMessageCount !== undefined &&
+    props.openWhenMessageCount >= props.openWhenMessageCountLimit
+
+  const ownVaultNavItems = [
     {
       label: t('dashboard'),
       href: '/dashboard',
@@ -47,22 +106,41 @@ function MobileBottomNav(props: {
       href: '/loved-ones',
       icon: <TwoPersonsIcon className={mobileIconClass} />,
     },
-    {
-      label: t('memories'),
-      href: '/memories',
-      icon: <MemoryBookIcon className={mobileIconClass} />,
-    },
+    ...(props.plan === 'community'
+      ? []
+      : [
+          {
+            label: t('digitalLegacy'),
+            href: '/digital-legacy',
+            icon: <BulletListIcon className={mobileIconClass} />,
+          },
+        ]),
     {
       label: t('openWhen'),
       href: '/open-when-messages',
       icon: <MailIcon className={mobileIconClass} />,
     },
     {
-      label: t('recipient'),
+      label: t('memories'),
+      href: '/memories',
+      icon: <MemoryBookIcon className={mobileIconClass} />,
+    },
+  ]
+
+  const recipientNavItems = [
+    {
+      label: t('dashboard'),
+      href: '/recipient/dashboard',
+      icon: <HouseIcon className={mobileIconClass} />,
+    },
+    {
+      label: sidebarT('sharedVaults'),
       href: '/recipient',
       icon: <OpenBookIcon className={mobileIconClass} />,
     },
   ]
+
+  const navItems = isRecipientMode ? recipientNavItems : ownVaultNavItems
 
   const drawerItems = [
     {
@@ -84,11 +162,6 @@ function MobileBottomNav(props: {
       ) : (
         <AccountCircleIcon className="h-5 w-5" />
       ),
-    },
-    {
-      label: t('website'),
-      href: '/',
-      icon: <WorldIcon className="h-5 w-5" />,
     },
   ]
 
@@ -146,7 +219,40 @@ function MobileBottomNav(props: {
           </button>
         </div>
 
-        <nav className="mt-6 grid gap-2" aria-label={t('menu')}>
+        <div
+          role="tablist"
+          aria-label={sidebarT('modeToggleLabel')}
+          className="mt-6 flex items-center gap-1 rounded-xl corner-shape-squircle bg-stone-50 p-1"
+        >
+          <Link
+            href="/dashboard"
+            role="tab"
+            aria-selected={!isRecipientMode}
+            onClick={() => setMenuOpen(false)}
+            className={cn(
+              'flex flex-1 items-center justify-center gap-1.5 rounded-lg corner-shape-squircle px-2 py-2 text-xs font-semibold transition-colors duration-200',
+              !isRecipientMode ? 'bg-white text-purple-600 shadow-sm' : 'text-stone-500',
+            )}
+          >
+            <LockIcon className="h-[14px] w-[14px] shrink-0" />
+            {sidebarT('modeOwnVault')}
+          </Link>
+          <Link
+            href="/recipient/dashboard"
+            role="tab"
+            aria-selected={isRecipientMode}
+            onClick={() => setMenuOpen(false)}
+            className={cn(
+              'flex flex-1 items-center justify-center gap-1.5 rounded-lg corner-shape-squircle px-2 py-2 text-xs font-semibold transition-colors duration-200',
+              isRecipientMode ? 'bg-white text-purple-600 shadow-sm' : 'text-stone-500',
+            )}
+          >
+            <OpenBookIcon className="h-[14px] w-[14px] shrink-0" />
+            {sidebarT('recipient')}
+          </Link>
+        </div>
+
+        <nav className="mt-4 grid gap-2" aria-label={t('menu')}>
           {drawerItems.map((item) => {
             const active = !item.href.startsWith('http') && (pathname === item.href || pathname.startsWith(`${item.href}/`))
 
@@ -170,6 +276,54 @@ function MobileBottomNav(props: {
           })}
         </nav>
 
+        {props.plan !== undefined ? (
+          <Link
+            href="/account"
+            onClick={() => setMenuOpen(false)}
+            className="mt-4 block rounded-xl corner-shape-squircle border border-stone-200/80 bg-stone-50 px-4 py-3 text-xs transition-colors duration-200 hover:border-purple-200 hover:bg-purple-50"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-semibold text-stone-700">{planLabel}</span>
+              {storageLimitBytes ? (
+                <span className={cn(storageLimitReached ? 'font-bold text-red-600' : 'text-stone-500')}>
+                  {formatStorageBytes(storageUsedBytes)} / {formatStorageBytes(storageLimitBytes)}
+                </span>
+              ) : null}
+            </div>
+
+            {storageLimitBytes ? (
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-stone-200">
+                <div
+                  className={cn('h-full rounded-full', storageLimitReached ? 'bg-red-600' : 'bg-purple-500')}
+                  style={{ width: `${storagePercent}%` }}
+                />
+              </div>
+            ) : (
+              <div className="mt-1 text-stone-500">{sidebarT('storageUnlimited')}</div>
+            )}
+
+            {props.plan === 'free' && props.memoryCount !== undefined && props.memoryCountLimit ? (
+              <div className="mt-2 flex items-center justify-between text-stone-500">
+                <span>{sidebarT('memoriesShort')}</span>
+                <span className={cn(memoryLimitReached && 'font-bold text-red-600')}>
+                  {props.memoryCount} / {props.memoryCountLimit}
+                </span>
+              </div>
+            ) : null}
+
+            {props.plan === 'free' &&
+            props.openWhenMessageCount !== undefined &&
+            props.openWhenMessageCountLimit ? (
+              <div className="mt-1 flex items-center justify-between text-stone-500">
+                <span>{sidebarT('openWhenShort')}</span>
+                <span className={cn(openWhenLimitReached && 'font-bold text-red-600')}>
+                  {props.openWhenMessageCount} / {props.openWhenMessageCountLimit}
+                </span>
+              </div>
+            ) : null}
+          </Link>
+        ) : null}
+
         <div className="mt-4">
           <LanguageSwitcher variant="full" />
         </div>
@@ -184,9 +338,16 @@ function MobileBottomNav(props: {
         data-tour="mobile-bottom-nav"
         className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-200 bg-white/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-2 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden"
       >
-        <ul className="grid grid-cols-6 gap-0.5">
+        <ul
+          className="grid gap-0.5"
+          style={{ gridTemplateColumns: `repeat(${navItems.length + 1}, minmax(0, 1fr))` }}
+        >
           {navItems.map((item) => {
-            const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
+            const active =
+              item.href === '/recipient'
+                ? pathname === '/recipient' ||
+                  (pathname.startsWith('/recipient/') && !pathname.startsWith('/recipient/dashboard'))
+                : pathname === item.href || pathname.startsWith(`${item.href}/`)
 
             return (
               <li key={item.href}>
@@ -237,6 +398,13 @@ export function AppShell(props: {
   appIntroCompleted?: boolean | null
   enableLegacyProtection?: boolean | null
   legacyProtectionPendingEnable?: boolean | null
+  plan?: 'free' | 'pro' | 'community'
+  storageUsedBytes?: number
+  storageLimitBytes?: number | null
+  memoryCount?: number
+  memoryCountLimit?: number | null
+  openWhenMessageCount?: number
+  openWhenMessageCountLimit?: number | null
 }) {
   const legacyProtectionNeedsAttention =
     !props.enableLegacyProtection || Boolean(props.legacyProtectionPendingEnable)
@@ -258,6 +426,13 @@ export function AppShell(props: {
           userFullName={props.userFullName}
           userProfileImageSrc={props.userProfileImageSrc}
           legacyProtectionNeedsAttention={legacyProtectionNeedsAttention}
+          plan={props.plan}
+          storageUsedBytes={props.storageUsedBytes}
+          storageLimitBytes={props.storageLimitBytes}
+          memoryCount={props.memoryCount}
+          memoryCountLimit={props.memoryCountLimit}
+          openWhenMessageCount={props.openWhenMessageCount}
+          openWhenMessageCountLimit={props.openWhenMessageCountLimit}
         />
 
         <main className="relative min-h-0 min-w-0 flex-1 overflow-hidden pb-[calc(4.35rem+env(safe-area-inset-bottom))] lg:pb-0">
@@ -268,6 +443,13 @@ export function AppShell(props: {
         userFullName={props.userFullName}
         userProfileImageSrc={props.userProfileImageSrc}
         legacyProtectionNeedsAttention={legacyProtectionNeedsAttention}
+        plan={props.plan}
+        storageUsedBytes={props.storageUsedBytes}
+        storageLimitBytes={props.storageLimitBytes}
+        memoryCount={props.memoryCount}
+        memoryCountLimit={props.memoryCountLimit}
+        openWhenMessageCount={props.openWhenMessageCount}
+        openWhenMessageCountLimit={props.openWhenMessageCountLimit}
       />
     </div>
   )

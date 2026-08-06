@@ -1,4 +1,5 @@
 import { getEffectiveLovedOneNote } from '@/lib/lovedOneNotes'
+import { digitalLegacyCategories, serializeDigitalLegacyItem } from '@/lib/digitalLegacy'
 import { getMemoryDisplayTitle } from '@/lib/encryptedFields'
 import { toAbsoluteAssetUrl } from '@/lib/legacyDelivery'
 import { serializeOpenWhenMessage } from '@/lib/openWhenMessages'
@@ -44,6 +45,13 @@ export type LegacyOpenWhenMessage = {
   }>
 }
 
+export type LegacyDigitalLegacyItem = {
+  id: number | string
+  title: string
+  category: string
+  notes: string
+}
+
 export type LegacyDeliveryData = {
   recipientName: string
   recipientNote: string
@@ -51,6 +59,7 @@ export type LegacyDeliveryData = {
   ownerProfileImageSrc?: string | null
   memories: LegacyMemory[]
   openWhenMessages: LegacyOpenWhenMessage[]
+  digitalLegacyItems: LegacyDigitalLegacyItem[]
 }
 
 function getOwnerDisplayName(owner: unknown) {
@@ -70,6 +79,11 @@ function getOwnerDisplayName(owner: unknown) {
   const email = String(value.email ?? '').trim()
 
   return [firstName, lastName].filter(Boolean).join(' ').trim() || fullName || email || null
+}
+
+function getDigitalLegacyCategoryTitle(value: unknown) {
+  const key = String(value ?? '').trim()
+  return digitalLegacyCategories.find((category) => category.key === key)?.title ?? key
 }
 
 export function serializeLegacyMemory(memory: any, origin: string): LegacyMemory {
@@ -150,6 +164,7 @@ export function buildLegacyDeliveryData({
   ownerProfileImageSrc,
   memories,
   openWhenMessages = [],
+  digitalLegacyItems = [],
   origin,
 }: {
   recipientName: string
@@ -159,6 +174,7 @@ export function buildLegacyDeliveryData({
   ownerProfileImageSrc?: string | null
   memories: any[]
   openWhenMessages?: any[]
+  digitalLegacyItems?: any[]
   origin: string
 }): LegacyDeliveryData {
   const profileImageSrc = toAbsoluteAssetUrl(origin, ownerProfileImageSrc)
@@ -169,6 +185,16 @@ export function buildLegacyDeliveryData({
     ownerDisplayName: String(ownerDisplayName ?? '').trim() || getOwnerDisplayName(owner),
     ownerProfileImageSrc: profileImageSrc || null,
     memories: memories.map((memory) => serializeLegacyMemory(memory, origin)),
+    digitalLegacyItems: digitalLegacyItems.map((item) => {
+      const serialized = serializeDigitalLegacyItem(item)
+
+      return {
+        id: serialized.id,
+        title: serialized.title,
+        category: getDigitalLegacyCategoryTitle(serialized.category),
+        notes: serialized.notes,
+      }
+    }),
     openWhenMessages: openWhenMessages.map((message) => {
       const serialized = serializeOpenWhenMessage(message)
       const attachments = Array.isArray(serialized.attachments) ? serialized.attachments : []

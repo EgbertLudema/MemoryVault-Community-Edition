@@ -4,7 +4,7 @@ import config from '@payload-config'
 import { getAppUserFromHeaders } from '@/lib/appAuth'
 import {
   buildExportMediaPath,
-  buildRecipientExportFilename,
+  buildVaultOwnerExportFilename,
   createRecipientPdf,
   createZip,
 } from '@/lib/exportArchive'
@@ -76,7 +76,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
 
   try {
     const payload = await getPayload({ config })
-    const [lovedOneResult, memoryResult] = await Promise.all([
+    const [lovedOneResult, memoryResult, digitalLegacyResult] = await Promise.all([
       payload.find({
         collection: 'loved-ones',
         overrideAccess: true,
@@ -95,6 +95,20 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
           owner: { equals: user.id },
         },
       }),
+      payload.find({
+        collection: 'digital-legacy-items' as any,
+        overrideAccess: true,
+        depth: 0,
+        limit: 500,
+        sort: 'sortOrder',
+        where: {
+          and: [
+            { owner: { equals: user.id } },
+            { lovedOnes: { equals: lovedOneId } },
+            { checked: { equals: true } },
+          ],
+        },
+      }),
     ])
 
     const lovedOne = lovedOneResult.docs?.[0] as any
@@ -102,9 +116,12 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 
-    const recipient = resolveLegacyRecipients([lovedOne], (memoryResult.docs ?? []) as any[]).find(
-      (item) => item.lovedOneId === lovedOneId,
-    )
+    const recipient = resolveLegacyRecipients(
+      [lovedOne],
+      (memoryResult.docs ?? []) as any[],
+      [],
+      (digitalLegacyResult.docs ?? []).length > 0 ? [lovedOneId] : [],
+    ).find((item) => item.lovedOneId === lovedOneId)
 
     const memories = recipient?.memoryIds.length
       ? (memoryResult.docs ?? []).filter((memory: any) =>
@@ -118,6 +135,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
       recipientNote: getLovedOneDisplayNote(lovedOne),
       ownerProfileImageSrc: getProfileImageSrc(user),
       memories,
+      digitalLegacyItems: digitalLegacyResult.docs ?? [],
       origin: getRequestOrigin(req.headers),
     })
 
@@ -147,10 +165,19 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
           continue
         }
 
+        const exportPath = buildExportMediaPath(
+          String(file.media.filename ?? '').trim(),
+          `memory-${memory.id}-${item.type}-${index + 1}`,
+          usedMediaNames,
+          String(
+            (file.media as any)?.encryptionMetadata?.originalType ??
+              (file.media as any)?.mimeType ??
+              '',
+          ),
+        )
         const memoryKey = String(memory.id)
         const displayName =
-          String(file.media.filename ?? '').trim() ||
-          `memory-${memory.id}-${item.type}-${index + 1}`
+          exportPath.split('/').pop() || `memory-${memory.id}-${item.type}-${index + 1}`
 
         if (!memoryMediaNames[memoryKey]) {
           memoryMediaNames[memoryKey] = []
@@ -159,11 +186,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
         memoryMediaNames[memoryKey].push(displayName)
 
         mediaEntries.push({
-          name: buildExportMediaPath(
-            String(file.media.filename ?? '').trim(),
-            `memory-${memory.id}-${item.type}-${index + 1}`,
-            usedMediaNames,
-          ),
+          name: exportPath,
           data: file.buffer,
         })
       }
@@ -171,7 +194,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
 
     const pdf = await createRecipientPdf(delivery, memoryMediaNames)
     const entries = [{ name: 'memories.pdf', data: pdf }, ...mediaEntries]
-    const filename = buildRecipientExportFilename(delivery.recipientName)
+    const filename = buildVaultOwnerExportFilename(delivery.ownerDisplayName)
     const archive = createZip(entries)
 
     return new Response(archive, {

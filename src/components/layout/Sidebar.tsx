@@ -6,13 +6,15 @@ import * as React from 'react'
 import { usePersistentState } from '@/app/_hooks/usePersistentState'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { Link, usePathname, useRouter } from '@/i18n/navigation'
+import { formatStorageBytes } from '@/lib/storageLimits'
 import { AccountCircleIcon } from '../icons/AccountCircleIcon'
+import { BulletListIcon } from '../icons/BulletListIcon'
 import { HouseIcon } from '../icons/HouseIcon'
+import { LockIcon } from '../icons/LockIcon'
 import { MailIcon } from '../icons/MailIcon'
 import { MemoryBookIcon } from '../icons/MemoryBookIcon'
 import { OpenBookIcon } from '../icons/OpenBookIcon'
 import { TwoPersonsIcon } from '../icons/TwoPersonsIcon'
-import { WorldIcon } from '../icons/WorldIcon'
 import { CollapseButton } from '../ui/CollapseButton'
 import { LogoutButton } from '../ui/LogoutButton'
 import { MemoryVaultLogo } from '../ui/MemoryVaultLogo'
@@ -90,12 +92,31 @@ const iconSvgClass = 'block h-[18px] w-[18px] pointer-events-none'
 const iconMotionClass =
   'inline-flex h-full w-full items-center justify-center origin-center transform-gpu transition-transform duration-200 ease-out motion-reduce:transform-none group-hover:-rotate-2 group-hover:scale-105'
 
+const OWN_VAULT_PREFIXES = [
+  '/dashboard',
+  '/loved-ones',
+  '/digital-legacy',
+  '/open-when-messages',
+  '/memories',
+]
+
+function matchesPrefix(pathname: string, prefixes: string[]) {
+  return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
+}
+
 export function Sidebar(props: {
   userFullName?: string | null
   userProfileImageSrc?: string | null
   legacyProtectionNeedsAttention?: boolean
   mobileOpen?: boolean
   onMobileClose?: () => void
+  plan?: 'free' | 'pro' | 'community'
+  storageUsedBytes?: number
+  storageLimitBytes?: number | null
+  memoryCount?: number
+  memoryCountLimit?: number | null
+  openWhenMessageCount?: number
+  openWhenMessageCountLimit?: number | null
 }) {
   const t = useTranslations('Sidebar')
   const pathname = usePathname()
@@ -122,7 +143,72 @@ export function Sidebar(props: {
   const itemRefs = React.useRef<Record<string, HTMLElement | null>>({})
   const hasAnimatedMobileSidebarRef = React.useRef(false)
 
-  const navItems: NavItem[] = [
+  const modeToggleRef = React.useRef<HTMLDivElement | null>(null)
+  const modeTogglePillRef = React.useRef<HTMLDivElement | null>(null)
+  const ownVaultTabRef = React.useRef<HTMLElement | null>(null)
+  const recipientTabRef = React.useRef<HTMLElement | null>(null)
+  const hasPositionedModeTogglePillRef = React.useRef(false)
+
+  const [sidebarMode, setSidebarMode] = React.useState<'own' | 'recipient'>(() =>
+    pathname?.startsWith('/recipient') ? 'recipient' : 'own',
+  )
+
+  React.useEffect(() => {
+    if (pathname?.startsWith('/recipient')) {
+      setSidebarMode('recipient')
+    } else if (matchesPrefix(pathname, OWN_VAULT_PREFIXES)) {
+      setSidebarMode('own')
+    }
+    // Neutral pages shared between both modes (e.g. /feature-ideas, /account)
+    // intentionally leave the current mode untouched.
+  }, [pathname])
+
+  const isRecipientMode = sidebarMode === 'recipient'
+
+  const updateModeTogglePill = React.useCallback(
+    (animate: boolean) => {
+      const container = modeToggleRef.current
+      const pill = modeTogglePillRef.current
+      const activeTab = isRecipientMode ? recipientTabRef.current : ownVaultTabRef.current
+
+      if (!container || !pill || !activeTab) {
+        return
+      }
+
+      const containerRect = container.getBoundingClientRect()
+      const tabRect = activeTab.getBoundingClientRect()
+      const target = {
+        x: tabRect.left - containerRect.left,
+        y: tabRect.top - containerRect.top,
+        width: tabRect.width,
+        height: tabRect.height,
+        opacity: 1,
+      }
+
+      gsap.killTweensOf(pill)
+
+      if (!animate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        gsap.set(pill, target)
+        return
+      }
+
+      gsap.to(pill, { ...target, duration: 0.45, ease: 'back.out(1.5)' })
+    },
+    [isRecipientMode],
+  )
+
+  React.useLayoutEffect(() => {
+    updateModeTogglePill(hasPositionedModeTogglePillRef.current)
+    hasPositionedModeTogglePillRef.current = true
+  }, [updateModeTogglePill, effectiveCollapsed])
+
+  React.useEffect(() => {
+    const handleResize = () => updateModeTogglePill(false)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [updateModeTogglePill])
+
+  const ownVaultNavItems: NavItem[] = [
     {
       label: t('dashboard'),
       href: '/dashboard',
@@ -133,29 +219,75 @@ export function Sidebar(props: {
       href: '/loved-ones',
       icon: <TwoPersonsIcon className={iconSvgClass} />,
     },
-    {
-      label: t('myMemories'),
-      href: '/memories',
-      icon: <MemoryBookIcon className={iconSvgClass} />,
-    },
+    ...(props.plan === 'community'
+      ? []
+      : [
+          {
+            label: t('digitalLegacy'),
+            href: '/digital-legacy',
+            icon: <BulletListIcon className={iconSvgClass} />,
+          },
+        ]),
     {
       label: t('openWhenMessages'),
       href: '/open-when-messages',
       icon: <MailIcon className={iconSvgClass} />,
     },
     {
-      label: t('recipient'),
+      label: t('myMemories'),
+      href: '/memories',
+      icon: <MemoryBookIcon className={iconSvgClass} />,
+    },
+  ]
+
+  const recipientNavItems: NavItem[] = [
+    {
+      label: t('dashboard'),
+      href: '/recipient/dashboard',
+      icon: <HouseIcon className={iconSvgClass} />,
+    },
+    {
+      label: t('sharedVaults'),
       href: '/recipient',
       icon: <OpenBookIcon className={iconSvgClass} />,
     },
   ]
 
+  const navItems: NavItem[] = isRecipientMode ? recipientNavItems : ownVaultNavItems
+
   const itemIsActive = React.useCallback(
-    (href: string) => pathname === href || (href !== '/' && pathname?.startsWith(href)),
+    (href: string) => {
+      if (href === '/recipient') {
+        return (
+          pathname === '/recipient' ||
+          (pathname?.startsWith('/recipient/') && !pathname.startsWith('/recipient/dashboard'))
+        )
+      }
+
+      return pathname === href || (href !== '/' && pathname?.startsWith(href))
+    },
     [pathname],
   )
 
   const accountActive = pathname.startsWith('/account')
+
+  const planLabel =
+    props.plan === 'pro' ? t('planPro') : props.plan === 'community' ? t('planCommunity') : t('planFree')
+  const storageLimitBytes = props.storageLimitBytes
+  const storageUsedBytes = props.storageUsedBytes ?? 0
+  const storagePercent =
+    storageLimitBytes && storageLimitBytes > 0
+      ? Math.min(100, Math.round((storageUsedBytes / storageLimitBytes) * 100))
+      : 0
+  const storageLimitReached = Boolean(storageLimitBytes) && storageUsedBytes >= storageLimitBytes!
+  const memoryLimitReached =
+    props.memoryCountLimit != null &&
+    props.memoryCount !== undefined &&
+    props.memoryCount >= props.memoryCountLimit
+  const openWhenLimitReached =
+    props.openWhenMessageCountLimit != null &&
+    props.openWhenMessageCount !== undefined &&
+    props.openWhenMessageCount >= props.openWhenMessageCountLimit
 
   const highlightedKey = hoveredKey
 
@@ -173,6 +305,10 @@ export function Sidebar(props: {
   React.useLayoutEffect(() => {
     updateHighlight()
   }, [updateHighlight, effectiveCollapsed])
+
+  React.useEffect(() => {
+    document.documentElement.style.setProperty('--app-sidebar-width', collapsed ? '66px' : '300px')
+  }, [collapsed])
 
   React.useEffect(() => {
     window.addEventListener('resize', updateHighlight)
@@ -261,7 +397,7 @@ export function Sidebar(props: {
       )}
       aria-label="Sidebar"
     >
-      <div className="flex w-full flex-col">
+      <div className="flex min-h-0 w-full flex-col">
         <div className="hidden items-end justify-end px-4 pt-3 lg:flex">
           <CollapseButton collapsed={collapsed} setCollapsed={setCollapsed} />
         </div>
@@ -286,7 +422,66 @@ export function Sidebar(props: {
           </div>
         </div>
 
-        <div onMouseLeave={() => setHoveredKey(null)} className="flex-1 px-2 py-4">
+        <div className="px-2 pb-2">
+          <div
+            ref={modeToggleRef}
+            role="tablist"
+            aria-label={t('modeToggleLabel')}
+            className={cn(
+              'relative flex items-center gap-1 rounded-xl corner-shape-squircle bg-stone-50 p-1',
+              effectiveCollapsed && 'flex-col',
+            )}
+          >
+            <div
+              ref={modeTogglePillRef}
+              aria-hidden="true"
+              className="pointer-events-none absolute left-0 top-0 rounded-lg corner-shape-squircle bg-white shadow-sm"
+              style={{ opacity: 0 }}
+            />
+
+            <Link
+              ref={(element) => {
+                ownVaultTabRef.current = element
+              }}
+              href="/dashboard"
+              role="tab"
+              aria-selected={!isRecipientMode}
+              title={effectiveCollapsed ? t('modeOwnVault') : undefined}
+              onClick={props.onMobileClose}
+              className={cn(
+                'relative z-10 flex flex-1 items-center justify-center gap-1.5 rounded-lg corner-shape-squircle px-2 py-1.5 text-xs font-semibold transition-colors duration-200',
+                effectiveCollapsed && 'w-full flex-none',
+                !isRecipientMode ? 'text-purple-600' : 'text-stone-500 hover:text-stone-700',
+              )}
+            >
+              <LockIcon className="h-[14px] w-[14px] shrink-0" />
+              {!effectiveCollapsed && <span className="truncate">{t('modeOwnVault')}</span>}
+            </Link>
+            <Link
+              ref={(element) => {
+                recipientTabRef.current = element
+              }}
+              href="/recipient/dashboard"
+              role="tab"
+              aria-selected={isRecipientMode}
+              title={effectiveCollapsed ? t('recipient') : undefined}
+              onClick={props.onMobileClose}
+              className={cn(
+                'relative z-10 flex flex-1 items-center justify-center gap-1.5 rounded-lg corner-shape-squircle px-2 py-1.5 text-xs font-semibold transition-colors duration-200',
+                effectiveCollapsed && 'w-full flex-none',
+                isRecipientMode ? 'text-purple-600' : 'text-stone-500 hover:text-stone-700',
+              )}
+            >
+              <OpenBookIcon className="h-[14px] w-[14px] shrink-0" />
+              {!effectiveCollapsed && <span className="truncate">{t('recipient')}</span>}
+            </Link>
+          </div>
+        </div>
+
+        <div
+          onMouseLeave={() => setHoveredKey(null)}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-4 [scrollbar-width:thin]"
+        >
           <nav>
             <ul
               ref={navListRef}
@@ -381,40 +576,56 @@ export function Sidebar(props: {
           </nav>
         </div>
 
-        <div className="space-y-2 px-2 py-4">
-          <a
-            href="https://memory-vault.app"
-            target="_blank"
-            rel="noreferrer"
-            className={cn(
-              linkBaseClass,
-              'w-full active:scale-[0.98]',
-              itemIsActive('/')
-                ? 'bg-purple-100 text-purple-500'
-                : 'text-stone-500 hover:bg-stone-50',
-              effectiveCollapsed && 'justify-center',
-            )}
-            title={effectiveCollapsed ? t('website') : undefined}
-            aria-current={itemIsActive('/') ? 'page' : undefined}
-            onClick={props.onMobileClose}
-          >
-            <span
-              className={cn(
-                iconWrapperClass,
-                itemIsActive('/') ? 'text-inherit' : 'group-hover:text-stone-700',
-              )}
+        <div className="shrink-0 space-y-2 px-2 py-4">
+          {!effectiveCollapsed && props.plan !== undefined ? (
+            <Link
+              href="/account"
+              className="block rounded-xl corner-shape-squircle border border-stone-200/80 bg-stone-50 px-4 py-3 text-xs transition-colors duration-200 hover:border-purple-200 hover:bg-purple-50"
+              onClick={props.onMobileClose}
             >
-              <span className={iconMotionClass}>
-                <WorldIcon className={iconSvgClass} />
-              </span>
-            </span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-semibold text-stone-700">{planLabel}</span>
+                {storageLimitBytes ? (
+                  <span className={cn(storageLimitReached ? 'font-bold text-red-600' : 'text-stone-500')}>
+                    {formatStorageBytes(storageUsedBytes)} / {formatStorageBytes(storageLimitBytes)}
+                  </span>
+                ) : null}
+              </div>
 
-            {!effectiveCollapsed && (
-              <span className="truncate transition-colors duration-200 group-hover:text-stone-700">
-                {t('website')}
-              </span>
-            )}
-          </a>
+              {storageLimitBytes ? (
+                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-stone-200">
+                  <div
+                    className={cn('h-full rounded-full', storageLimitReached ? 'bg-red-600' : 'bg-purple-500')}
+                    style={{ width: `${storagePercent}%` }}
+                  />
+                </div>
+              ) : (
+                <div className="mt-1 text-stone-500">{t('storageUnlimited')}</div>
+              )}
+
+              {props.plan === 'free' &&
+              props.memoryCount !== undefined &&
+              props.memoryCountLimit ? (
+                <div className="mt-2 flex items-center justify-between text-stone-500">
+                  <span>{t('memoriesShort')}</span>
+                  <span className={cn(memoryLimitReached && 'font-bold text-red-600')}>
+                    {props.memoryCount} / {props.memoryCountLimit}
+                  </span>
+                </div>
+              ) : null}
+
+              {props.plan === 'free' &&
+              props.openWhenMessageCount !== undefined &&
+              props.openWhenMessageCountLimit ? (
+                <div className="mt-1 flex items-center justify-between text-stone-500">
+                  <span>{t('openWhenShort')}</span>
+                  <span className={cn(openWhenLimitReached && 'font-bold text-red-600')}>
+                    {props.openWhenMessageCount} / {props.openWhenMessageCountLimit}
+                  </span>
+                </div>
+              ) : null}
+            </Link>
+          ) : null}
 
           {!effectiveCollapsed ? <LanguageSwitcher variant="sidebar" /> : null}
 

@@ -168,7 +168,7 @@ export function LovedOneEditForm({
       onSubmit={handleSave}
       onDelete={handleDelete}
       onCancel={closeModal}
-      stickyActions
+      stickyActions={mode === 'modal'}
     />
   )
 }

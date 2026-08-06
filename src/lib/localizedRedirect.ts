@@ -24,6 +24,10 @@ export function getSafeLocalizedPath(
   }
 
   const [, firstSegment] = next.split('/')
+  if (firstSegment === 'legacy') {
+    return next
+  }
+
   if (firstSegment && isSupportedLocale(firstSegment)) {
     return next
   }

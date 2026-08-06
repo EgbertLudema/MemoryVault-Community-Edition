@@ -224,10 +224,10 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
 
   return (
     <div className="grid gap-3.5">
-      <div className="rounded-[14px] border border-[#eee] bg-white p-4">
+      <div className="rounded-[14px] corner-shape-squircle border border-stone-200 bg-white p-4">
         <div className="text-sm font-bold text-stone-800">{t('createGroup')}</div>
 
-        <p className="mt-1.5 mb-3 text-[13px] text-[#555]">{t('createGroupBody')}</p>
+        <p className="mt-1.5 mb-3 text-[13px] text-stone-600">{t('createGroupBody')}</p>
 
         <form onSubmit={onCreate} className="grid gap-6">
           <div className="flex flex-wrap gap-4">
@@ -249,7 +249,7 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
                 onChange={(e) => setName(e.target.value)}
                 disabled={!canCreateCustomGroups}
                 placeholder={t('createPlaceholder')}
-                className="h-[42px] w-full rounded-xl border border-[#ddd] bg-white px-3 text-sm outline-none disabled:cursor-not-allowed disabled:bg-stone-50 disabled:text-stone-400"
+                className="h-[42px] w-full rounded-xl corner-shape-squircle border border-stone-300 bg-white px-3 text-sm text-stone-900 outline-none transition focus:border-purple-300 focus:ring-4 focus:ring-purple-100 disabled:cursor-not-allowed disabled:bg-stone-50 disabled:text-stone-400"
               />
             </div>
 
@@ -285,14 +285,15 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
                     aria-pressed={active}
                     title={t(`colorLabels.${opt.key}`)}
                     className={cn(
-                      'cursor-pointer rounded-xl border px-3 py-2 text-xs font-medium transition duration-150',
-                      active && 'ring-2 ring-purple-700 ring-offset-1 ring-offset-white',
+                      'cursor-pointer rounded-xl border-2 px-3 py-2 text-xs font-medium transition duration-150',
                       !canCreateCustomGroups && 'cursor-not-allowed opacity-50',
                     )}
                     style={{
                       color: opt.value,
                       backgroundColor: `color-mix(in srgb, ${opt.value} 10%, transparent)`,
-                      borderColor: `color-mix(in srgb, ${opt.value} 40%, transparent)`,
+                      borderColor: active
+                        ? '#7e22ce'
+                        : `color-mix(in srgb, ${opt.value} 40%, transparent)`,
                     }}
                   >
                     <span className="block leading-none">{t(`colorLabels.${opt.key}`)}</span>
@@ -321,14 +322,15 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
                     aria-pressed={active}
                     title={opt.label}
                     className={cn(
-                      'grid h-[42px] w-[42px] cursor-pointer place-items-center rounded-xl border transition duration-150',
-                      active && 'ring-2 ring-purple-700 ring-offset-1 ring-offset-white',
+                      'grid h-[42px] w-[42px] cursor-pointer place-items-center rounded-xl border-2 transition duration-150',
                       !canCreateCustomGroups && 'cursor-not-allowed opacity-50',
                     )}
                     style={{
                       color: createPreviewColor.value,
                       backgroundColor: `color-mix(in srgb, ${createPreviewColor.value} 10%, transparent)`,
-                      borderColor: `color-mix(in srgb, ${createPreviewColor.value} 40%, transparent)`,
+                      borderColor: active
+                        ? '#7e22ce'
+                        : `color-mix(in srgb, ${createPreviewColor.value} 40%, transparent)`,
                     }}
                   >
                     <IconComponent width={20} height={20} />
@@ -341,8 +343,11 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
       </div>
 
       {groups.length === 0 ? (
-        <div className="rounded-[14px] border border-[#eee] bg-[#fafafa] p-5">
-          <p className="m-0 text-[#444]">{t('empty')}</p>
+        <div className="rounded-[24px] corner-shape-squircle border border-dashed border-stone-200 bg-stone-50/70 p-8 text-center">
+          <div className="mx-auto max-w-md">
+            <TwoPersonsIcon className="mx-auto h-6 w-6 text-stone-400" />
+            <p className="m-0 mt-3 text-sm leading-6 text-stone-600">{t('empty')}</p>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -352,7 +357,10 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
             const groupLabel = getDefaultGroupLabel(g.defaultKey, g.name, (key) => tGroups(key))
 
             return (
-              <div key={g.id} className="rounded-[14px] border border-[#eee] bg-white p-[14px]">
+              <div
+                key={g.id}
+                className="rounded-[14px] corner-shape-squircle border border-stone-200 bg-white p-[14px]"
+              >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex min-w-0 items-start gap-2.5">
                     <div
@@ -370,7 +378,7 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-bold">{groupLabel}</div>
 
-                      <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-[#666]">
+                      <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-stone-500">
                         <span>{g.isDefault ? t('defaultGroup') : t('customGroup')}</span>
 
                         <span
@@ -389,7 +397,7 @@ export function LovedOneGroupsClient({ initialGroups }: { initialGroups: Group[]
 
                   <div className="flex shrink-0 sm:justify-end">
                     {g.isDefault ? (
-                      <span className="inline-flex h-[34px] items-center gap-1.5 whitespace-nowrap rounded-full border border-[#eee] bg-[#fafafa] px-2.5 text-xs text-[#333]">
+                      <span className="inline-flex h-[34px] items-center gap-1.5 whitespace-nowrap rounded-full border border-stone-200 bg-stone-50 px-2.5 text-xs text-stone-700">
                         <LockIcon className="h-3.5 w-3.5 shrink-0" />
                         <span>{t('locked')}</span>
                       </span>

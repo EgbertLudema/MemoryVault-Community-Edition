@@ -7,7 +7,6 @@
   "HomeHowItWorksDemo": {
     "stepKicker": "Stap {step}",
     "demoBadge": "Demo",
-    "compactHint": "Swipe of scroll",
     "steps": [
       {
         "title": "Voeg een dierbare toe",
@@ -18,7 +17,11 @@
         "description": "Bewaar een notitie, foto of video en koppel de juiste dierbare(n)."
       },
       {
-        "title": "Voeg een Open When bericht toe",
+        "title": "Vul de digitale checklist in",
+        "description": "Leg belangrijke accounts, wensen en praktische informatie vast voor de juiste dierbare(n)."
+      },
+      {
+        "title": "Voeg een Open Wanneer bericht toe",
         "description": "Schrijf een bericht voor een later moment en koppel de dierbare(n)."
       },
       {
@@ -143,9 +146,18 @@
     "dashboard": "Dashboard",
     "myMemories": "Mijn herinneringen",
     "myLovedOnes": "Mijn dierbaren",
-    "openWhenMessages": "Open When berichten",
+    "openWhenMessages": "Open Wanneer berichten",
+    "digitalLegacy": "Digitale checklist",
     "recipient": "Ontvanger",
-    "website": "Website",
+    "sharedVaults": "Gedeelde vaults",
+    "modeToggleLabel": "Wisselen tussen eigen vault en ontvanger",
+    "modeOwnVault": "Eigen vault",
+    "planFree": "Gratis",
+    "planPro": "Pro",
+    "planCommunity": "Community",
+    "storageUnlimited": "Onbeperkte opslag",
+    "memoriesShort": "Herinneringen",
+    "openWhenShort": "Open Wanneer",
     "accountFallback": "Account",
     "viewProfile": "Profiel bekijken",
     "actionNeeded": "Actie nodig"
@@ -153,10 +165,9 @@
   "MobileNav": {
     "dashboard": "Dashboard",
     "memories": "Herinneringen",
-    "openWhen": "Open When",
-    "recipient": "Ontvanger",
+    "openWhen": "Open Wanneer",
     "lovedOnes": "Dierbaren",
-    "website": "Website",
+    "digitalLegacy": "Checklist",
     "account": "Account",
     "menu": "Menu",
     "closeMenu": "Menu sluiten"
@@ -206,7 +217,7 @@
     "videoPosterImageRequired": "De videoposter moet een afbeeldingsbestand zijn.",
     "memoryLimit": "Je plan kan maximaal {max} herinneringen hebben.",
     "lovedOneLimit": "Je plan kan maximaal {max} dierbaren hebben.",
-    "openWhenMessageLimit": "Je plan kan maximaal {max} Open When berichten hebben.",
+    "openWhenMessageLimit": "Je plan kan maximaal {max} Open Wanneer berichten hebben.",
     "loadMemoryFailed": "Herinnering laden is mislukt.",
     "saveMemoryFailed": "Herinnering opslaan is mislukt.",
     "deleteMemoryFailed": "Herinnering verwijderen is mislukt.",
@@ -345,7 +356,7 @@
       "heroTitle": "Je dashboard",
       "heroBody": "Dit scherm is je startpunt. Het vat je vault samen en laat zien welke volgende stap logisch is.",
       "navTitle": "Gebruik de appnavigatie",
-      "navBody": "Gebruik deze navigatie onderin om op mobiel te wisselen tussen dashboard, dierbaren, herinneringen, Open When berichten en ontvangers.",
+      "navBody": "Gebruik deze navigatie onderin om op mobiel te wisselen tussen dashboard, dierbaren, herinneringen, digitale checklist en Open Wanneer berichten. Ontvanger staat in het menu.",
       "createMemoryTitle": "Voeg een herinnering toe",
       "createMemoryBody": "Gebruik deze actie om snel een notitie, foto of video op te slaan terwijl je in de app bent.",
       "trustedContactTitle": "Vertrouwd contact instellen",
@@ -416,10 +427,12 @@
       "open": "Openen",
       "skip": "Hulp sluiten"
     },
-    "heroTitle": "Open When overzicht",
+    "heroTitle": "Open Wanneer overzicht",
     "heroBody": "Op deze pagina schrijf je berichten voor specifieke toekomstige momenten, zoals verjaardagen, moeilijke dagen of momenten waarop iemand aanmoediging nodig heeft.",
     "listTitle": "Opgeslagen berichten",
-    "listBody": "Je Open When berichten verschijnen hier. Je kunt ze bekijken, bewerken of verwijderen voordat ze worden gedeeld.",
+    "listBody": "Je Open Wanneer berichten verschijnen hier. Je kunt ze bekijken, bewerken of verwijderen voordat ze worden gedeeld.",
+    "createButtonTitle": "Nieuw bericht toevoegen",
+    "createButtonBody": "Gebruik de plusknop om op mobiel een nieuw Open Wanneer bericht te maken. Het formulier opent daarna in een venster.",
     "formTitle": "Schrijf of bewerk een bericht",
     "formBody": "Gebruik dit formulier om de prompt te kiezen, het bericht te schrijven, ontvangers te selecteren, optionele foto's toe te voegen en eventueel een datum in te stellen."
   },
@@ -434,15 +447,15 @@
       "skip": "Hulp sluiten"
     },
     "dashboardHeroTitle": "Ontvangersgedeelte",
-    "dashboardHeroBody": "Deze pagina vat de herinneringen en Open When berichten samen die met jouw ontvangersaccount zijn gedeeld.",
+    "dashboardHeroBody": "Deze pagina vat de herinneringen en Open Wanneer berichten samen die met jouw ontvangersaccount zijn gedeeld.",
     "statsTitle": "Totaal gedeelde content",
-    "statsBody": "Deze tellers laten zien hoeveel herinneringen en Open When berichten beschikbaar zijn in je opgeslagen collecties.",
+    "statsBody": "Deze tellers laten zien hoeveel herinneringen en Open Wanneer berichten beschikbaar zijn in je opgeslagen collecties.",
     "collectionsTitle": "Gedeelde collecties",
     "collectionsBody": "Open een collectie om de herinneringen en berichten te bekijken die door die persoon zijn gedeeld.",
     "detailHeroTitle": "Collectieoverzicht",
     "detailHeroBody": "Dit gedeelte laat zien voor wie de collectie is, wie deze heeft gedeeld en welk onderdeel je bekijkt.",
     "subnavTitle": "Ontvanger onderdelen",
-    "subnavBody": "Gebruik deze tabs om te wisselen tussen het collectieoverzicht, herinneringen en Open When berichten.",
+    "subnavBody": "Gebruik deze tabs om te wisselen tussen het collectieoverzicht, herinneringen en Open Wanneer berichten.",
     "contentTitle": "Gedeelde content",
     "contentBody": "De content voor het gekozen onderdeel verschijnt hier, inclusief berichten, herinneringen, foto's en video's wanneer die beschikbaar zijn."
   },
@@ -466,12 +479,14 @@
     "actionsBody": "Gebruik dit gedeelte voor accountacties zoals uitloggen."
   },
   "LovedOneDetail": {
+    "label": "Dierbaren",
     "notFoundTitle": "Niet gevonden",
     "notFoundBody": "Deze dierbare bestaat niet of je hebt geen toegang.",
     "backToLovedOnes": "Terug naar dierbaren",
     "subtitle": "Bewerk de gegevens of verwijder deze persoon.",
     "back": "Terug",
-    "currentNote": "Huidige notitie"
+    "currentNote": "Huidige notitie",
+    "editModalTitle": "Bewerken: {name}"
   },
   "LegacyDelivery": {
     "undated": "Zonder datum",
@@ -499,29 +514,41 @@
     "photosTypeLabel": "Foto's",
     "videoTypeLabel": "Video",
     "sharedByLabel": "Gedeeld door {name}",
-    "openWhenMessagesLabel": "Open When berichten",
+    "openWhenMessagesLabel": "Open Wanneer berichten",
+    "digitalLegacyLabel": "Digitale checklist",
+    "noDigitalLegacyItems": "Er zijn geen digitale checklistitems aan deze dierbare gekoppeld.",
     "lockedOpenWhenEyebrow": "Vergrendeld bericht",
     "lockedOpenWhenBody": "Open dit wanneer jij voelt dat je het nodig hebt, of wanneer de titel of datum aangeeft dat het moment daar is. Maak hieronder een account aan om het in de app te openen.",
     "lockedOpenWhenDialogTitle": "Weet je zeker dat je dit wilt openen?",
-    "lockedOpenWhenDialogBody": "Open When berichten zijn bedoeld om te openen wanneer jij voelt dat je ze nodig hebt, of wanneer de titel of datum aangeeft dat het moment daar is. Ze worden niet vanaf deze ontvangerpagina geopend. Maak eerst een account aan, daarna kun je dit bericht openen en bewaren in je Memory Vault app.",
+    "lockedOpenWhenDialogBody": "Open Wanneer berichten zijn bedoeld om te openen wanneer jij voelt dat je ze nodig hebt, of wanneer de titel of datum aangeeft dat het moment daar is. Ze worden niet vanaf deze ontvangerpagina geopend. Maak eerst een account aan, daarna kun je dit bericht openen en bewaren in je Memory Vault app.",
     "lockedOpenWhenCreateAccount": "Account maken om te openen",
     "lockedOpenWhenClose": "Nu niet",
-    "lockedOpenWhenFallbackTitle": "Vergrendeld Open When bericht",
+    "lockedOpenWhenFallbackTitle": "Vergrendeld Open Wanneer bericht",
     "claimBadge": "Bewaar dit in de app",
-    "claimTitle": "Maak een account om deze content beschikbaar te houden.",
-    "claimBody": "De ontvangerpagina blijft bestaan, en je opgeslagen kopie verschijnt ook in je Memory Vault app.",
+    "claimTitle": "Maak een account of log in om deze content beschikbaar te houden.",
+    "claimBody": "Maak een account of log in om dit op te slaan in je Memory Vault account. Je kunt het ook exporteren als ZIP-bestand.",
     "claimFirstName": "Voornaam",
     "claimLastName": "Achternaam",
     "claimEmail": "E-mail",
     "claimPassword": "Wachtwoord",
     "claimSaving": "Opslaan...",
     "claimSubmit": "Account maken en opslaan",
+    "createAccountTab": "Account maken",
+    "loginTab": "Inloggen",
+    "loginPassword": "Accountwachtwoord",
+    "loginSaving": "Inloggen...",
+    "loginAndSave": "Inloggen en opslaan",
+    "loginError": "Inloggen is mislukt",
+    "saveToCurrentAccount": "Opslaan in mijn account",
+    "signedInAs": "Ingelogd als {email}",
+    "continueWithGoogle": "Doorgaan met Google",
+    "or": "of",
     "claimError": "Deze levering kon niet worden opgeslagen"
   },
   "OpenWhenMessagesPage": {
     "hero": {
       "badge": "Voor later",
-      "title": "Open When berichten",
+      "title": "Open Wanneer berichten",
       "body": "Schrijf een persoonlijk bericht voor een toekomstige verjaardag, moeilijke dag of bijzonder moment."
     },
     "templates": {
@@ -535,8 +562,8 @@
     },
     "dateReached": {
       "title": "Een gekozen datum is bereikt",
-      "one": "Een Open When bericht heeft de ingestelde datum bereikt, maar is niet gedeeld omdat je vault nog actief is.",
-      "many": "{count} Open When berichten hebben hun ingestelde datum bereikt, maar zijn niet gedeeld omdat je vault nog actief is."
+      "one": "Een Open Wanneer bericht heeft de ingestelde datum bereikt, maar is niet gedeeld omdat je vault nog actief is.",
+      "many": "{count} Open Wanneer berichten hebben hun ingestelde datum bereikt, maar zijn niet gedeeld omdat je vault nog actief is."
     },
     "empty": {
       "title": "Begin met een bericht voor iemand van wie je houdt.",
@@ -544,10 +571,10 @@
     },
     "form": {
       "kicker": "Persoonlijk bericht",
-      "createTitle": "Schrijf een Open When bericht",
+      "createTitle": "Schrijf een Open Wanneer bericht",
       "editTitle": "Bericht bewerken",
       "template": "Template",
-      "templateHelp": "Templates vullen de tekst, kleur en icoon in. Je kunt de Open when tekst hieronder nog aanpassen.",
+      "templateHelp": "Templates vullen de tekst, kleur en icoon in. Je kunt de Open Wanneer tekst hieronder nog aanpassen.",
       "chooseTemplate": "Kies een template",
       "openWhen": "Open wanneer...",
       "openWhenPlaceholder": "Open wanneer je moet lachen",
@@ -562,7 +589,7 @@
       "photos": "Foto's",
       "photosHelp": "{count}/{max} foto's toegevoegd. Je kunt maximaal {max} foto's toevoegen.",
       "lovedOnes": "Voor je dierbaren",
-      "noLovedOnes": "Voeg eerst een dierbare toe voordat je een Open When bericht maakt.",
+      "noLovedOnes": "Voeg eerst een dierbare toe voordat je een Open Wanneer bericht maakt.",
       "optionalDate": "Optionele datum",
       "allowSendTitle": "Verstuur op deze datum, ook als ik nog actief ben",
       "allowSendHelp": "Als dit aanstaat, kan dit bericht op de gekozen datum worden gedeeld met de geselecteerde dierbare(n), ook terwijl je vault nog actief is."
@@ -589,29 +616,29 @@
       "create": "Bericht maken",
       "addPhotos": "Foto's toevoegen",
       "removePhoto": "Foto verwijderen",
-      "editAria": "Open When bericht bewerken",
-      "deleteAria": "Open When bericht verwijderen"
+      "editAria": "Open Wanneer bericht bewerken",
+      "deleteAria": "Open Wanneer bericht verwijderen"
     },
     "fallback": {
       "openWhen": "Open wanneer...",
       "untitled": "Bericht zonder titel",
       "thisMessage": "dit bericht"
     },
-    "loading": "Open When berichten laden...",
+    "loading": "Open Wanneer berichten laden...",
     "deleteConfirm": "\"{title}\" verwijderen? Dit kan niet ongedaan worden gemaakt.",
     "toasts": {
-      "created": "Open When bericht gemaakt",
-      "updated": "Open When bericht bijgewerkt",
-      "deleted": "Open When bericht verwijderd"
+      "created": "Open Wanneer bericht gemaakt",
+      "updated": "Open Wanneer bericht bijgewerkt",
+      "deleted": "Open Wanneer bericht verwijderd"
     },
     "errors": {
-      "loadMessages": "Open When berichten laden is mislukt",
+      "loadMessages": "Open Wanneer berichten laden is mislukt",
       "loadLovedOnes": "Dierbaren laden is mislukt",
-      "couldNotLoad": "Open When berichten konden niet worden geladen",
-      "save": "Open When bericht opslaan is mislukt",
-      "delete": "Open When bericht verwijderen is mislukt",
-      "maxPhotos": "Je kunt maximaal 4 foto's toevoegen aan een Open When bericht.",
-      "messageLimit": "Je abonnement kan maximaal {max} Open When berichten hebben.",
+      "couldNotLoad": "Open Wanneer berichten konden niet worden geladen",
+      "save": "Open Wanneer bericht opslaan is mislukt",
+      "delete": "Open Wanneer bericht verwijderen is mislukt",
+      "maxPhotos": "Je kunt maximaal 4 foto's toevoegen aan een Open Wanneer bericht.",
+      "messageLimit": "Je abonnement kan maximaal {max} Open Wanneer berichten hebben.",
       "photosOnly": "Kies alleen afbeeldingsbestanden.",
       "uploadFailed": "Foto uploaden is mislukt",
       "uploadTooLarge": "Deze foto is te groot.",
@@ -628,30 +655,40 @@
       "aria": "Ontvanger onderdelen",
       "dashboard": "Dashboard",
       "memories": "Herinneringen",
-      "openWhen": "Open When berichten"
+      "openWhen": "Open Wanneer berichten",
+      "digitalLegacy": "Digitale checklist"
     },
     "labels": {
       "memories": "Herinneringen",
-      "openWhen": "Open When berichten",
+      "openWhen": "Open Wanneer berichten",
+      "digitalLegacy": "Digitale checklist",
       "undated": "Zonder datum",
       "sharedBy": "Gedeeld door {name}"
     },
     "forRecipient": "Voor {name}",
+    "ownDashboard": {
+      "badge": "Jouw dashboard",
+      "title": "Ontvanger dashboard",
+      "body": "Dit wordt binnenkort jouw eigen plek als ontvanger, bijvoorbeeld om mensen uit te nodigen. Voor nu vind je de content die met je is gedeeld onder Gedeelde vaults.",
+      "comingSoon": "Hier komen binnenkort meer opties, zoals mensen uitnodigen."
+    },
     "dashboard": {
       "badge": "Ontvanger dashboard",
       "title": "Content die met jou is gedeeld",
-      "body": "Herinneringen en Open When berichten die je via ontvangerlinks hebt opgeslagen blijven hier beschikbaar.",
+      "body": "Herinneringen en Open Wanneer berichten die je via ontvangerlinks hebt opgeslagen blijven hier beschikbaar.",
       "empty": "Er is nog geen ontvangercontent opgeslagen in dit account.",
       "sharedCollection": "Gedeelde collectie",
       "recentlyShared": "Recent gedeeld",
       "memoryCount": "{count, plural, one {# herinnering} other {# herinneringen}}",
-      "openWhenCount": "{count} Open When"
+      "openWhenCount": "{count} Open Wanneer",
+      "digitalLegacyCount": "{count, plural, one {# checklistitem} other {# checklistitems}}"
     },
     "collection": {
       "title": "Ontvanger dashboard",
       "body": "Een opgeslagen overzicht van de content die met jou is gedeeld.",
       "memoriesBody": "Bekijk {count, plural, one {# gedeelde herinnering} other {# gedeelde herinneringen}}.",
-      "openWhenBody": "Lees {count, plural, one {# persoonlijk bericht} other {# persoonlijke berichten}} voor specifieke momenten."
+      "openWhenBody": "Lees {count, plural, one {# persoonlijk bericht} other {# persoonlijke berichten}} voor specifieke momenten.",
+      "digitalLegacyBody": "Bekijk {count, plural, one {# digitaal checklistitem} other {# digitale checklistitems}} die voor jou bedoeld zijn."
     },
     "memories": {
       "title": "Gedeelde herinneringen",
@@ -659,11 +696,16 @@
       "empty": "Er zijn geen herinneringen gedeeld in deze collectie."
     },
     "openWhen": {
-      "title": "Open When berichten",
+      "title": "Open Wanneer berichten",
       "body": "Persoonlijke berichten voor momenten waarop je ze misschien het meest nodig hebt.",
-      "empty": "Er zijn geen Open When berichten gedeeld in deze collectie.",
+      "empty": "Er zijn geen Open Wanneer berichten gedeeld in deze collectie.",
       "fallbackOpenWhen": "Open wanneer...",
       "fallbackTitle": "Persoonlijk bericht"
+    },
+    "digitalLegacy": {
+      "title": "Digitale checklist",
+      "body": "Checklist-items en instructies die specifiek met jou zijn gedeeld.",
+      "empty": "Er zijn geen digitale checklistitems gedeeld in deze collectie."
     }
   },
   "DashboardPage": {
@@ -687,6 +729,13 @@
     "legacyActiveBody": "{count, plural, one {{names} is ingesteld als je vertrouwde contact en kan later helpen met het bevestigen van overdracht.} other {{names} zijn ingesteld als vertrouwde contacten en kunnen later helpen met het bevestigen van overdracht.}}",
     "legacyActiveGenericBody": "Nalatenschapsbescherming is actief en je vertrouwde contact kan later helpen met het bevestigen van overdracht.",
     "legacyActiveCta": "Bescherming beheren",
+    "digitalChecklistLabel": "Digitale checklist",
+    "digitalChecklistNotStartedTitle": "Start je digitale checklist",
+    "digitalChecklistNotStartedBody": "Regel toegang, geldzaken en herinneringen zodat de mensen die je vertrouwt precies weten wat ze moeten doen.",
+    "digitalChecklistNotStartedCta": "Start checklist",
+    "digitalChecklistAllDoneTitle": "Je checklist is helemaal geregeld!",
+    "digitalChecklistAllDoneBody": "Goed gedaan. Controleer hem eens per jaar om hem actueel te houden.",
+    "digitalChecklistCta": "Open checklist",
     "nextStepLabel": "Volgende stap",
     "nextStepTitle": "Voeg vandaag iets betekenisvols toe",
     "nextStepBody": "Een korte notitie, een favoriete foto of een snelle video kan precies het moment worden waar je dierbaren het vaakst naar terugkeren.",
@@ -696,7 +745,7 @@
     "photos": "Foto's",
     "videos": "Video's",
     "lovedOnes": "Dierbaren",
-    "openWhenMessages": "Open When berichten",
+    "openWhenMessages": "Open Wanneer berichten",
     "addNoteAction": "Notitieherinnering toevoegen",
     "addPhotoAction": "Fotoherinnering toevoegen",
     "addVideoAction": "Videoherinnering toevoegen",
@@ -749,6 +798,19 @@
     "pending": "in afwachting",
     "disabled": "uitgeschakeld",
     "manageLovedOnes": "Beheer dierbaren",
+    "usageStorageLabel": "Opslag",
+    "usageMemoriesLabel": "Herinneringen",
+    "usageOpenWhenLabel": "Open Wanneer berichten",
+    "usageUnlimited": "Onbeperkt",
+    "proFeaturesTitle": "Dit krijg je met Pro",
+    "proFeaturesList": [
+      "Videoherinneringen",
+      "Aangepaste groepen voor dierbaren",
+      "Tot 500 herinneringen (in plaats van 12)",
+      "10 GB opslag (in plaats van 250 MB)",
+      "Tot 200 Open Wanneer berichten (in plaats van 6)",
+      "Foto's toevoegen aan Open Wanneer berichten"
+    ],
     "profileLabel": "Profiel",
     "profileTitle": "Jouw accountgegevens",
     "profileBody": "Houd je persoonlijke gegevens up-to-date.",
@@ -798,9 +860,156 @@
     "accountActionsLabel": "Accountacties",
     "accountActionsTitle": "Sessiebediening",
     "accountActionsBody": "Gebruik deze acties om je sessie te beheren.",
+    "websiteLink": "Naar de website",
     "vaultLabel": "Jouw vault",
     "vaultTitle": "Gebouwd om te blijven",
     "vaultBody": "Je bewaart kostbare herinneringen die je dierbaren nog jarenlang troost en vreugde zullen geven."
+  },
+  "DigitalLegacyChecklist": {
+    "heroTitle": "Regel wat later helpt",
+    "heroBody": "Begin met toegang, vertrouwen en belangrijke papieren. Werk daarna rustig je geldzaken, herinneringen, wensen en persoonlijke instructies af.",
+    "stats": {
+      "priorityOpen": "Prio open",
+      "done": "Klaar",
+      "linked": "Gekoppeld"
+    },
+    "steps": {
+      "priorityTitle": "1. Start met prio",
+      "priorityBody": "Regel eerst toegang, vertrouwenspersoon en belangrijke papieren. Dit voorkomt later de meeste stress.",
+      "linkTitle": "2. Koppel per persoon",
+      "linkBody": "Niet iedereen hoeft alles te krijgen. Koppel gevoelige items alleen aan de juiste dierbaren.",
+      "maintainTitle": "3. Houd het levend",
+      "maintainBody": "Plan een jaarlijkse check. Verwijder oude accounts en vul nieuwe belangrijke zaken meteen aan."
+    },
+    "languageChoice": {
+      "title": "Kies de taal van je checklist",
+      "body": "We vullen je standaard checklist-items in de taal die je kiest. Je kunt elk item daarna nog aanpassen.",
+      "dutch": "Nederlands",
+      "english": "Engels"
+    },
+    "intake": {
+      "title": "Maak eerst je checklist passend",
+      "body": "Beantwoord een paar korte vragen. Daarna tonen we alleen de onderdelen die voor jou logisch zijn.",
+      "kicker": "Korte intro",
+      "introTitle": "We vullen je checklist zo gericht mogelijk",
+      "introBody": "Daarom stellen we eerst een paar korte vragen. Je krijgt daarna een simpele checklist met alleen de onderdelen die voor jou relevant zijn.",
+      "stepCounter": "Vraag {current} van {total}",
+      "ownBusiness": "Heb jij een eigen bedrijf?",
+      "businessType": "Wat voor bedrijf is het?",
+      "hasEmployees": "Heb jij medewerkers in dienst?",
+      "hasWebsite": "Gebruik jij een zakelijke website, domein of hosting?",
+      "hasCrypto": "Gebruik jij cryptovaluta of andere digitale bezittingen?",
+      "usesSocialMedia": "Gebruik jij sociale media zoals Facebook, Instagram of LinkedIn?",
+      "storesPhotosOnline": "Gebruik jij online opslag voor foto's en video's?",
+      "hasExtraDevices": "Heb jij nog oude apparaten of harde schijven liggen?",
+      "yes": "Ja",
+      "no": "Nee",
+      "unknown": "Weet ik niet",
+      "later": "Later beantwoorden",
+      "zzp": "ZZP",
+      "company": "BV of ander bedrijf",
+      "back": "Terug",
+      "continue": "Ga verder",
+      "footer": "Je kunt straks alles nog aanpassen, verwijderen of aanvullen.",
+      "startChecklist": "Maak checklist",
+      "trustTitle": "Je informatie is altijd veilig!",
+      "trustBody": "Alles wat je hier invult wordt versleuteld opgeslagen en is alleen voor jou zichtbaar."
+    },
+    "help": {
+      "languageTitle": "Kies eerst de taal",
+      "languageBody": "Hiermee vullen we de standaard checklist in de juiste taal. Daarna start de korte intro.",
+      "intakeTitle": "Korte introvragen",
+      "intakeBody": "Beantwoord een paar korte vragen. Daarmee maken we de checklist kleiner en relevanter voor jouw situatie.",
+      "heroTitle": "Overzicht",
+      "heroBody": "Bovenaan zie je hoeveel belangrijke punten nog openstaan en hoeveel al klaar of gekoppeld is.",
+      "categoryTitle": "Categorieen",
+      "categoryBody": "Klik op een categorie om de bijbehorende pagina te openen met alle items.",
+      "detailItemsTitle": "Items beheren",
+      "detailItemsBody": "Vink items af, bewerk ze of koppel ze aan dierbaren.",
+      "addItemTitle": "Voeg zelf een item toe",
+      "addItemBody": "Mis je iets in deze categorie? Typ hier een eigen titel en voeg het toe aan de lijst.",
+      "saveTitle": "Opslaan",
+      "saveBody": "Wijzigingen blijven lokaal zichtbaar, maar gebruik deze knop om ze definitief op te slaan.",
+      "controls": {
+        "back": "Terug",
+        "close": "Sluiten",
+        "finish": "Klaar",
+        "next": "Volgende",
+        "nextWithProgress": "Volgende ({current} van {total})",
+        "open": "Open",
+        "skip": "Overslaan"
+      }
+    },
+    "categories": {
+      "access": {
+        "title": "Je belangrijkste toegang",
+        "body": "Wie je vertrouwt, hoe die persoon binnenkomt, en wat er verder moet gebeuren."
+      },
+      "government": {
+        "title": "Overheid en administratie",
+        "body": "DigiD, belastingen, verzekeringen en officiele documenten die nabestaanden nodig hebben."
+      },
+      "money": {
+        "title": "Geld en digitale bezittingen",
+        "body": "Banken, beleggingen en andere bezittingen met waarde."
+      },
+      "cloud": {
+        "title": "E-mail, cloud en bestanden",
+        "body": "Waar je mail, bestanden en back-ups staan, en wie daar later bij moet kunnen."
+      },
+      "memories": {
+        "title": "Foto's, video's en herinneringen",
+        "body": "De momenten die je wilt bewaren, en wie daar later bij mag."
+      },
+      "social": {
+        "title": "Sociale media en communicatie",
+        "body": "Wat er met je profielen en gesprekken moet gebeuren."
+      },
+      "business": {
+        "title": "Bedrijfzaken",
+        "body": "Zakelijke toegang, klanten, domeinen, hosting en administratie."
+      }
+    },
+    "priority": {
+      "high": "Prio",
+      "normal": "Normaal",
+      "low": "Laag"
+    },
+    "validation": {
+      "titleRequired": "Vul eerst een titel in."
+    },
+    "status": {
+      "unsaved": "Niet opgeslagen",
+      "saved": "Checklist opgeslagen"
+    },
+    "errors": {
+      "loadFailed": "Checklist laden mislukt",
+      "saveFailed": "Checklist opslaan mislukt"
+    },
+    "addPlaceholder": "Nieuwe stap bij {category}",
+    "addItem": "Item toevoegen",
+    "continueKicker": "Volgende stap",
+    "continueIn": "in {category}",
+    "categoryProgress": "{done} van {total} geregeld",
+    "priorityOpenCount": "{count} prio open",
+    "linkedCount": "{count} gekoppeld",
+    "loading": "Checklist laden...",
+    "emptyCategories": "Geen checklistcategorieen gevonden.",
+    "emptyCategory": "Geen items in deze categorie.",
+    "unnamedItem": "Naamloos item",
+    "deleteConfirm": "\"{title}\" verwijderen? Dit kan niet ongedaan worden gemaakt.",
+    "editTitle": "Titel bewerken",
+    "notesPlaceholder": "Wat moet iemand weten? Denk aan locatie, volgorde, contactpersoon, wens of betaalmethode. Zet wachtwoorden liever in je wachtwoordkluis.",
+    "noLovedOnesLinked": "Nog niet gekoppeld aan een dierbare.",
+    "clear": "Wissen",
+    "chooseLovedOnes": "Dierbaren kiezen",
+    "save": "Opslaan",
+    "saveSmall": "Opslaan",
+    "saving": "Opslaan...",
+    "close": "Sluiten",
+    "noneSelected": "Geen dierbaren geselecteerd",
+    "selectedCount": "{count} geselecteerd",
+    "done": "Klaar"
   },
   "LovedOnesPage": {
     "badge": "Dierbaren",
@@ -858,6 +1067,7 @@
     "noGroupsFound": "Geen groepen gevonden",
     "groupsManagePrefix": "Beheer groepen via",
     "back": "Terug",
+    "label": "Dierbaren",
     "createPageTitle": "Dierbare toevoegen",
     "createPageBody": "Maak een persoon aan om herinneringen aan te koppelen.",
     "modalCreateTitle": "Dierbare toevoegen"
@@ -879,6 +1089,8 @@
     "general": "Algemeen"
   },
   "GroupsPage": {
+    "label": "Dierbaren",
+    "back": "Terug naar dierbaren",
     "title": "Groepen",
     "body": "Maak je eigen groepen aan en organiseer dierbaren.",
     "modalTitle": "Groepen",

@@ -18,6 +18,20 @@ export default async function RootLayout(props: { children: ReactNode }) {
 
   return (
     <html lang={locale} className={cormorant.variable}>
+      <head>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=AW-18250176564" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'AW-18250176564');
+`,
+          }}
+        />
+      </head>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <ToastProvider>{props.children}</ToastProvider>

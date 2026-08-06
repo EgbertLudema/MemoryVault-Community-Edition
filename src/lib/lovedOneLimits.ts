@@ -1,4 +1,4 @@
-export function getLovedOneCountLimit() {
+export function getLovedOneCountLimit(_user?: unknown) {
   return null
 }
 

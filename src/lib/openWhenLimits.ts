@@ -1,4 +1,4 @@
-export function getOpenWhenMessageCountLimit() {
+export function getOpenWhenMessageCountLimit(_user?: unknown) {
   return null
 }
 

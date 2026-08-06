@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/MemoryFilters'
 import { usePersistentState } from '@/app/_hooks/usePersistentState'
 import { SecondaryButton } from '@/components/ui/SecondairyButton'
+import { PrimaryButton } from '@/components/ui/PrimaryButton'
 import { PlusIcon } from '@/components/icons/PlusIcon'
 import { EditIcon } from '@/components/icons/EditIcon'
 import { MemoriesHelpTour } from '@/components/onboarding/MemoriesHelpTour'
@@ -113,6 +114,7 @@ export default function UserHomePage() {
   const [isExpandedUiVisible, setIsExpandedUiVisible] = useState(false)
   const [isCompactFilterOpen, setIsCompactFilterOpen] = useState(false)
   const [isCompactModeOpen, setIsCompactModeOpen] = useState(false)
+  const [isDesktopViewport, setIsDesktopViewport] = useState(false)
 
   const containerRef = useRef<HTMLDivElement | null>(null)
   const canvasRef = useRef<HTMLDivElement | null>(null)
@@ -994,11 +996,37 @@ export default function UserHomePage() {
     }
   }, [filters.gridMode])
 
-  const isDragMode = filters.gridMode === 'drag'
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 1024px)')
+    const updateViewport = () => {
+      setIsDesktopViewport(mediaQuery.matches)
+
+      if (!mediaQuery.matches) {
+        setFilters((current) =>
+          current.gridMode === 'drag' ? { ...current, gridMode: 'scroll' } : current,
+        )
+      }
+    }
+
+    updateViewport()
+    mediaQuery.addEventListener('change', updateViewport)
+
+    return () => {
+      mediaQuery.removeEventListener('change', updateViewport)
+    }
+  }, [])
+
+  const effectiveGridMode: GridMode = isDesktopViewport ? filters.gridMode : 'scroll'
+  const isDragMode = effectiveGridMode === 'drag'
+  const hasMemories = albums.length > 0
   const sidebarWidth = sidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_OPEN
   const dragGridOffsetX = sidebarWidth + GRID_OFFSET_X
   const activeFilterCount = filters.groupIds.length + (filters.type === 'all' ? 0 : 1)
   const handleGridModeChange = (gridMode: GridMode) => {
+    if (gridMode === 'drag' && !isDesktopViewport) {
+      return
+    }
+
     setFilters((prev) => ({
       ...prev,
       gridMode,
@@ -1045,7 +1073,7 @@ export default function UserHomePage() {
 
   return (
     <>
-      <MemoriesHelpTour gridMode={filters.gridMode} />
+      <MemoriesHelpTour gridMode={effectiveGridMode} hasMemories={hasMemories} />
       {isDragMode ? (
         <>
           <div
@@ -1159,7 +1187,7 @@ export default function UserHomePage() {
       ) : (
         <div className="flex h-full min-h-0 flex-col">
           <div className="relative min-h-0 flex-1 overflow-hidden">
-            {filters.gridMode === 'scroll' && (
+            {effectiveGridMode === 'scroll' && (
               <div
                 ref={containerRef}
                 data-view-mode="scroll"
@@ -1167,7 +1195,7 @@ export default function UserHomePage() {
               >
                 <div
                   ref={scrollViewRef}
-                  className="mx-auto flex w-full max-w-[1700px] flex-col gap-4 px-4 pb-6 pt-4 sm:gap-6 sm:px-6 sm:pb-8 sm:pt-6"
+                  className="mx-auto flex w-full max-w-[1700px] flex-col gap-4 px-4 pb-10 pt-4 sm:gap-6 sm:px-6 sm:pb-8 sm:pt-6 lg:pb-24"
                 >
                   <div
                     ref={scrollHeaderRef}
@@ -1184,7 +1212,7 @@ export default function UserHomePage() {
                           </h2>
                         </div>
 
-                        <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 lg:shrink-0">
+                        <div className="hidden flex-wrap items-center justify-end gap-2 sm:gap-3 lg:flex lg:shrink-0">
                           <div data-tour="memories-view-toggle">
                             <GridModeToggle
                               gridMode={filters.gridMode}
@@ -1355,6 +1383,17 @@ export default function UserHomePage() {
           </div>
         </div>
       )}
+      <div
+        className="pointer-events-none fixed bottom-[calc(4.85rem+env(safe-area-inset-bottom))] left-4 z-40 lg:hidden"
+        data-tour="memories-floating-add-memory"
+      >
+        <div className="pointer-events-auto rounded-2xl border border-white/80 bg-white/90 p-2 shadow-[0_18px_50px_rgba(15,23,42,0.14)] backdrop-blur-xl">
+          <PrimaryButton href="/memories/new" className="h-12 w-12 rounded-xl corner-shape-squircle p-0">
+            <PlusIcon className="h-5 w-5" />
+            <span className="sr-only">{t('addMemory')}</span>
+          </PrimaryButton>
+        </div>
+      </div>
     </>
   )
 }

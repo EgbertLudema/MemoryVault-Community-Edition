@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getAppUserFromHeaders, getAppAuthCookieOptions } from '@/lib/appAuth'
 import { APP_AUTH_COOKIE } from '@/lib/appAuthShared'
+import { ensureDefaultDigitalLegacyItems } from '@/lib/defaultDigitalLegacyItems'
 import { ensureDefaultLovedOneGroups } from '@/lib/defaultLovedOneGroups'
 import { hashDeliveryToken, verifyDeliveryPassword } from '@/lib/legacyDelivery'
 
@@ -10,11 +11,16 @@ const emailRegex =
   /^(?!.*\.\.)[\w!#$%&'*+/=?^`{|}~-](?:[\w!#$%&'*+/=?^`{|}~.-]*[\w!#$%&'*+/=?^`{|}~-])?@[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$/i
 
 function normalizeEmail(value: unknown) {
-  return String(value ?? '').trim().toLowerCase()
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
 }
 
 function splitName(value: unknown) {
-  const parts = String(value ?? '').trim().split(/\s+/).filter(Boolean)
+  const parts = String(value ?? '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
   return {
     firstName: parts[0] ?? '',
     lastName: parts.slice(1).join(' ') || 'Recipient',
@@ -44,7 +50,10 @@ export async function POST(req: Request, props: { params: Promise<{ token: strin
       depth: 1,
       limit: 1,
       where: {
-        and: [{ tokenHash: { equals: hashDeliveryToken(token) } }, { status: { equals: 'active' } }],
+        and: [
+          { tokenHash: { equals: hashDeliveryToken(token) } },
+          { status: { equals: 'active' } },
+        ],
       },
     })
 
@@ -94,7 +103,10 @@ export async function POST(req: Request, props: { params: Promise<{ token: strin
     }
 
     if (accountPassword.length < 8) {
-      return NextResponse.json({ message: 'Password must be at least 8 characters' }, { status: 400 })
+      return NextResponse.json(
+        { message: 'Password must be at least 8 characters' },
+        { status: 400 },
+      )
     }
 
     const existingAccount = await payload.find({
@@ -127,6 +139,7 @@ export async function POST(req: Request, props: { params: Promise<{ token: strin
     })
 
     await ensureDefaultLovedOneGroups(payload, user.id)
+    await ensureDefaultDigitalLegacyItems(payload, user.id)
 
     await payload.update({
       collection: 'legacy-deliveries',

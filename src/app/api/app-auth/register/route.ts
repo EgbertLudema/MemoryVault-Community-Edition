@@ -3,18 +3,23 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getAppAuthCookieOptions } from '@/lib/appAuth'
 import { APP_AUTH_COOKIE } from '@/lib/appAuthShared'
+import { sendTriggeredAdminEmailCampaigns } from '@/lib/adminEmailCampaigns'
+import { ensureDefaultDigitalLegacyItems } from '@/lib/defaultDigitalLegacyItems'
 import { ensureDefaultLovedOneGroups } from '@/lib/defaultLovedOneGroups'
 
 const emailRegex =
   /^(?!.*\.\.)[\w!#$%&'*+/=?^`{|}~-](?:[\w!#$%&'*+/=?^`{|}~.-]*[\w!#$%&'*+/=?^`{|}~-])?@[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$/i
 
 function normalizeEmail(value: unknown) {
-  return String(value ?? '').trim().toLowerCase()
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
 }
 
 function getRegisterErrorMessage(error: unknown) {
   if (typeof error === 'object' && error !== null && 'data' in error) {
-    const data = (error as { data?: { errors?: Array<{ message?: unknown; path?: unknown }> } }).data
+    const data = (error as { data?: { errors?: Array<{ message?: unknown; path?: unknown }> } })
+      .data
     const fieldError = data?.errors?.[0]
     const fieldMessage = typeof fieldError?.message === 'string' ? fieldError.message : null
 
@@ -71,6 +76,18 @@ export async function POST(req: Request) {
     })
 
     await ensureDefaultLovedOneGroups(payload, user.id)
+    await ensureDefaultDigitalLegacyItems(payload, user.id)
+
+    try {
+      await sendTriggeredAdminEmailCampaigns({
+        payload,
+        trigger: 'user_signup',
+        user,
+        origin: new URL(req.url).origin,
+      })
+    } catch (error) {
+      console.warn('Failed to send signup email campaigns', error)
+    }
 
     const result = await payload.login({
       collection: 'users',

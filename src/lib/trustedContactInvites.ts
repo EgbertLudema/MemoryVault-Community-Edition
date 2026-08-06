@@ -1,6 +1,8 @@
 import crypto from 'crypto'
 import type { Payload } from 'payload'
+import { sendTriggeredAdminEmailCampaigns } from '@/lib/adminEmailCampaigns'
 import { emailButton, escapeHtml, renderBrandedEmail } from '@/lib/emailTemplate'
+import { getLovedOneDisplayEmail } from '@/lib/encryptedFields'
 import { hashDeliveryToken } from '@/lib/legacyDelivery'
 
 type TrustedContactInviteUser = {
@@ -17,6 +19,8 @@ export type TrustedContactInviteLovedOne = {
   id: number
   fullName?: string | null
   email?: string | null
+  emailCiphertext?: unknown
+  emailEncryptionMetadata?: unknown
   trustedContactInviteStatus?: 'none' | 'pending' | 'accepted' | null
   user?: number | TrustedContactInviteUser | null
 }
@@ -95,7 +99,7 @@ export async function sendTrustedContactInvite({
   origin: string
   force?: boolean
 }) {
-  const email = String(lovedOne.email ?? '').trim()
+  const email = getLovedOneDisplayEmail(lovedOne)
 
   if (!email) {
     throw new Error('Trusted contact has no email address.')
@@ -141,7 +145,7 @@ export async function sendTrustedContactInvite({
   return true
 }
 
-export async function acceptTrustedContactInvite(payload: Payload, token: string) {
+export async function acceptTrustedContactInvite(payload: Payload, token: string, origin: string) {
   const result = await payload.find({
     collection: 'loved-ones',
     overrideAccess: true,
@@ -193,6 +197,19 @@ export async function acceptTrustedContactInvite(payload: Payload, token: string
         legacyTrustedContactTokenHash: null,
       },
     })
+  }
+
+  if (user) {
+    try {
+      await sendTriggeredAdminEmailCampaigns({
+        payload,
+        trigger: 'trusted_contact_accepted',
+        user,
+        origin,
+      })
+    } catch (error) {
+      console.warn('Failed to send trusted contact confirmation email campaigns', error)
+    }
   }
 
   return true

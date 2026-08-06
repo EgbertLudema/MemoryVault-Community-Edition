@@ -15,6 +15,7 @@ import { LovedOneGroups } from './collections/LovedOneGroups'
 import { Memories } from './collections/Memories'
 import { OpenWhenMessages } from './collections/OpenWhenMessages'
 import { LegacyDeliveries } from './collections/LegacyDeliveries'
+import { DigitalLegacyItems } from './collections/DigitalLegacyItems'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -47,6 +48,7 @@ export default buildConfig({
     LovedOnes,
     LovedOneGroups,
     LegacyDeliveries,
+    DigitalLegacyItems,
   ],
   localization: {
     defaultLocale: 'en',

@@ -46,44 +46,54 @@ export async function createLegacyDeliveriesForUser({
     .map((value) => toNumberId(value))
     .filter((value) => Number.isFinite(value))
 
-  const [lovedOneResult, memoryResult, openWhenResult, priorDeliveryResult] = await Promise.all([
-    payload.find({
-      collection: 'loved-ones',
-      overrideAccess: true,
-      depth: 1,
-      limit: 200,
-      where: {
-        user: { equals: user.id },
-      },
-    }),
-    payload.find({
-      collection: 'memories',
-      overrideAccess: true,
-      depth: 2,
-      limit: 500,
-      where: {
-        owner: { equals: user.id },
-      },
-    }),
-    payload.find({
-      collection: 'open-when-messages' as any,
-      overrideAccess: true,
-      depth: 1,
-      limit: 500,
-      where: {
-        and: [{ owner: { equals: user.id } }, { status: { not_equals: 'draft' } }],
-      },
-    }),
-    payload.find({
-      collection: 'legacy-deliveries',
-      overrideAccess: true,
-      depth: 0,
-      limit: 200,
-      where: {
-        and: [{ owner: { equals: user.id } }, { status: { equals: 'active' } }],
-      },
-    }),
-  ])
+  const [lovedOneResult, memoryResult, openWhenResult, digitalLegacyResult, priorDeliveryResult] =
+    await Promise.all([
+      payload.find({
+        collection: 'loved-ones',
+        overrideAccess: true,
+        depth: 1,
+        limit: 200,
+        where: {
+          user: { equals: user.id },
+        },
+      }),
+      payload.find({
+        collection: 'memories',
+        overrideAccess: true,
+        depth: 2,
+        limit: 500,
+        where: {
+          owner: { equals: user.id },
+        },
+      }),
+      payload.find({
+        collection: 'open-when-messages' as any,
+        overrideAccess: true,
+        depth: 1,
+        limit: 500,
+        where: {
+          and: [{ owner: { equals: user.id } }, { status: { not_equals: 'draft' } }],
+        },
+      }),
+      payload.find({
+        collection: 'digital-legacy-items' as any,
+        overrideAccess: true,
+        depth: 0,
+        limit: 500,
+        where: {
+          and: [{ owner: { equals: user.id } }, { checked: { equals: true } }],
+        },
+      }),
+      payload.find({
+        collection: 'legacy-deliveries',
+        overrideAccess: true,
+        depth: 0,
+        limit: 200,
+        where: {
+          and: [{ owner: { equals: user.id } }, { status: { equals: 'active' } }],
+        },
+      }),
+    ])
 
   const lovedOnes = (lovedOneResult.docs ?? []).filter((lovedOne: any) => {
     if (requestedLovedOneIds.length === 0) {
@@ -106,14 +116,32 @@ export async function createLegacyDeliveriesForUser({
     }
   }
 
+  const digitalLegacyItemsByLovedOne = new Map<number, number[]>()
+  for (const item of (digitalLegacyResult.docs ?? []) as any[]) {
+    const itemLovedOnes = Array.isArray(item?.lovedOnes) ? item.lovedOnes : []
+    for (const lovedOne of itemLovedOnes) {
+      const lovedOneId = toNumberId(
+        typeof lovedOne === 'object' && lovedOne ? lovedOne.id : lovedOne,
+      )
+      if (Number.isFinite(lovedOneId)) {
+        const existing = digitalLegacyItemsByLovedOne.get(lovedOneId) ?? []
+        existing.push(Number(item.id))
+        digitalLegacyItemsByLovedOne.set(lovedOneId, existing)
+      }
+    }
+  }
+
   const recipients = resolveLegacyRecipients(
     lovedOnes as any[],
     (memoryResult.docs ?? []) as any[],
     Array.from(openWhenLovedOneCounts.keys()),
+    Array.from(digitalLegacyItemsByLovedOne.keys()),
   )
 
   if (recipients.length === 0) {
-    throw new Error('No loved ones with assigned memories or Open When messages were found for delivery.')
+    throw new Error(
+      'No loved ones with assigned memories, Open When messages, or digital legacy items were found for delivery.',
+    )
   }
 
   const priorDeliveries = priorDeliveryResult.docs ?? []
@@ -142,6 +170,7 @@ export async function createLegacyDeliveriesForUser({
 
   for (const recipient of recipients) {
     const openWhenCount = openWhenLovedOneCounts.get(recipient.lovedOneId) ?? 0
+    const digitalLegacyItemIds = digitalLegacyItemsByLovedOne.get(recipient.lovedOneId) ?? []
     const hasMemories = recipient.memoryIds.length > 0
     const accessDescription =
       hasMemories && openWhenCount > 0
@@ -157,6 +186,7 @@ export async function createLegacyDeliveriesForUser({
       depth: 0,
       data: {
         status: 'active',
+        deliveryKind: 'legacy',
         tokenHash,
         accessPasswordHash: hashDeliveryPassword(accessPassword),
         recipientName: recipient.recipientName,
@@ -165,6 +195,7 @@ export async function createLegacyDeliveriesForUser({
         owner: Number(user.id),
         lovedOne: recipient.lovedOneId,
         memories: recipient.memoryIds,
+        digitalLegacyItems: digitalLegacyItemIds,
       },
     })
 

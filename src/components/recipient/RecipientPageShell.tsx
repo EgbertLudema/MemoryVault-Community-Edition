@@ -4,19 +4,18 @@ import { redirect } from '@/i18n/navigation'
 import { RecipientBreadcrumbs } from '@/components/recipient/RecipientBreadcrumbs'
 import { RecipientSubNav } from '@/components/recipient/RecipientSubNav'
 import { RecipientHelpTour } from '@/components/onboarding/RecipientHelpTour'
-import {
-  getClaimedRecipientDelivery,
-  getRecipientUser,
-} from '@/lib/recipientDeliveryServer'
+import { getClaimedRecipientDelivery, getRecipientUser } from '@/lib/recipientDeliveryServer'
 
 type RecipientPageShellProps = {
   locale: string
   deliveryId: string
-  active: 'dashboard' | 'memories' | 'open-when'
+  active: 'dashboard' | 'memories' | 'open-when' | 'digital-legacy'
   breadcrumbLabel: string
   title: string
   body: string
-  children: (delivery: NonNullable<Awaited<ReturnType<typeof getClaimedRecipientDelivery>>>) => ReactNode
+  children: (
+    delivery: NonNullable<Awaited<ReturnType<typeof getClaimedRecipientDelivery>>>,
+  ) => ReactNode
 }
 
 export async function RecipientPageShell({
@@ -61,7 +60,7 @@ export async function RecipientPageShell({
 
         <section
           data-tour="recipient-detail-hero"
-          className="mt-5 rounded-[30px] border border-white/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.97),rgba(250,245,255,0.9))] p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] sm:p-8"
+          className="mt-5 rounded-[30px] corner-shape-squircle border border-white/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.97),rgba(250,245,255,0.9))] p-6 shadow-[0_20px_60px_rgba(15,23,42,0.06)] sm:p-8"
         >
           <div className="inline-flex rounded-full bg-purple-600/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-purple-700">
             {t('forRecipient', { name: delivery.data.recipientName })}
@@ -97,12 +96,15 @@ export async function RecipientPageShell({
                 dashboard: t('subnav.dashboard'),
                 memories: t('subnav.memories'),
                 openWhen: t('subnav.openWhen'),
+                digitalLegacy: t('subnav.digitalLegacy'),
               }}
             />
           </div>
         </section>
 
-        <section data-tour="recipient-content" className="mt-6">{children(delivery)}</section>
+        <section data-tour="recipient-content" className="mt-6">
+          {children(delivery)}
+        </section>
       </div>
     </main>
   )

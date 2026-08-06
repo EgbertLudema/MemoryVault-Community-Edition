@@ -1,5 +1,6 @@
 // app/(app)/@modal/loved-ones/new/person/[id]/page.tsx
 import { cookies } from 'next/headers'
+import { getTranslations } from 'next-intl/server'
 import { Modal } from '@/components/Modal'
 import { LovedOneEditForm } from '@/components/LovedOneEditForm'
 
@@ -60,29 +61,30 @@ async function fetchLovedOne(id: string): Promise<LovedOne | null> {
   return (await res.json()) as LovedOne
 }
 
-export default async function LovedOnesEditModalPage(props: { params: Promise<{ id: string }> }) {
-  const { id } = await props.params
+export default async function LovedOnesEditModalPage(props: {
+  params: Promise<{ id: string; locale: string }>
+}) {
+  const { id, locale } = await props.params
 
   // Prevent crashes when the modal slot matches static routes like "groups"
   if (!isNumericId(id)) {
     return null
   }
 
+  const t = await getTranslations({ locale, namespace: 'LovedOneDetail' })
   const lovedOne = await fetchLovedOne(id)
 
   if (!lovedOne) {
     return (
-      <Modal title="Not found">
-        <div style={{ color: '#555', fontSize: 14 }}>
-          This loved one does not exist or you do not have access.
-        </div>
+      <Modal title={t('notFoundTitle')}>
+        <div className="text-sm text-stone-600">{t('notFoundBody')}</div>
       </Modal>
     )
   }
 
   return (
-    <Modal title={`Edit: ${lovedOne.fullName}`}>
-      <LovedOneEditForm lovedOne={lovedOne} />
+    <Modal title={t('editModalTitle', { name: lovedOne.fullName })}>
+      <LovedOneEditForm lovedOne={lovedOne} mode="modal" />
     </Modal>
   )
 }

@@ -34,6 +34,16 @@ export const LegacyDeliveries: CollectionConfig = {
       ],
     },
     {
+      name: 'deliveryKind',
+      type: 'select',
+      required: true,
+      defaultValue: 'legacy',
+      options: [
+        { label: 'Legacy delivery', value: 'legacy' },
+        { label: 'Open When message', value: 'open_when' },
+      ],
+    },
+    {
       name: 'tokenHash',
       type: 'text',
       required: true,
@@ -89,6 +99,13 @@ export const LegacyDeliveries: CollectionConfig = {
       relationTo: 'memories',
       hasMany: true,
       required: true,
+    },
+    {
+      name: 'digitalLegacyItems',
+      type: 'relationship',
+      relationTo: 'digital-legacy-items',
+      hasMany: true,
+      required: false,
     },
   ],
   hooks: {

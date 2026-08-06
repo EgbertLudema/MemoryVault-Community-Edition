@@ -26,7 +26,7 @@ export function DeleteButton({
   className,
 }: DeleteButtonProps) {
   const baseClasses = cn(
-    'inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md corner-shape-squircle cursor-pointer',
+    'inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl corner-shape-squircle cursor-pointer',
     'text-md font-medium',
     'bg-red-50 text-red-700 border border-red-200',
     'transition-all duration-200',

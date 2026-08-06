@@ -40,7 +40,7 @@ function getSteps(
     }
 
     steps.push({
-      target: '[data-tour="memories-add-memory"]',
+      target: '[data-tour="memories-floating-add-memory"]',
       placement: 'bottom',
       skipBeacon: true,
       title: t('scroll.addMemoryTitle'),
@@ -79,15 +79,13 @@ function getSteps(
       })
     }
 
-    steps.push(
-      {
-        target: '[data-tour="memories-add-memory"]',
-        placement: 'left',
-        skipBeacon: true,
-        title: t('drag.addMemoryTitle'),
-        content: t('drag.addMemoryBody'),
-      },
-    )
+    steps.push({
+      target: '[data-tour="memories-add-memory"]',
+      placement: 'left',
+      skipBeacon: true,
+      title: t('drag.addMemoryTitle'),
+      content: t('drag.addMemoryBody'),
+    })
 
     return steps
   }
@@ -120,15 +118,13 @@ function getSteps(
     })
   }
 
-  steps.push(
-    {
-      target: '[data-tour="memories-add-memory"]',
-      placement: 'left',
-      skipBeacon: true,
-      title: t('scroll.addMemoryTitle'),
-      content: t('scroll.addMemoryBody'),
-    },
-  )
+  steps.push({
+    target: '[data-tour="memories-add-memory"]',
+    placement: 'left',
+    skipBeacon: true,
+    title: t('scroll.addMemoryTitle'),
+    content: t('scroll.addMemoryBody'),
+  })
 
   return steps
 }

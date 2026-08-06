@@ -191,7 +191,7 @@ export function TrustedContactSetupButton({ children, className }: TrustedContac
               role="dialog"
               aria-modal="true"
               aria-label={accountT('legacyProtectionTitle')}
-              className="fixed inset-0 z-1000 flex items-stretch justify-center bg-black/35 p-0 sm:items-center sm:p-4"
+              className="fixed inset-0 z-[1000] flex items-stretch justify-center bg-black/35 p-0 sm:items-center sm:p-4"
               onMouseDown={() => setOpen(false)}
             >
               <div
@@ -236,10 +236,6 @@ export function TrustedContactSetupButton({ children, className }: TrustedContac
                       initialLastName={data.lastName}
                       initialProfileImageSrc={data.profileImageSrc}
                       email={data.email}
-                      billingResult={null}
-                      subscriptionPlan={data.subscriptionPlan}
-                      subscriptionStatus={data.subscriptionStatus}
-                      subscriptionCurrentPeriodEnd={data.subscriptionCurrentPeriodEnd}
                       initialLegacyProtectionEnabled={data.enableLegacyProtection}
                       initialLegacyProtectionPendingEnable={data.legacyProtectionPendingEnable}
                       lovedOneOptions={data.lovedOneOptions}

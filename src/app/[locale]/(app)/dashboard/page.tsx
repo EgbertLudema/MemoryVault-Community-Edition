@@ -1,5 +1,5 @@
 // app/(app)/dashboard/page.tsx
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import { cookies, headers } from 'next/headers'
 import { getTranslations } from 'next-intl/server'
 import { redirect } from 'next/navigation'
@@ -11,6 +11,7 @@ import { VideoIcon } from '@/components/icons/VideoIcon'
 import { PhotoIcon } from '@/components/icons/PhotoIcon'
 import { NotesIcon } from '@/components/icons/NotesIcon'
 import { PrimaryButton } from '@/components/ui/PrimaryButton'
+import { TrustedContactSetupButton } from '@/components/account/TrustedContactSetupButton'
 import { APP_AUTH_COOKIE } from '@/lib/appAuthShared'
 import { FEATURE_GRADIENTS } from '@/lib/featureGradients'
 import { getEffectiveGroupUiMeta, type GroupUiOption } from '@/lib/groupUi'
@@ -47,7 +48,19 @@ type LovedOneDoc = {
   customNote?: string | null
   createdAt?: string | null
   groups?: Array<string | LovedOneGroup>
+  trustedContactInviteStatus?: 'none' | 'pending' | 'accepted' | null
 }
+
+type LegacyProtectionContact =
+  | string
+  | number
+  | {
+      id?: string | number | null
+      fullName?: string | null
+      email?: string | null
+      trustedContactInviteStatus?: 'none' | 'pending' | 'accepted' | null
+    }
+  | null
 
 type LovedOneGroup = {
   id: string | number
@@ -63,12 +76,19 @@ type PayloadListResponse<T> = {
   totalDocs?: number
 }
 
+type OpenWhenMessagesResponse = {
+  totalDocs?: number
+}
+
 type MeResponse = {
   user?: {
     id?: string | number
     email?: string | null
     firstName?: string | null
     lastName?: string | null
+    enableLegacyProtection?: boolean | null
+    legacyProtectionPendingEnable?: boolean | null
+    legacyProtectionContacts?: LegacyProtectionContact[] | null
   }
 }
 
@@ -138,8 +158,13 @@ async function getMemories() {
 }
 
 async function getLovedOnes() {
-  const res = await fetchWithAuth('/api/loved-ones?depth=1&sort=-createdAt&limit=4')
+  const res = await fetchWithAuth('/api/loved-ones?depth=1&sort=-createdAt&limit=100')
   return (await res.json()) as PayloadListResponse<LovedOneDoc>
+}
+
+async function getOpenWhenMessages() {
+  const res = await fetchWithAuth('/api/open-when-messages')
+  return (await res.json()) as OpenWhenMessagesResponse
 }
 
 function countMemoryTypes(memories: MemoryAlbum[]) {
@@ -221,27 +246,80 @@ function toGroupUiOption(group: LovedOneGroup): GroupUiOption {
   }
 }
 
+function getContactId(contact: LegacyProtectionContact) {
+  if (typeof contact === 'string' || typeof contact === 'number') {
+    return String(contact)
+  }
+
+  if (contact && typeof contact === 'object' && contact.id != null) {
+    return String(contact.id)
+  }
+
+  return null
+}
+
+function getTrustedContactNames(
+  contacts: LegacyProtectionContact[] | null | undefined,
+  lovedOnes: LovedOneDoc[],
+) {
+  const lovedOnesById = new Map(lovedOnes.map((person) => [String(person.id), person]))
+
+  return (contacts ?? [])
+    .map((contact) => {
+      const id = getContactId(contact)
+      const lovedOne = id ? lovedOnesById.get(id) : undefined
+      const fromContact = typeof contact === 'object' && contact ? contact : undefined
+      const status =
+        fromContact?.trustedContactInviteStatus ?? lovedOne?.trustedContactInviteStatus ?? null
+
+      if (status !== 'accepted') {
+        return null
+      }
+
+      return (
+        fromContact?.fullName?.trim() ||
+        lovedOne?.fullName?.trim() ||
+        fromContact?.email?.trim() ||
+        lovedOne?.email?.trim() ||
+        null
+      )
+    })
+    .filter((name): name is string => Boolean(name))
+}
+
 export default async function DashboardPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
-  const memoriesHref = `/${locale}/memories`
-  const newMemoryHref = `/${locale}/memories/new`
-  const lovedOnesHref = `/${locale}/loved-ones`
-  const newLovedOneHref = `/${locale}/loved-ones/new`
+  const memoriesHref = '/memories'
+  const newMemoryHref = '/memories/new'
+  const lovedOnesHref = '/loved-ones'
+  const newLovedOneHref = '/loved-ones/new'
   const t = await getTranslations({ locale, namespace: 'DashboardPage' })
   const tGroups = await getTranslations({ locale, namespace: 'GroupLabels' })
-  const [meData, memoriesData, lovedOnesData] = await Promise.all([
+  const [meData, memoriesData, lovedOnesData, openWhenData] = await Promise.all([
     getCurrentUser(),
     getMemories(),
     getLovedOnes(),
+    getOpenWhenMessages(),
   ])
 
   const memories = Array.isArray(memoriesData?.albums) ? memoriesData.albums : []
   const recentMemories = memories.slice(0, 4)
   const recentLovedOnes = Array.isArray(lovedOnesData?.docs) ? lovedOnesData.docs.slice(0, 4) : []
   const firstName = String(meData?.user?.firstName ?? '').trim()
+  const legacyProtectionEnabled = Boolean(meData?.user?.enableLegacyProtection)
+  const legacyProtectionPending = Boolean(meData?.user?.legacyProtectionPendingEnable)
+  const showLegacyProtectionWarning = !legacyProtectionEnabled || legacyProtectionPending
+  const trustedContactNames = getTrustedContactNames(
+    meData?.user?.legacyProtectionContacts,
+    lovedOnesData?.docs ?? [],
+  )
+  const hasLovedOneWithEmail = (lovedOnesData?.docs ?? []).some((person) =>
+    Boolean(person.email?.trim()),
+  )
 
   const { notesCount, photosCount, videosCount } = countMemoryTypes(memories)
   const lovedOnesCount = lovedOnesData?.totalDocs ?? 0
+  const openWhenCount = openWhenData?.totalDocs ?? 0
 
   return (
     <div className="relative max-h-full overflow-y-auto">
@@ -250,7 +328,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
         className="pointer-events-none absolute inset-x-0 top-0 h-[520px] animate-dashboard-ambient bg-[radial-gradient(circle_at_top_left,rgba(216,180,254,0.4),transparent_36%),radial-gradient(circle_at_top_right,rgba(251,207,232,0.42),transparent_32%),linear-gradient(180deg,rgba(243,232,255,0.72)_0%,rgba(248,241,255,0.45)_42%,rgba(249,250,251,0.12)_78%,rgba(249,250,251,0)_100%)] [mask-image:linear-gradient(to_bottom,rgba(0,0,0,1)_0%,rgba(0,0,0,0.94)_62%,rgba(0,0,0,0.45)_84%,transparent_100%)]"
       />
 
-      <div className="relative grid gap-6 p-6">
+      <div className="relative grid grid-cols-1 gap-6 p-4 sm:p-6 lg:pb-24">
         <DashboardLoadReveal delayMs={40}>
           <section
             data-tour="dashboard-hero"
@@ -300,10 +378,10 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
 
                 <div className="mt-5" data-tour="dashboard-create-memory">
                   <PrimaryButton
-                    href={newMemoryHref}
+                    href={lovedOnesCount === 0 ? newLovedOneHref : newMemoryHref}
                     className="w-full justify-center rounded-full px-5 py-3"
                   >
-                    {t('createMemory')}
+                    {lovedOnesCount === 0 ? t('addLovedOneAction') : t('createMemory')}
                   </PrimaryButton>
                 </div>
 
@@ -318,10 +396,80 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
           </section>
         </DashboardLoadReveal>
 
+        {showLegacyProtectionWarning ? (
+          <DashboardLoadReveal delayMs={90}>
+            <section
+              data-tour="dashboard-trusted-contact"
+              className="rounded-[28px] corner-shape-squircle border border-amber-200 bg-[linear-gradient(135deg,rgba(255,251,235,0.96),rgba(255,247,237,0.92))] p-5 shadow-[0_18px_50px_rgba(245,158,11,0.12)] sm:p-6"
+            >
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="min-w-0">
+                  <div className="inline-flex rounded-full bg-amber-500/12 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-800">
+                    {t('legacyWarningLabel')}
+                  </div>
+                  <h2 className="mt-3 text-xl font-bold tracking-tight text-stone-950 sm:text-2xl">
+                    {legacyProtectionPending ? t('legacyPendingTitle') : t('legacyWarningTitle')}
+                  </h2>
+                  <p className="mt-2 max-w-[760px] text-sm leading-6 text-stone-700 sm:text-base">
+                    {legacyProtectionPending
+                      ? t('legacyPendingBody')
+                      : hasLovedOneWithEmail
+                        ? t('legacyWarningBody')
+                        : t('legacyWarningNoEmailBody')}
+                  </p>
+                </div>
+
+                {hasLovedOneWithEmail ? (
+                  <TrustedContactSetupButton className="inline-flex shrink-0 items-center justify-center rounded-full bg-amber-600 px-5 py-3 text-sm font-semibold text-white no-underline shadow-[0_14px_30px_rgba(217,119,6,0.24)] transition hover:bg-amber-700">
+                    {t('legacyWarningCta')}
+                  </TrustedContactSetupButton>
+                ) : (
+                  <Link
+                    href={newLovedOneHref}
+                    className="inline-flex shrink-0 items-center justify-center rounded-full bg-amber-600 px-5 py-3 text-sm font-semibold text-white no-underline shadow-[0_14px_30px_rgba(217,119,6,0.24)] transition hover:bg-amber-700"
+                  >
+                    {t('legacyWarningNoEmailCta')}
+                  </Link>
+                )}
+              </div>
+            </section>
+          </DashboardLoadReveal>
+        ) : (
+          <DashboardLoadReveal delayMs={90}>
+            <section
+              data-tour="dashboard-trusted-contact"
+              className="rounded-[28px] corner-shape-squircle border border-emerald-200 bg-[linear-gradient(135deg,rgba(236,253,245,0.96),rgba(255,255,255,0.92))] p-5 shadow-[0_18px_50px_rgba(16,185,129,0.12)] sm:p-6"
+            >
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="min-w-0">
+                  <div className="inline-flex rounded-full bg-emerald-500/12 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">
+                    {t('legacyActiveLabel')}
+                  </div>
+                  <h2 className="mt-3 text-xl font-bold tracking-tight text-stone-950 sm:text-2xl">
+                    {t('legacyActiveTitle')}
+                  </h2>
+                  <p className="mt-2 max-w-[760px] text-sm leading-6 text-stone-700 sm:text-base">
+                    {trustedContactNames.length > 0
+                      ? t('legacyActiveBody', {
+                          count: trustedContactNames.length,
+                          names: trustedContactNames.join(', '),
+                        })
+                      : t('legacyActiveGenericBody')}
+                  </p>
+                </div>
+
+                <TrustedContactSetupButton className="inline-flex shrink-0 items-center justify-center rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white no-underline shadow-[0_14px_30px_rgba(5,150,105,0.22)] transition hover:bg-emerald-700">
+                  {t('legacyActiveCta')}
+                </TrustedContactSetupButton>
+              </div>
+            </section>
+          </DashboardLoadReveal>
+        )}
+
         <div data-tour="dashboard-overview" className="grid gap-6">
           <section
             data-tour="dashboard-summary-cards"
-            className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5"
           >
             <DashboardLoadReveal delayMs={120}>
               <DashboardStatCard
@@ -353,6 +501,14 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                 icon={<HeartIcon className="h-5 w-5" />}
                 value={lovedOnesCount}
                 label={t('lovedOnes')}
+              />
+            </DashboardLoadReveal>
+            <DashboardLoadReveal delayMs={330}>
+              <DashboardStatCard
+                backgroundImage="linear-gradient(to bottom right, rgb(139 92 246), rgb(217 70 239))"
+                icon={<MailIcon className="h-5 w-5" />}
+                value={openWhenCount}
+                label={t('openWhenMessages')}
               />
             </DashboardLoadReveal>
           </section>

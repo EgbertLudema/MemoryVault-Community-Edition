@@ -65,6 +65,14 @@ export const Users: CollectionConfig = {
       required: false,
     },
     {
+      name: 'appIntroCompleted',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        hidden: true,
+      },
+    },
+    {
       name: 'enableLegacyProtection',
       type: 'checkbox',
       defaultValue: false,
