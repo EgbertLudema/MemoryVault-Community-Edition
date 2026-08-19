@@ -3,7 +3,7 @@
 MemoryVault Community Edition is the self-hostable App and Admin version of
 MemoryVault. It lets you save memories, notes, photos, videos, loved-one
 profiles, groups, and Open When Messages (letters that unlock on a date or
-after a life event) in your own deployment — with no usage limits, since
+after a life event) in your own deployment, with no usage limits, since
 you're running it yourself.
 
 This public repository intentionally contains only the product app and Payload
@@ -16,7 +16,7 @@ hosted-service code, or internal operational code.
 
 <p align="center">
   <img src="./docs/screenshots/SS_CE_Memories.png" alt="An open memory in MemoryVault" width="260" />
-  <img src="./docs/screenshots/SS_EC_LovedOnes.png" alt="The Loved Ones directory" width="260" />
+  <img src="./docs/screenshots/SS_CE_LovedOnes.png" alt="The Loved Ones directory" width="260" />
   <img src="./docs/screenshots/SS_CE_OpenWhen.png" alt="An Open When Message" width="260" />
 </p>
 
@@ -36,7 +36,7 @@ Then open [http://localhost:3000](http://localhost:3000). Payload Admin is at
 
 The compose file starts Postgres for you, but you still need to fill in a few
 secrets and your media storage credentials in `.env` before things work end to
-end — see [Environment Variables](#environment-variables) below,
+end, see [Environment Variables](#environment-variables) below,
 `PAYLOAD_SECRET`, `APP_ENCRYPTION_KEY`, and the `S3_*` values in particular.
 
 For a manual (non-Docker) setup, see [Manual Setup](#manual-setup).
@@ -54,7 +54,7 @@ For a manual (non-Docker) setup, see [Manual Setup](#manual-setup).
 
 MemoryVault Community Edition is licensed under the GNU Affero General
 Public License v3.0 (AGPL-3.0). This means you're free to run, study,
-modify, and redistribute it, including for commercial use — but if you run
+modify, and redistribute it, including for commercial use, but if you run
 a modified version as a network service, you must make the source of your
 modified version available to its users.
 
@@ -177,15 +177,15 @@ database, use a fresh database before retrying migrations.
 MemoryVault supports three storage backends, picked with `STORAGE_DRIVER` in
 `.env`:
 
-- **`local`** (default) — stores files on disk in the app's `media/` folder.
+- **`local`** (default), stores files on disk in the app's `media/` folder.
   No setup required, matches the Docker Compose quickstart. Uploaded content
   is already encrypted at rest at the application level regardless of
   backend, but note that local-disk filenames aren't randomized the way the
   other two backends' are, so treat the `media/` folder itself as sensitive.
-- **`s3`** — any S3-compatible object storage: Amazon S3, Cloudflare R2,
+- **`s3`**, any S3-compatible object storage: Amazon S3, Cloudflare R2,
   MinIO, or any other S3-compatible API. Requires the `S3_*` variables in
   `.env`.
-- **`vercel-blob`** — if you're deploying on Vercel, point `BLOB_READ_WRITE_TOKEN`
+- **`vercel-blob`**, if you're deploying on Vercel, point `BLOB_READ_WRITE_TOKEN`
   at a Blob store from your Vercel project settings.
 
 Leaving `STORAGE_DRIVER` unset auto-detects from whichever credentials are
@@ -204,16 +204,16 @@ present (S3 first, then Vercel Blob), falling back to `local` if none are set.
 
 This repository does not include the MemoryVault marketing website, website page
 builder, website assets, hosted-service implementation, or private deployment
-workflows. Two-factor authentication and paid-plan concepts are cloud-only —
+workflows. Two-factor authentication and paid-plan concepts are cloud-only,
 self-hosting already gives you the full, unlimited product on your own
 infrastructure.
 
 ## Contributing
 
-Contributions are welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md) for how
+Contributions are welcome, see [CONTRIBUTING.md](./CONTRIBUTING.md) for how
 to get started, and please follow our
 [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 This repository is exported from a private monorepo, so pull requests here
-can't be merged directly upstream — see CONTRIBUTING.md for how that works in
+can't be merged directly upstream, see CONTRIBUTING.md for how that works in
 practice.

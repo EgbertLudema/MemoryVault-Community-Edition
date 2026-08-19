@@ -8,12 +8,12 @@ Thanks for your interest in contributing. Please read our
 This repository is **exported** from a private monorepo that also contains
 the MemoryVault marketing website, hosted-service billing, and other
 cloud-only code that isn't open source. It isn't a manually-maintained
-mirror — it's regenerated from the private repo.
+mirror,  it's regenerated from the private repo.
 
 That has one practical consequence: **pull requests opened here can't be
 merged directly with a click.** When a PR looks good, the maintainer ports
 the change into the private monorepo (by hand or via patch), tests it there,
-and it ships in the next export/release — at which point it appears in this
+and it ships in the next export/release,  at which point it appears in this
 repository's history under the maintainer's commit, with credit to you in
 the PR thread and release notes. This is slower than a normal open-source
 repo, but it's the tradeoff of shipping a subset of a larger private
@@ -42,7 +42,7 @@ and votes aren't split across two places.
 1. Fork the repository and create a branch from `master`.
 2. Set up your local environment following the [README](./README.md)
    Quickstart or Manual Setup.
-3. Make your change. Keep PRs focused — one fix or feature per PR.
+3. Make your change. Keep PRs focused, one fix or feature per PR.
 4. If you changed a Payload collection or global, run:
    ```bash
    npm run generate:types
