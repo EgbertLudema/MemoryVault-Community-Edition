@@ -2,7 +2,7 @@ import crypto from 'crypto'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getAppUserFromHeaders } from '@/lib/appAuth'
-import { getPublicMediaBaseUrl } from '@/lib/mediaBlob'
+import { getPublicMediaBaseUrl, getStorageDriver } from '@/lib/mediaBlob'
 
 type Media = Record<string, any>
 
@@ -21,6 +21,21 @@ function toNumberId(value: unknown) {
 }
 
 function getFileUrl(media: Media, filename: string) {
+  // Local mode: never trust media.url. Payload's built-in local storage sets
+  // it to its own native /api/media/file/{filename} route, which is
+  // absolute (so the naive "already a URL?" check below would wrongly
+  // accept it) but doesn't recognize this app's auth cookie and 403s. Always
+  // route through our own local-file endpoint instead.
+  if (getStorageDriver() === 'local') {
+    const baseUrl = getPublicMediaBaseUrl()
+
+    if (!baseUrl) {
+      throw new Error('Media storage is not configured (check STORAGE_DRIVER and its related env vars)')
+    }
+
+    return `${baseUrl}/${encodeURIComponent(filename)}`
+  }
+
   const mediaUrl = toStringSafe(media?.url)
 
   if (mediaUrl.startsWith('http://') || mediaUrl.startsWith('https://')) {
@@ -30,7 +45,7 @@ function getFileUrl(media: Media, filename: string) {
   const baseUrl = getPublicMediaBaseUrl()
 
   if (!baseUrl) {
-    throw new Error('S3 media storage is not configured')
+    throw new Error('Media storage is not configured (check STORAGE_DRIVER and its related env vars)')
   }
 
   return `${baseUrl}/${encodeURIComponent(filename)}`
@@ -274,7 +289,10 @@ export async function getOwnedPosterBlobFromHeaders(
     return { error: 'not_found' }
   }
 
-  if (posterUrl.startsWith('http://') || posterUrl.startsWith('https://')) {
+  // Same local-mode caveat as getFileUrl: Payload's native local-storage URL
+  // is absolute but not usable here, so don't trust it even if it looks like
+  // a real URL - always resolve through our own filename-based routing.
+  if (getStorageDriver() !== 'local' && (posterUrl.startsWith('http://') || posterUrl.startsWith('https://'))) {
     return {
       media: mediaResult.media,
       fileUrl: posterUrl,
@@ -291,6 +309,36 @@ export async function getOwnedPosterBlobFromHeaders(
     media: mediaResult.media,
     fileUrl: getFileUrl(mediaResult.media, filename),
   }
+}
+
+export function getMediaFileUrl(media: Media) {
+  const filename = toStringSafe(media?.filename)
+
+  if (!filename) {
+    return null
+  }
+
+  return getFileUrl(media, filename)
+}
+
+export function getPosterFileUrl(media: Media) {
+  const posterUrl = toStringSafe(media?.posterUrl)
+
+  if (!posterUrl) {
+    return null
+  }
+
+  if (posterUrl.startsWith('http://') || posterUrl.startsWith('https://')) {
+    return posterUrl
+  }
+
+  const filename = decodeURIComponent(posterUrl.split('/').pop() ?? '')
+
+  if (!filename) {
+    return null
+  }
+
+  return getFileUrl(media, filename)
 }
 
 export function applyForwardedHeaders(target: Headers, source: Headers) {

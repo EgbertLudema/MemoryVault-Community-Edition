@@ -2,25 +2,65 @@
 
 MemoryVault Community Edition is the self-hostable App and Admin version of
 MemoryVault. It lets you save memories, notes, photos, videos, loved-one
-profiles, groups, and legacy messages in your own deployment.
+profiles, groups, and Open When Messages (letters that unlock on a date or
+after a life event) in your own deployment — with no usage limits, since
+you're running it yourself.
 
 This public repository intentionally contains only the product app and Payload
 admin. It does not include the private MemoryVault website, marketing CMS,
 hosted-service code, or internal operational code.
 
-The Community Edition is the free self-hosted app and admin experience.
+<p align="center">
+  <img src="./docs/screenshots/SS_CE_Dashboard.png" alt="MemoryVault dashboard" width="800" />
+</p>
+
+<p align="center">
+  <img src="./docs/screenshots/SS_CE_Memories.png" alt="An open memory in MemoryVault" width="260" />
+  <img src="./docs/screenshots/SS_EC_LovedOnes.png" alt="The Loved Ones directory" width="260" />
+  <img src="./docs/screenshots/SS_CE_OpenWhen.png" alt="An Open When Message" width="260" />
+</p>
+
+## Quickstart (Docker Compose)
+
+The fastest way to try MemoryVault locally:
+
+```bash
+git clone https://github.com/EgbertLudema/MemoryVault-Community-Edition.git
+cd MemoryVault-Community-Edition
+cp .env.example .env
+docker compose up
+```
+
+Then open [http://localhost:3000](http://localhost:3000). Payload Admin is at
+[http://localhost:3000/admin](http://localhost:3000/admin).
+
+The compose file starts Postgres for you, but you still need to fill in a few
+secrets and your media storage credentials in `.env` before things work end to
+end — see [Environment Variables](#environment-variables) below,
+`PAYLOAD_SECRET`, `APP_ENCRYPTION_KEY`, and the `S3_*` values in particular.
+
+For a manual (non-Docker) setup, see [Manual Setup](#manual-setup).
 
 ## What Is Included
 
 - MemoryVault app routes for dashboard, memories, loved ones, groups, and account
+- Open When Messages (letters that unlock on a date or after a life event)
+- Vault export/import (download your entire vault as a zip, or import one back in)
 - Payload admin panel
 - App email/password authentication routes
 - Memory, media, loved-one, group, legacy-delivery, and user APIs
 
 ## License
 
-MemoryVault Community Edition is licensed under the PolyForm Noncommercial
-License 1.0.0.
+MemoryVault Community Edition is licensed under the GNU Affero General
+Public License v3.0 (AGPL-3.0). This means you're free to run, study,
+modify, and redistribute it, including for commercial use — but if you run
+a modified version as a network service, you must make the source of your
+modified version available to its users.
+
+This license covers only MemoryVault Community Edition. The private
+MemoryVault website, marketing CMS, and hosted-service code are not part
+of this repository and are not open source.
 
 See [LICENSE.md](./LICENSE.md) and [NOTICE](./NOTICE).
 
@@ -32,28 +72,13 @@ See [LICENSE.md](./LICENSE.md) and [NOTICE](./NOTICE).
 - S3-compatible object storage for media uploads
 - Optional: Resend for email delivery
 
-## Setup
+## Environment Variables
 
-1. Clone the repository:
-
-```bash
-git clone https://github.com/EgbertLudema/MemoryVault-Community-Edition.git
-cd MemoryVault-Community-Edition
-```
-
-2. Install dependencies:
-
-```bash
-npm install
-```
-
-3. Copy the environment file:
+Copy the environment file and fill it in:
 
 ```bash
 cp .env.example .env
 ```
-
-4. Fill in `.env`.
 
 Minimum local values:
 
@@ -70,7 +95,29 @@ S3_PUBLIC_URL=https://media.example.com
 APP_ENCRYPTION_KEY=replace-with-a-long-random-secret
 ```
 
-5. Make sure Postgres is running.
+## Manual Setup
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/EgbertLudema/MemoryVault-Community-Edition.git
+cd MemoryVault-Community-Edition
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Copy the environment file and fill it in (see
+   [Environment Variables](#environment-variables) above):
+
+```bash
+cp .env.example .env
+```
+
+4. Make sure Postgres is running.
 
 For the local database from this repository:
 
@@ -81,19 +128,19 @@ docker compose up -d postgres
 If you use a hosted Postgres database, set `POSTGRES_URL` to the exact
 connection string from that provider.
 
-6. Run the database migrations:
+5. Run the database migrations:
 
 ```bash
 npm run db:migrate
 ```
 
-7. Start the app:
+6. Start the app:
 
 ```bash
 npm run dev
 ```
 
-8. Open:
+7. Open:
 
 ```txt
 http://localhost:3000
@@ -104,19 +151,6 @@ The root URL redirects to the app dashboard. Payload Admin is available at:
 ```txt
 http://localhost:3000/admin
 ```
-
-## Docker
-
-You can start a local Postgres database and the app with Docker Compose:
-
-```bash
-cp .env.example .env
-docker compose up
-```
-
-The compose file provides Postgres to the app container. You still need to set
-secrets and service credentials in `.env`, especially `PAYLOAD_SECRET`,
-`APP_ENCRYPTION_KEY`, and the `S3_*` media storage values.
 
 ## Database Connection Errors
 
@@ -140,13 +174,22 @@ database, use a fresh database before retrying migrations.
 
 ## Media Storage
 
-MemoryVault stores uploaded media in S3-compatible object storage.
+MemoryVault supports three storage backends, picked with `STORAGE_DRIVER` in
+`.env`:
 
-Recommended options:
+- **`local`** (default) — stores files on disk in the app's `media/` folder.
+  No setup required, matches the Docker Compose quickstart. Uploaded content
+  is already encrypted at rest at the application level regardless of
+  backend, but note that local-disk filenames aren't randomized the way the
+  other two backends' are, so treat the `media/` folder itself as sensitive.
+- **`s3`** — any S3-compatible object storage: Amazon S3, Cloudflare R2,
+  MinIO, or any other S3-compatible API. Requires the `S3_*` variables in
+  `.env`.
+- **`vercel-blob`** — if you're deploying on Vercel, point `BLOB_READ_WRITE_TOKEN`
+  at a Blob store from your Vercel project settings.
 
-- Cloudflare R2 for hosted object storage.
-- MinIO for fully self-hosted object storage.
-- Any provider with an S3-compatible API.
+Leaving `STORAGE_DRIVER` unset auto-detects from whichever credentials are
+present (S3 first, then Vercel Blob), falling back to `local` if none are set.
 
 ## Scripts
 
@@ -161,4 +204,16 @@ Recommended options:
 
 This repository does not include the MemoryVault marketing website, website page
 builder, website assets, hosted-service implementation, or private deployment
-workflows.
+workflows. Two-factor authentication and paid-plan concepts are cloud-only —
+self-hosting already gives you the full, unlimited product on your own
+infrastructure.
+
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md) for how
+to get started, and please follow our
+[Code of Conduct](./CODE_OF_CONDUCT.md).
+
+This repository is exported from a private monorepo, so pull requests here
+can't be merged directly upstream — see CONTRIBUTING.md for how that works in
+practice.

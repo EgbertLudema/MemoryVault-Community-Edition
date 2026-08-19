@@ -2,7 +2,7 @@
   "name": "3d-photo-grid",
   "version": "1.0.0",
   "description": "A blank template to get started with Payload 3.0",
-  "license": "PolyForm-Noncommercial-1.0.0",
+  "license": "AGPL-3.0-or-later",
   "type": "module",
   "scripts": {
     "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build",
@@ -34,7 +34,9 @@
     "@payloadcms/email-resend": "^3.84.1",
     "@payloadcms/next": "^3.84.1",
     "@payloadcms/richtext-lexical": "^3.84.1",
+    "@payloadcms/storage-vercel-blob": "^3.84.1",
     "@payloadcms/ui": "^3.84.1",
+    "@react-pdf/renderer": "^4.6.0",
     "@tailwindcss/postcss": "^4.2.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",

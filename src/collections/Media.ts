@@ -67,6 +67,19 @@ export const Media: CollectionConfig = {
       required: false,
     },
     {
+      name: 'purpose',
+      type: 'select',
+      defaultValue: 'content',
+      options: [
+        { label: 'Content', value: 'content' },
+        { label: 'Vault archive', value: 'vault-archive' },
+      ],
+      admin: {
+        hidden: true,
+        readOnly: true,
+      },
+    },
+    {
       name: 'posterUrl',
       type: 'text',
       required: false,

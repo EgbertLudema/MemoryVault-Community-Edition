@@ -11,6 +11,10 @@
     {
       "path": "/api/admin-email-campaigns/run",
       "schedule": "15 7 * * *"
+    },
+    {
+      "path": "/api/vault/jobs/run",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

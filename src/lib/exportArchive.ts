@@ -2,7 +2,7 @@ import path from 'path'
 import sharp from 'sharp'
 import type { LegacyDeliveryData } from '@/lib/legacyDeliveryContent'
 
-type ZipEntry = {
+export type ZipEntry = {
   name: string
   data: Buffer
 }
@@ -528,6 +528,77 @@ export function createZip(entries: ZipEntry[]) {
   end.writeUInt16LE(0, 20)
 
   return Buffer.concat([...fileParts, centralDirectoryBuffer, end])
+}
+
+const EOCD_SIGNATURE = 0x06054b50
+const CENTRAL_DIR_SIGNATURE = 0x02014b50
+const LOCAL_HEADER_SIGNATURE = 0x04034b50
+const MIN_EOCD_SIZE = 22
+const MAX_COMMENT_SIZE = 65535
+
+function findEndOfCentralDirectory(buffer: Buffer) {
+  const searchStart = Math.max(0, buffer.length - MIN_EOCD_SIZE - MAX_COMMENT_SIZE)
+
+  for (let offset = buffer.length - MIN_EOCD_SIZE; offset >= searchStart; offset -= 1) {
+    if (buffer.readUInt32LE(offset) === EOCD_SIGNATURE) {
+      return offset
+    }
+  }
+
+  return -1
+}
+
+/**
+ * Reads zip archives produced by createZip() above (stored/uncompressed entries only).
+ * Not a general-purpose zip reader - rejects compressed entries rather than
+ * silently returning corrupt data.
+ */
+export function readZip(buffer: Buffer): ZipEntry[] {
+  const eocdOffset = findEndOfCentralDirectory(buffer)
+
+  if (eocdOffset === -1) {
+    throw new Error('Not a valid zip archive')
+  }
+
+  const entryCount = buffer.readUInt16LE(eocdOffset + 10)
+  const centralDirOffset = buffer.readUInt32LE(eocdOffset + 16)
+
+  const entries: ZipEntry[] = []
+  let cursor = centralDirOffset
+
+  for (let index = 0; index < entryCount; index += 1) {
+    if (buffer.readUInt32LE(cursor) !== CENTRAL_DIR_SIGNATURE) {
+      throw new Error('Corrupt zip central directory')
+    }
+
+    const compressionMethod = buffer.readUInt16LE(cursor + 10)
+    const uncompressedSize = buffer.readUInt32LE(cursor + 24)
+    const nameLength = buffer.readUInt16LE(cursor + 28)
+    const extraLength = buffer.readUInt16LE(cursor + 30)
+    const commentLength = buffer.readUInt16LE(cursor + 32)
+    const localHeaderOffset = buffer.readUInt32LE(cursor + 42)
+    const name = buffer
+      .subarray(cursor + 46, cursor + 46 + nameLength)
+      .toString('utf8')
+
+    if (compressionMethod !== 0) {
+      throw new Error(`Unsupported zip compression for entry "${name}"`)
+    }
+
+    if (buffer.readUInt32LE(localHeaderOffset) !== LOCAL_HEADER_SIGNATURE) {
+      throw new Error(`Corrupt zip local header for entry "${name}"`)
+    }
+
+    const localNameLength = buffer.readUInt16LE(localHeaderOffset + 26)
+    const localExtraLength = buffer.readUInt16LE(localHeaderOffset + 28)
+    const dataStart = localHeaderOffset + 30 + localNameLength + localExtraLength
+    const data = buffer.subarray(dataStart, dataStart + uncompressedSize)
+
+    entries.push({ name, data: Buffer.from(data) })
+    cursor += 46 + nameLength + extraLength + commentLength
+  }
+
+  return entries
 }
 
 export function buildExportMediaPath(

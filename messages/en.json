@@ -4,6 +4,227 @@
     "english": "English",
     "dutch": "Dutch"
   },
+  "CookieConsent": {
+    "title": "Cookie preferences",
+    "message": "A few cookies help us see which ads bring people to MemoryVault. Nothing is shared until you give the OK.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "currentAccepted": "You've currently accepted tracking cookies.",
+    "currentDeclined": "You've currently declined tracking cookies.",
+    "manageLink": "Cookie preferences",
+    "saved": "Saved!"
+  },
+  "Pricing": {
+    "eyebrow": "Plans",
+    "title": "Choose the version that fits your legacy",
+    "description": "Free forever, monthly, annual, or pay once and own it for life.",
+    "perMonth": "/month",
+    "perYear": "/year",
+    "oneTime": "one-time",
+    "openSource": {
+      "eyebrow": "Build in public",
+      "title": "Open source",
+      "description": "Inspect the code, self-host it, contribute improvements, or follow along.",
+      "price": "MIT licensed",
+      "meta": "Self-hosted",
+      "cta": "View on GitHub",
+      "features": [
+        {
+          "label": "Memories stored",
+          "value": "Unlimited"
+        },
+        {
+          "label": "Items per memory",
+          "value": "Unlimited"
+        },
+        {
+          "label": "Loved ones",
+          "value": "Unlimited"
+        },
+        {
+          "label": "Digital checklist"
+        },
+        {
+          "label": "Storage",
+          "value": "Unlimited"
+        },
+        {
+          "label": "Hosted for you",
+          "included": false
+        },
+        {
+          "label": "Note memories"
+        },
+        {
+          "label": "Photo memories"
+        },
+        {
+          "label": "Video messages"
+        },
+        {
+          "label": "Open When messages",
+          "value": "Unlimited"
+        },
+        {
+          "label": "Custom groups"
+        },
+        {
+          "label": "Supporting MemoryVault"
+        }
+      ]
+    },
+    "free": {
+      "eyebrow": "Start today",
+      "title": "Free",
+      "description": "A focused hosted vault for capturing the essentials.",
+      "price": "Free forever",
+      "meta": "Hosted by us",
+      "cta": "Create free account",
+      "features": [
+        {
+          "label": "Memories stored",
+          "value": "Up to 12"
+        },
+        {
+          "label": "Items per memory",
+          "value": "6 items"
+        },
+        {
+          "label": "Loved ones",
+          "value": "Up to 6"
+        },
+        {
+          "label": "Digital checklist"
+        },
+        {
+          "label": "Storage",
+          "value": "250MB"
+        },
+        {
+          "label": "Hosted for you"
+        },
+        {
+          "label": "Note memories"
+        },
+        {
+          "label": "Photo memories"
+        },
+        {
+          "label": "Video messages",
+          "included": false
+        },
+        {
+          "label": "Open When messages",
+          "value": "Up to 6"
+        },
+        {
+          "label": "Custom groups",
+          "included": false
+        },
+        {
+          "label": "Supporting MemoryVault"
+        }
+      ]
+    },
+    "lifetime": {
+      "eyebrow": "Pay once, own it",
+      "title": "Lifetime",
+      "description": "Pay once, keep it for as long as MemoryVault exists.",
+      "bestValue": "Best value",
+      "meta": "Hosted by us",
+      "standardPrice": "€149",
+      "foundingPrice": "€99",
+      "spotsLeft": "{count} of {limit} founding spots left",
+      "soldOut": "Founding pricing is sold out, standard price applies",
+      "cta": "Claim founding price",
+      "ctaStandard": "Buy lifetime access",
+      "features": [
+        {
+          "label": "Memories stored",
+          "value": "500 memories"
+        },
+        {
+          "label": "Items per memory",
+          "value": "6 items"
+        },
+        {
+          "label": "Loved ones",
+          "value": "200 loved ones"
+        },
+        {
+          "label": "Digital checklist"
+        },
+        {
+          "label": "Storage",
+          "value": "10GB"
+        },
+        {
+          "label": "Hosted for you"
+        },
+        {
+          "label": "Note memories"
+        },
+        {
+          "label": "Photo memories"
+        },
+        {
+          "label": "Video messages"
+        },
+        {
+          "label": "Open When messages",
+          "value": "400 messages"
+        },
+        {
+          "label": "Custom groups"
+        },
+        {
+          "label": "Supporting MemoryVault"
+        },
+        {
+          "label": "Never billed again"
+        }
+      ]
+    },
+    "comparison": {
+      "title": "Compare every plan",
+      "featureColumn": "Feature"
+    },
+    "trust": {
+      "title": "Why \"lifetime\" is a promise we can actually back up",
+      "body1": "MemoryVault Community Edition, the same software that runs this hosted service, is open source and free to self-host. If MemoryVault the company ever shuts down or changes direction, a lifetime purchase doesn't leave you stranded: you can export your data and run it yourself, for free, for as long as you want.",
+      "body2": "\"Lifetime\" means access to MemoryVault for as long as the hosted service exists, capped at 500 memories, 200 loved ones, and 10GB of storage, the same limits as the monthly and annual plans. It isn't unlimited, and it isn't a guarantee that the company runs forever. It's a guarantee that your memories aren't locked to us even if it doesn't.",
+      "link": "See the code and what self-hosting involves"
+    }
+  },
+  "BlogCta": {
+    "defaultHeading": "Not ready to start a vault yet?",
+    "defaultBody": "Download our free Digital Legacy Checklist PDF instead. A short, practical starting point for organizing what matters. No account required.",
+    "defaultButtonLabel": "Download the free PDF"
+  },
+  "Checklist": {
+    "eyebrow": "Free download",
+    "title": "The Digital Legacy Checklist",
+    "description": "A short, practical checklist for organizing your accounts, memories, and wishes, before anyone has to guess.",
+    "emailLabel": "Email address",
+    "emailPlaceholder": "you@example.com",
+    "submit": "Send me the checklist",
+    "submitting": "Sending...",
+    "successTitle": "Check your inbox",
+    "successBody": "We've sent a confirmation link to {email}. Click it to get your checklist.",
+    "alreadyConfirmedTitle": "You're already confirmed",
+    "alreadyConfirmedBody": "Check your inbox for the checklist, or use the link below.",
+    "error": "Something went wrong. Please try again.",
+    "confirm": {
+      "confirmedTitle": "You're confirmed",
+      "confirmedBody": "Your Digital Legacy Checklist is ready.",
+      "downloadCta": "Download the checklist",
+      "invalidTitle": "That link isn't valid",
+      "invalidBody": "Double check the link from your email, or request a new one below.",
+      "expiredTitle": "That link has expired",
+      "expiredBody": "Confirmation links expire after 48 hours. Request a new one below.",
+      "backToChecklist": "Back to the checklist page"
+    }
+  },
   "HomeHowItWorksDemo": {
     "stepKicker": "Step {step}",
     "demoBadge": "Demo",
@@ -154,6 +375,7 @@
     "modeOwnVault": "My vault",
     "planFree": "Free",
     "planPro": "Pro",
+    "planLifetime": "Lifetime",
     "planCommunity": "Community",
     "storageUnlimited": "Unlimited storage",
     "memoriesShort": "Memories",
@@ -275,6 +497,22 @@
     "createAccount": "Create an account",
     "alreadyHaveAccount": "Already have an account?",
     "signIn": "Sign in",
+    "twoFactorTitle": "Two-factor verification",
+    "twoFactorBody": "Enter the code from your authenticator app, or use a backup code.",
+    "twoFactorCodeLabel": "Verification code",
+    "twoFactorCodePlaceholder": "000000",
+    "twoFactorBackupCodeLabel": "Backup code",
+    "twoFactorBackupCodePlaceholder": "XXXX-XXXX",
+    "twoFactorUseBackupCode": "Use a backup code instead",
+    "twoFactorUseAuthenticatorInstead": "Use your authenticator app instead",
+    "twoFactorSubmit": "Verify",
+    "twoFactorVerifying": "Verifying...",
+    "twoFactorCodeRequired": "Enter a code to continue",
+    "twoFactorInvalidCode": "Invalid or expired code",
+    "twoFactorSendEmailCode": "Email me a code instead",
+    "twoFactorSendingEmailCode": "Sending...",
+    "twoFactorEmailCodeSent": "Code sent. Check your email.",
+    "twoFactorEmailCodeFailed": "Could not send a code. Please try again.",
     "passwordChecks": {
       "characters": "8+ characters",
       "uppercase": "Uppercase letter",
@@ -475,8 +713,12 @@
     "profileBody": "Update your name and profile picture here. Your email is shown for reference and cannot be changed from this form.",
     "legacyTitle": "Legacy protection",
     "legacyBody": "Choose trusted contacts and enable check-ins so your vault can be released according to your legacy settings.",
+    "securityTitle": "Two-factor authentication",
+    "securityBody": "Add an authenticator app as a second sign-in step, with backup codes and an email fallback for when you don't have it handy.",
     "actionsTitle": "Account actions",
-    "actionsBody": "Use this section for account-level actions such as logging out."
+    "actionsBody": "Use this section for account-level actions such as logging out.",
+    "vaultDataTitle": "Export & import your vault",
+    "vaultDataBody": "Download everything in your vault as a zip file, or import one you exported earlier - useful for backups or moving between hosting options."
   },
   "LovedOneDetail": {
     "label": "Loved ones",
@@ -811,6 +1053,7 @@
       "Up to 200 Open When messages (vs. 6)",
       "Add photos to Open When messages"
     ],
+    "choosePlanTitle": "Choose your plan",
     "profileLabel": "Profile",
     "profileTitle": "Your account details",
     "profileBody": "Keep your personal information up to date.",
@@ -863,7 +1106,66 @@
     "websiteLink": "Go to website",
     "vaultLabel": "Your Vault",
     "vaultTitle": "Built to last",
-    "vaultBody": "You're preserving precious memories that will bring comfort and joy to your loved ones for years to come."
+    "vaultBody": "You're preserving precious memories that will bring comfort and joy to your loved ones for years to come.",
+    "vaultDataLabel": "Your Data",
+    "vaultDataTitle": "Export & import your vault",
+    "vaultDataBody": "Download everything in your vault as a zip file, or import a vault you exported earlier. Useful for moving between the hosted app and a self-hosted install, or just keeping your own backup.",
+    "vaultExportTitle": "Export your vault",
+    "vaultExportBody": "Get a zip with your memories, loved ones, photos and videos, Open When messages, and checklist data.",
+    "vaultExportButton": "Export my vault",
+    "vaultExportButtonLoading": "Starting export...",
+    "vaultExportStarted": "Export started. We'll email you a download link when it's ready.",
+    "vaultExportError": "Unable to start the export. Please try again.",
+    "vaultDownloadExport": "Download export",
+    "vaultImportTitle": "Import a vault",
+    "vaultImportBody": "Choose a .zip file exported from MemoryVault. Imported items are always added as new, your existing data is never overwritten.",
+    "vaultImportButton": "Import vault",
+    "vaultImportButtonLoading": "Starting import...",
+    "vaultImportStarted": "Import started. We'll email you when it's finished.",
+    "vaultImportError": "Unable to start the import. Please try again.",
+    "vaultImportChooseFile": "Choose a .zip file to import first.",
+    "vaultImportSummary": "Imported {memories, plural, one {# memory} other {# memories}}, {lovedOnes, plural, one {# loved one} other {# loved ones}}, and {media, plural, one {# media file} other {# media files}}.",
+    "vaultJobStatusQueued": "Queued - this usually starts within a few minutes.",
+    "vaultJobStatusProcessing": "In progress...",
+    "vaultJobStatusCompleted": "Completed",
+    "vaultJobStatusFailed": "Failed",
+    "vaultJobStatusExpired": "This export link has expired",
+    "vaultRefreshStatus": "Refresh status",
+    "vaultRefreshing": "Refreshing...",
+    "securityLabel": "Security",
+    "securityTitle": "Two-factor authentication",
+    "securityBody": "Add an extra layer of protection to your account with an authenticator app.",
+    "twoFactorDisabledBody": "Two-factor authentication is currently off. Turn it on to require a code from your authenticator app when signing in.",
+    "twoFactorEnable": "Enable two-factor authentication",
+    "twoFactorStarting": "Starting...",
+    "twoFactorSetupError": "Could not start setup. Please try again.",
+    "twoFactorSetupBody": "Scan this QR code with your authenticator app (Google Authenticator, Authy, 1Password, etc.), or enter the code manually.",
+    "twoFactorQrAlt": "Two-factor authentication QR code",
+    "twoFactorManualEntryLabel": "Manual entry code",
+    "twoFactorCodeLabel": "Enter the 6-digit code",
+    "twoFactorCodePlaceholder": "000000",
+    "twoFactorBackupCodeLabel": "Backup code",
+    "twoFactorBackupCodePlaceholder": "XXXX-XXXX",
+    "twoFactorUseBackupCode": "Use a backup code instead",
+    "twoFactorUseAuthenticatorInstead": "Use your authenticator app instead",
+    "twoFactorCancel": "Cancel",
+    "twoFactorConfirmSetup": "Confirm and enable",
+    "twoFactorConfirmButton": "Confirm",
+    "twoFactorVerifying": "Verifying...",
+    "twoFactorInvalidCode": "Invalid code",
+    "twoFactorEnabledToast": "Two-factor authentication enabled",
+    "twoFactorStatusEnabled": "Two-factor authentication is enabled",
+    "twoFactorRegenerateBackupCodes": "Regenerate backup codes",
+    "twoFactorDisable": "Disable two-factor authentication",
+    "twoFactorConfirmDisableBody": "Enter a code from your authenticator app (or a backup code) to disable two-factor authentication.",
+    "twoFactorConfirmRegenerateBody": "Enter a code from your authenticator app (or a backup code) to generate a new set of backup codes. Your old backup codes will stop working.",
+    "twoFactorDisabledToast": "Two-factor authentication disabled",
+    "twoFactorBackupCodesRegeneratedToast": "New backup codes generated",
+    "twoFactorBackupCodesTitle": "Save your backup codes",
+    "twoFactorBackupCodesBody": "Each code can be used once to sign in if you lose access to your authenticator app. Save them somewhere safe - they won't be shown again.",
+    "twoFactorCopyBackupCodes": "Copy codes",
+    "twoFactorBackupCodesCopied": "Backup codes copied",
+    "twoFactorDone": "Done"
   },
   "DigitalLegacyChecklist": {
     "heroTitle": "Arrange what helps later",

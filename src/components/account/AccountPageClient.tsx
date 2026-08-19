@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useRouter } from '@/i18n/navigation'
 import { DashboardLoadReveal } from '@/components/dashboard/DashboardLoadReveal'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { Modal } from '@/components/Modal'
 import { AccountHelpTour } from '@/components/onboarding/AccountHelpTour'
 import { CheckIcon } from '@/components/icons/CheckIcon'
 import { EditIcon } from '@/components/icons/EditIcon'
@@ -21,6 +22,18 @@ import {
   getUploadLimitForMimeType,
 } from '@/lib/uploadLimits'
 import { analytics } from '@/lib/analytics'
+
+type VaultJob = {
+  id: number
+  type: 'export' | 'import'
+  status: 'queued' | 'processing' | 'completed' | 'failed' | 'expired'
+  summary: Record<string, number> | null
+  errorMessage: string | null
+  requestedAt: string
+  completedAt: string | null
+  expiresAt: string | null
+  downloadAvailable: boolean
+}
 
 type LovedOneOption = {
   id: number
@@ -47,6 +60,8 @@ type AccountPageClientProps = {
   memoryCountLimit?: number | null
   openWhenMessageCount?: number
   openWhenMessageCountLimit?: number | null
+  remainingFoundingSpots?: number
+  foundingSpotLimit?: number
 }
 
 function cn(...classes: Array<string | false | null | undefined>) {
@@ -71,11 +86,16 @@ export function AccountPageClient({
   memoryCountLimit = null,
   openWhenMessageCount = 0,
   openWhenMessageCountLimit = null,
+  remainingFoundingSpots = 0,
+  foundingSpotLimit = 200,
 }: AccountPageClientProps) {
   const t = useTranslations('AccountPage')
+  const tPricing = useTranslations('Pricing')
   const router = useRouter()
   const { showToast } = useToast()
   const isLegacyOnly = variant === 'legacy'
+  const [showPlansModal, setShowPlansModal] = useState(false)
+  const foundingAvailable = remainingFoundingSpots > 0
 
   const [firstName, setFirstName] = useState(initialFirstName)
   const [lastName, setLastName] = useState(initialLastName)
@@ -100,6 +120,12 @@ export function AccountPageClient({
   const [resendingContactId, setResendingContactId] = useState<number | null>(null)
   const [logoutLoading, setLogoutLoading] = useState(false)
   const profileImageInputRef = React.useRef<HTMLInputElement | null>(null)
+  const [vaultJobs, setVaultJobs] = useState<VaultJob[]>([])
+  const [vaultJobsLoading, setVaultJobsLoading] = useState(false)
+  const [vaultExportLoading, setVaultExportLoading] = useState(false)
+  const [vaultImportLoading, setVaultImportLoading] = useState(false)
+  const [vaultImportFile, setVaultImportFile] = useState<File | null>(null)
+  const vaultImportInputRef = React.useRef<HTMLInputElement | null>(null)
 
   const hasSelectableLovedOnes = lovedOneOptions.length > 0
   const hasSelectedTrustedContact = selectedContactIds.length > 0
@@ -440,6 +466,119 @@ export function AccountPageClient({
       setLogoutLoading(false)
     }
   }
+
+
+  const refreshVaultJobs = React.useCallback(async () => {
+    try {
+      setVaultJobsLoading(true)
+      const response = await fetch('/api/vault/jobs', { credentials: 'include', cache: 'no-store' })
+      if (!response.ok) {
+        return
+      }
+      const body = await response.json().catch(() => null)
+      setVaultJobs(Array.isArray(body?.jobs) ? body.jobs : [])
+    } catch {
+      // Ignore - the user can retry with the refresh button.
+    } finally {
+      setVaultJobsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isLegacyOnly) {
+      return
+    }
+    refreshVaultJobs()
+  }, [isLegacyOnly, refreshVaultJobs])
+
+  async function handleExportVault() {
+    try {
+      setVaultExportLoading(true)
+      const response = await fetch('/api/vault/export', { method: 'POST', credentials: 'include' })
+
+      if (!response.ok) {
+        throw new Error()
+      }
+
+      showToast({ tone: 'info', message: t('vaultExportStarted') })
+      await refreshVaultJobs()
+    } catch {
+      showToast({ tone: 'error', message: t('vaultExportError') })
+    } finally {
+      setVaultExportLoading(false)
+    }
+  }
+
+  function handleVaultImportFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setVaultImportFile(event.target.files?.[0] ?? null)
+  }
+
+  async function handleImportVault() {
+    if (!vaultImportFile) {
+      showToast({ tone: 'warning', message: t('vaultImportChooseFile') })
+      return
+    }
+
+    try {
+      setVaultImportLoading(true)
+      const form = new FormData()
+      form.append('file', vaultImportFile)
+
+      const response = await fetch('/api/vault/import', {
+        method: 'POST',
+        credentials: 'include',
+        body: form,
+      })
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null)
+        throw new Error(typeof body?.error === 'string' ? body.error : undefined)
+      }
+
+      showToast({ tone: 'info', message: t('vaultImportStarted') })
+      setVaultImportFile(null)
+      if (vaultImportInputRef.current) {
+        vaultImportInputRef.current.value = ''
+      }
+      await refreshVaultJobs()
+    } catch (error) {
+      showToast({
+        tone: 'error',
+        message: error instanceof Error && error.message ? error.message : t('vaultImportError'),
+      })
+    } finally {
+      setVaultImportLoading(false)
+    }
+  }
+
+  function handleDownloadVaultExport(jobId: number) {
+    window.location.href = `/api/vault/export/${jobId}/download`
+  }
+
+  function vaultJobStatusLabel(status: VaultJob['status']) {
+    switch (status) {
+      case 'queued':
+        return t('vaultJobStatusQueued')
+      case 'processing':
+        return t('vaultJobStatusProcessing')
+      case 'completed':
+        return t('vaultJobStatusCompleted')
+      case 'failed':
+        return t('vaultJobStatusFailed')
+      case 'expired':
+        return t('vaultJobStatusExpired')
+      default:
+        return status
+    }
+  }
+
+
+  const latestVaultExportJob = vaultJobs.find((job) => job.type === 'export') ?? null
+  const latestVaultImportJob = vaultJobs.find((job) => job.type === 'import') ?? null
+  const vaultExportInProgress =
+    latestVaultExportJob?.status === 'queued' || latestVaultExportJob?.status === 'processing'
+  const vaultImportInProgress =
+    latestVaultImportJob?.status === 'queued' || latestVaultImportJob?.status === 'processing'
 
   return (
     <div className="relative max-h-full overflow-x-hidden overflow-y-auto">
@@ -837,6 +976,7 @@ export function AccountPageClient({
           </section>
         </DashboardLoadReveal>
 
+
         {!isLegacyOnly ? (
           <DashboardLoadReveal delayMs={280}>
             <section
@@ -874,6 +1014,108 @@ export function AccountPageClient({
                   <WorldIcon className="h-4 w-4" />
                   {t('websiteLink')}
                 </SecondaryButton>
+              </div>
+            </section>
+          </DashboardLoadReveal>
+        ) : null}
+
+        {!isLegacyOnly ? (
+          <DashboardLoadReveal delayMs={320}>
+            <section
+              data-tour="account-data"
+              className="rounded-[28px] corner-shape-squircle border border-white/70 bg-white/80 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:rounded-[32px] sm:p-7"
+            >
+              <div className="mb-6">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
+                  {t('vaultDataLabel')}
+                </div>
+                <h2 className="mt-2 text-[26px] font-bold tracking-tight text-gray-900">
+                  {t('vaultDataTitle')}
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-stone-600">{t('vaultDataBody')}</p>
+              </div>
+
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">{t('vaultExportTitle')}</h3>
+                  <p className="mt-1 text-sm leading-6 text-stone-600">{t('vaultExportBody')}</p>
+                  <PrimaryButton
+                    onClick={handleExportVault}
+                    disabled={vaultExportLoading || vaultExportInProgress}
+                    className="mt-3 w-full sm:w-auto"
+                  >
+                    {vaultExportLoading || vaultExportInProgress
+                      ? t('vaultExportButtonLoading')
+                      : t('vaultExportButton')}
+                  </PrimaryButton>
+
+                  {latestVaultExportJob ? (
+                    <div className="mt-3 text-sm text-stone-600">
+                      <p>{vaultJobStatusLabel(latestVaultExportJob.status)}</p>
+                      {latestVaultExportJob.status === 'completed' ? (
+                        <SecondaryButton
+                          onClick={() => handleDownloadVaultExport(latestVaultExportJob.id)}
+                          className="mt-2"
+                        >
+                          {t('vaultDownloadExport')}
+                        </SecondaryButton>
+                      ) : null}
+                      {latestVaultExportJob.status === 'failed' && latestVaultExportJob.errorMessage ? (
+                        <p className="mt-1 text-red-600">{latestVaultExportJob.errorMessage}</p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">{t('vaultImportTitle')}</h3>
+                  <p className="mt-1 text-sm leading-6 text-stone-600">{t('vaultImportBody')}</p>
+                  <input
+                    ref={vaultImportInputRef}
+                    type="file"
+                    accept=".zip,application/zip"
+                    onChange={handleVaultImportFileChange}
+                    className="mt-3 block w-full cursor-pointer text-sm text-stone-600 file:mr-3 file:cursor-pointer file:rounded-xl file:border-0 file:bg-stone-100 file:px-3 file:py-2 file:text-sm file:font-medium file:text-stone-700"
+                  />
+                  <PrimaryButton
+                    onClick={handleImportVault}
+                    disabled={vaultImportLoading || vaultImportInProgress || !vaultImportFile}
+                    className="mt-3 w-full sm:w-auto"
+                  >
+                    {vaultImportLoading || vaultImportInProgress
+                      ? t('vaultImportButtonLoading')
+                      : t('vaultImportButton')}
+                  </PrimaryButton>
+
+                  {latestVaultImportJob ? (
+                    <div className="mt-3 text-sm text-stone-600">
+                      <p>{vaultJobStatusLabel(latestVaultImportJob.status)}</p>
+                      {latestVaultImportJob.status === 'completed' && latestVaultImportJob.summary ? (
+                        <p className="mt-1">
+                          {t('vaultImportSummary', {
+                            memories: latestVaultImportJob.summary.memories ?? 0,
+                            lovedOnes: latestVaultImportJob.summary.lovedOnes ?? 0,
+                            media: latestVaultImportJob.summary.media ?? 0,
+                          })}
+                        </p>
+                      ) : null}
+                      {latestVaultImportJob.errorMessage ? (
+                        <p className="mt-1 text-amber-700">{latestVaultImportJob.errorMessage}</p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={refreshVaultJobs}
+                  disabled={vaultJobsLoading}
+                  className="text-sm font-medium text-purple-700 hover:underline disabled:opacity-50"
+                >
+                  {vaultJobsLoading ? t('vaultRefreshing') : t('vaultRefreshStatus')}
+                </button>
               </div>
             </section>
           </DashboardLoadReveal>

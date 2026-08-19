@@ -10,6 +10,8 @@ import * as migration_20260614_150000_encrypt_digital_legacy_text_fields from '.
 import * as migration_20260622_120000_add_digital_legacy_priority from './20260622_120000_add_digital_legacy_priority'
 import * as migration_20260804_120000_add_loved_one_email_encryption from './20260804_120000_add_loved_one_email_encryption'
 import * as migration_20260804_130000_drop_loved_one_email_not_null from './20260804_130000_drop_loved_one_email_not_null'
+import * as migration_20260806_120000_add_digital_legacy_intake_completed from './20260806_120000_add_digital_legacy_intake_completed'
+import * as migration_20260819_090000_add_vault_jobs from './20260819_090000_add_vault_jobs'
 
 export const migrations = [
   {
@@ -71,5 +73,15 @@ export const migrations = [
     up: migration_20260804_130000_drop_loved_one_email_not_null.up,
     down: migration_20260804_130000_drop_loved_one_email_not_null.down,
     name: '20260804_130000_drop_loved_one_email_not_null',
+  },
+  {
+    up: migration_20260806_120000_add_digital_legacy_intake_completed.up,
+    down: migration_20260806_120000_add_digital_legacy_intake_completed.down,
+    name: '20260806_120000_add_digital_legacy_intake_completed',
+  },
+  {
+    up: migration_20260819_090000_add_vault_jobs.up,
+    down: migration_20260819_090000_add_vault_jobs.down,
+    name: '20260819_090000_add_vault_jobs',
   },
 ]

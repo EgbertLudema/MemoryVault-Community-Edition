@@ -1,5 +1,7 @@
 import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { getPayload } from 'payload'
+import config from '@payload-config'
 import { AccountPageClient } from '@/components/account/AccountPageClient'
 import { APP_AUTH_COOKIE } from '@/lib/appAuthShared'
 import { getMemoryCountLimit } from '@/lib/memoryLimits'

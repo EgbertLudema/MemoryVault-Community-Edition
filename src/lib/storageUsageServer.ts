@@ -19,9 +19,10 @@ export async function getUserStorageUsageBytes(userId: number | string) {
       limit: 100,
       page,
       where: {
-        ownerUser: {
-          equals: userId,
-        },
+        and: [
+          { ownerUser: { equals: userId } },
+          { purpose: { not_equals: 'vault-archive' } },
+        ],
       },
     })
 

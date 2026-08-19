@@ -4,6 +4,227 @@
     "english": "Engels",
     "dutch": "Nederlands"
   },
+  "CookieConsent": {
+    "title": "Cookievoorkeuren",
+    "message": "Een paar cookies helpen ons zien welke advertenties bezoekers naar MemoryVault brengen. Er wordt niets gedeeld totdat je akkoord geeft.",
+    "accept": "Accepteren",
+    "decline": "Weigeren",
+    "currentAccepted": "Je hebt tracking cookies momenteel geaccepteerd.",
+    "currentDeclined": "Je hebt tracking cookies momenteel geweigerd.",
+    "manageLink": "Cookievoorkeuren",
+    "saved": "Opgeslagen!"
+  },
+  "Pricing": {
+    "eyebrow": "Abonnementen",
+    "title": "Kies de versie die bij je nalatenschap past",
+    "description": "Gratis voor altijd, maandelijks, jaarlijks, of eenmalig betalen en het voor altijd bezitten.",
+    "perMonth": "/maand",
+    "perYear": "/jaar",
+    "oneTime": "eenmalig",
+    "openSource": {
+      "eyebrow": "Bouw in het openbaar",
+      "title": "Open source",
+      "description": "Bekijk de code, host het zelf, draag bij, of volg mee.",
+      "price": "MIT-licentie",
+      "meta": "Zelf gehost",
+      "cta": "Bekijk op GitHub",
+      "features": [
+        {
+          "label": "Herinneringen opgeslagen",
+          "value": "Onbeperkt"
+        },
+        {
+          "label": "Items per herinnering",
+          "value": "Onbeperkt"
+        },
+        {
+          "label": "Dierbaren",
+          "value": "Onbeperkt"
+        },
+        {
+          "label": "Digitale checklist"
+        },
+        {
+          "label": "Opslag",
+          "value": "Onbeperkt"
+        },
+        {
+          "label": "Voor je gehost",
+          "included": false
+        },
+        {
+          "label": "Tekstherinneringen"
+        },
+        {
+          "label": "Foto-herinneringen"
+        },
+        {
+          "label": "Videoberichten"
+        },
+        {
+          "label": "Open When-berichten",
+          "value": "Onbeperkt"
+        },
+        {
+          "label": "Aangepaste groepen"
+        },
+        {
+          "label": "Steun MemoryVault"
+        }
+      ]
+    },
+    "free": {
+      "eyebrow": "Begin vandaag",
+      "title": "Gratis",
+      "description": "Een gerichte gehoste kluis voor de essentie.",
+      "price": "Gratis voor altijd",
+      "meta": "Door ons gehost",
+      "cta": "Gratis account aanmaken",
+      "features": [
+        {
+          "label": "Herinneringen opgeslagen",
+          "value": "Tot 12"
+        },
+        {
+          "label": "Items per herinnering",
+          "value": "6 items"
+        },
+        {
+          "label": "Dierbaren",
+          "value": "Tot 6"
+        },
+        {
+          "label": "Digitale checklist"
+        },
+        {
+          "label": "Opslag",
+          "value": "250MB"
+        },
+        {
+          "label": "Voor je gehost"
+        },
+        {
+          "label": "Tekstherinneringen"
+        },
+        {
+          "label": "Foto-herinneringen"
+        },
+        {
+          "label": "Videoberichten",
+          "included": false
+        },
+        {
+          "label": "Open When-berichten",
+          "value": "Tot 6"
+        },
+        {
+          "label": "Aangepaste groepen",
+          "included": false
+        },
+        {
+          "label": "Steun MemoryVault"
+        }
+      ]
+    },
+    "lifetime": {
+      "eyebrow": "Eenmalig betalen, bezitten",
+      "title": "Levenslang",
+      "description": "Eenmalig betalen, behouden zolang MemoryVault bestaat.",
+      "bestValue": "Beste waarde",
+      "meta": "Door ons gehost",
+      "standardPrice": "€149",
+      "foundingPrice": "€99",
+      "spotsLeft": "Nog {count} van de {limit} founding-plekken over",
+      "soldOut": "De founding-prijs is uitverkocht, standaardprijs is van toepassing",
+      "cta": "Founding-prijs claimen",
+      "ctaStandard": "Levenslange toegang kopen",
+      "features": [
+        {
+          "label": "Herinneringen opgeslagen",
+          "value": "500 herinneringen"
+        },
+        {
+          "label": "Items per herinnering",
+          "value": "6 items"
+        },
+        {
+          "label": "Dierbaren",
+          "value": "200 dierbaren"
+        },
+        {
+          "label": "Digitale checklist"
+        },
+        {
+          "label": "Opslag",
+          "value": "10GB"
+        },
+        {
+          "label": "Voor je gehost"
+        },
+        {
+          "label": "Tekstherinneringen"
+        },
+        {
+          "label": "Foto-herinneringen"
+        },
+        {
+          "label": "Videoberichten"
+        },
+        {
+          "label": "Open When-berichten",
+          "value": "400 berichten"
+        },
+        {
+          "label": "Aangepaste groepen"
+        },
+        {
+          "label": "Steun MemoryVault"
+        },
+        {
+          "label": "Nooit meer gefactureerd"
+        }
+      ]
+    },
+    "comparison": {
+      "title": "Vergelijk alle abonnementen",
+      "featureColumn": "Functie"
+    },
+    "trust": {
+      "title": "Waarom \"levenslang\" een belofte is die we waar kunnen maken",
+      "body1": "MemoryVault Community Edition, dezelfde software die deze gehoste dienst draait, is open source en gratis zelf te hosten. Als MemoryVault als bedrijf ooit stopt of van koers verandert, sta je met een levenslange aankoop niet met lege handen: je kunt je gegevens exporteren en zelf draaien, gratis, zolang je wilt.",
+      "body2": "\"Levenslang\" betekent toegang tot MemoryVault zolang de gehoste dienst bestaat, met een limiet van 500 herinneringen, 200 dierbaren en 10GB opslag, dezelfde grenzen als het maandelijkse en jaarlijkse abonnement. Het is niet onbeperkt, en het is geen garantie dat het bedrijf voor altijd blijft bestaan. Het is een garantie dat je herinneringen niet aan ons vastzitten, zelfs als dat niet zo is.",
+      "link": "Bekijk de code en wat zelf hosten inhoudt"
+    }
+  },
+  "BlogCta": {
+    "defaultHeading": "Nog niet klaar om een kluis te starten?",
+    "defaultBody": "Download in plaats daarvan onze gratis Digitale Nalatenschap Checklist als PDF. Een korte, praktische start om te regelen wat belangrijk is. Geen account nodig.",
+    "defaultButtonLabel": "Download de gratis PDF"
+  },
+  "Checklist": {
+    "eyebrow": "Gratis download",
+    "title": "De Digitale Nalatenschap Checklist",
+    "description": "Een korte, praktische checklist om je accounts, herinneringen en wensen te regelen, voordat iemand anders moet gokken.",
+    "emailLabel": "E-mailadres",
+    "emailPlaceholder": "jij@voorbeeld.nl",
+    "submit": "Stuur me de checklist",
+    "submitting": "Bezig met versturen...",
+    "successTitle": "Check je inbox",
+    "successBody": "We hebben een bevestigingslink gestuurd naar {email}. Klik erop om je checklist te ontvangen.",
+    "alreadyConfirmedTitle": "Je bent al bevestigd",
+    "alreadyConfirmedBody": "Check je inbox voor de checklist, of gebruik de link hieronder.",
+    "error": "Er ging iets mis. Probeer het opnieuw.",
+    "confirm": {
+      "confirmedTitle": "Je bent bevestigd",
+      "confirmedBody": "Je Digitale Nalatenschap Checklist staat klaar.",
+      "downloadCta": "Download de checklist",
+      "invalidTitle": "Deze link is niet geldig",
+      "invalidBody": "Controleer de link uit je e-mail, of vraag hieronder een nieuwe aan.",
+      "expiredTitle": "Deze link is verlopen",
+      "expiredBody": "Bevestigingslinks verlopen na 48 uur. Vraag hieronder een nieuwe aan.",
+      "backToChecklist": "Terug naar de checklist-pagina"
+    }
+  },
   "HomeHowItWorksDemo": {
     "stepKicker": "Stap {step}",
     "demoBadge": "Demo",
@@ -154,6 +375,7 @@
     "modeOwnVault": "Eigen vault",
     "planFree": "Gratis",
     "planPro": "Pro",
+    "planLifetime": "Levenslang",
     "planCommunity": "Community",
     "storageUnlimited": "Onbeperkte opslag",
     "memoriesShort": "Herinneringen",
@@ -275,6 +497,22 @@
     "createAccount": "Maak een account aan",
     "alreadyHaveAccount": "Heb je al een account?",
     "signIn": "Inloggen",
+    "twoFactorTitle": "Tweefactorverificatie",
+    "twoFactorBody": "Voer de code uit je authenticator-app in, of gebruik een back-upcode.",
+    "twoFactorCodeLabel": "Verificatiecode",
+    "twoFactorCodePlaceholder": "000000",
+    "twoFactorBackupCodeLabel": "Back-upcode",
+    "twoFactorBackupCodePlaceholder": "XXXX-XXXX",
+    "twoFactorUseBackupCode": "Gebruik in plaats daarvan een back-upcode",
+    "twoFactorUseAuthenticatorInstead": "Gebruik in plaats daarvan je authenticator-app",
+    "twoFactorSubmit": "Verifieren",
+    "twoFactorVerifying": "Verifieren...",
+    "twoFactorCodeRequired": "Voer een code in om door te gaan",
+    "twoFactorInvalidCode": "Ongeldige of verlopen code",
+    "twoFactorSendEmailCode": "Stuur mij een code per e-mail",
+    "twoFactorSendingEmailCode": "Versturen...",
+    "twoFactorEmailCodeSent": "Code verzonden. Controleer je e-mail.",
+    "twoFactorEmailCodeFailed": "Kon geen code versturen. Probeer het opnieuw.",
     "passwordChecks": {
       "characters": "8+ tekens",
       "uppercase": "Hoofdletter",
@@ -475,8 +713,12 @@
     "profileBody": "Werk hier je naam en profielfoto bij. Je e-mailadres staat ter referentie en kan niet via dit formulier worden gewijzigd.",
     "legacyTitle": "Nalatenschapsbescherming",
     "legacyBody": "Kies vertrouwde contacten en schakel check-ins in, zodat je vault volgens je nalatenschapsinstellingen kan worden vrijgegeven.",
+    "securityTitle": "Tweefactorauthenticatie",
+    "securityBody": "Voeg een authenticator-app toe als extra inlogstap, met back-upcodes en een e-mailoptie voor als je die niet bij de hand hebt.",
     "actionsTitle": "Accountacties",
-    "actionsBody": "Gebruik dit gedeelte voor accountacties zoals uitloggen."
+    "actionsBody": "Gebruik dit gedeelte voor accountacties zoals uitloggen.",
+    "vaultDataTitle": "Vault exporteren & importeren",
+    "vaultDataBody": "Download alles in je vault als zip-bestand, of importeer er een die je eerder hebt geexporteerd: handig voor back-ups of om te wisselen tussen hostingopties."
   },
   "LovedOneDetail": {
     "label": "Dierbaren",
@@ -811,6 +1053,7 @@
       "Tot 200 Open Wanneer berichten (in plaats van 6)",
       "Foto's toevoegen aan Open Wanneer berichten"
     ],
+    "choosePlanTitle": "Kies je abonnement",
     "profileLabel": "Profiel",
     "profileTitle": "Jouw accountgegevens",
     "profileBody": "Houd je persoonlijke gegevens up-to-date.",
@@ -863,7 +1106,66 @@
     "websiteLink": "Naar de website",
     "vaultLabel": "Jouw vault",
     "vaultTitle": "Gebouwd om te blijven",
-    "vaultBody": "Je bewaart kostbare herinneringen die je dierbaren nog jarenlang troost en vreugde zullen geven."
+    "vaultBody": "Je bewaart kostbare herinneringen die je dierbaren nog jarenlang troost en vreugde zullen geven.",
+    "vaultDataLabel": "Jouw gegevens",
+    "vaultDataTitle": "Vault exporteren & importeren",
+    "vaultDataBody": "Download alles in je vault als zip-bestand, of importeer een vault die je eerder hebt geexporteerd. Handig om te wisselen tussen de hosted app en een zelf gehoste installatie, of gewoon als eigen back-up.",
+    "vaultExportTitle": "Exporteer je vault",
+    "vaultExportBody": "Ontvang een zip met je herinneringen, dierbaren, foto's en video's, Open Wanneer berichten en checklistgegevens.",
+    "vaultExportButton": "Exporteer mijn vault",
+    "vaultExportButtonLoading": "Export starten...",
+    "vaultExportStarted": "Export gestart. We mailen je een downloadlink zodra deze klaar is.",
+    "vaultExportError": "De export kon niet worden gestart. Probeer het opnieuw.",
+    "vaultDownloadExport": "Download export",
+    "vaultImportTitle": "Importeer een vault",
+    "vaultImportBody": "Kies een .zip-bestand dat is geexporteerd vanuit MemoryVault. Geimporteerde items worden altijd toegevoegd, je bestaande gegevens worden nooit overschreven.",
+    "vaultImportButton": "Vault importeren",
+    "vaultImportButtonLoading": "Import starten...",
+    "vaultImportStarted": "Import gestart. We mailen je zodra deze klaar is.",
+    "vaultImportError": "De import kon niet worden gestart. Probeer het opnieuw.",
+    "vaultImportChooseFile": "Kies eerst een .zip-bestand om te importeren.",
+    "vaultImportSummary": "{memories, plural, one {# herinnering} other {# herinneringen}}, {lovedOnes, plural, one {# dierbare} other {# dierbaren}} en {media, plural, one {# mediabestand} other {# mediabestanden}} geimporteerd.",
+    "vaultJobStatusQueued": "In de wachtrij - dit start meestal binnen enkele minuten.",
+    "vaultJobStatusProcessing": "Bezig...",
+    "vaultJobStatusCompleted": "Voltooid",
+    "vaultJobStatusFailed": "Mislukt",
+    "vaultJobStatusExpired": "Deze exportlink is verlopen",
+    "vaultRefreshStatus": "Status vernieuwen",
+    "vaultRefreshing": "Vernieuwen...",
+    "securityLabel": "Beveiliging",
+    "securityTitle": "Tweefactorauthenticatie",
+    "securityBody": "Voeg een extra beveiligingslaag toe aan je account met een authenticator-app.",
+    "twoFactorDisabledBody": "Tweefactorauthenticatie staat momenteel uit. Zet het aan om bij het inloggen een code van je authenticator-app te vereisen.",
+    "twoFactorEnable": "Tweefactorauthenticatie inschakelen",
+    "twoFactorStarting": "Starten...",
+    "twoFactorSetupError": "Kon niet starten met instellen. Probeer het opnieuw.",
+    "twoFactorSetupBody": "Scan deze QR-code met je authenticator-app (Google Authenticator, Authy, 1Password, etc.), of voer de code handmatig in.",
+    "twoFactorQrAlt": "QR-code voor tweefactorauthenticatie",
+    "twoFactorManualEntryLabel": "Code voor handmatige invoer",
+    "twoFactorCodeLabel": "Voer de 6-cijferige code in",
+    "twoFactorCodePlaceholder": "000000",
+    "twoFactorBackupCodeLabel": "Back-upcode",
+    "twoFactorBackupCodePlaceholder": "XXXX-XXXX",
+    "twoFactorUseBackupCode": "Gebruik in plaats daarvan een back-upcode",
+    "twoFactorUseAuthenticatorInstead": "Gebruik in plaats daarvan je authenticator-app",
+    "twoFactorCancel": "Annuleren",
+    "twoFactorConfirmSetup": "Bevestigen en inschakelen",
+    "twoFactorConfirmButton": "Bevestigen",
+    "twoFactorVerifying": "Verifieren...",
+    "twoFactorInvalidCode": "Ongeldige code",
+    "twoFactorEnabledToast": "Tweefactorauthenticatie ingeschakeld",
+    "twoFactorStatusEnabled": "Tweefactorauthenticatie is ingeschakeld",
+    "twoFactorRegenerateBackupCodes": "Back-upcodes opnieuw genereren",
+    "twoFactorDisable": "Tweefactorauthenticatie uitschakelen",
+    "twoFactorConfirmDisableBody": "Voer een code van je authenticator-app in (of een back-upcode) om tweefactorauthenticatie uit te schakelen.",
+    "twoFactorConfirmRegenerateBody": "Voer een code van je authenticator-app in (of een back-upcode) om een nieuwe set back-upcodes te genereren. Je oude back-upcodes werken dan niet meer.",
+    "twoFactorDisabledToast": "Tweefactorauthenticatie uitgeschakeld",
+    "twoFactorBackupCodesRegeneratedToast": "Nieuwe back-upcodes gegenereerd",
+    "twoFactorBackupCodesTitle": "Bewaar je back-upcodes",
+    "twoFactorBackupCodesBody": "Elke code kan een keer worden gebruikt om in te loggen als je geen toegang meer hebt tot je authenticator-app. Bewaar ze op een veilige plek: ze worden niet opnieuw getoond.",
+    "twoFactorCopyBackupCodes": "Codes kopieren",
+    "twoFactorBackupCodesCopied": "Back-upcodes gekopieerd",
+    "twoFactorDone": "Klaar"
   },
   "DigitalLegacyChecklist": {
     "heroTitle": "Regel wat later helpt",

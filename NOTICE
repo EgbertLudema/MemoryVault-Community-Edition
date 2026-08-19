@@ -1,5 +1,11 @@
 MemoryVault Community Edition
 Copyright (c) 2026 EL Websolutions
 
-Licensed under the PolyForm Noncommercial License 1.0.0.
-Commercial use requires a separate license from EL Websolutions.
+Licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
+See LICENSE.md for the full license text.
+
+This license applies only to MemoryVault Community Edition, the
+self-hosted app and Payload admin distributed from this repository. It
+does not extend to the private MemoryVault website, marketing CMS, or
+hosted-service code, which remain proprietary and are not distributed
+under this license.

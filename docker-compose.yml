@@ -6,6 +6,7 @@ services:
     volumes:
       - .:/home/node/app
       - node_modules:/home/node/app/node_modules
+      - memoryvault_community_media:/home/node/app/media
     working_dir: /home/node/app/
     command: sh -c "npm install && npm run dev"
     depends_on:
@@ -35,4 +36,5 @@ services:
 
 volumes:
   memoryvault_community_pgdata:
+  memoryvault_community_media:
   node_modules:

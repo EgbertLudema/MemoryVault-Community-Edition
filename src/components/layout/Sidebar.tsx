@@ -272,7 +272,11 @@ export function Sidebar(props: {
   const accountActive = pathname.startsWith('/account')
 
   const planLabel =
-    props.plan === 'pro' ? t('planPro') : props.plan === 'community' ? t('planCommunity') : t('planFree')
+    props.plan === 'pro'
+      ? t('planPro')
+      : props.plan === 'community'
+        ? t('planCommunity')
+        : t('planFree')
   const storageLimitBytes = props.storageLimitBytes
   const storageUsedBytes = props.storageUsedBytes ?? 0
   const storagePercent =

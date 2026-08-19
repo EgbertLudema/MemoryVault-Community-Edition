@@ -2,6 +2,7 @@ import { vercelPostgresAdapter } from '@payloadcms/db-vercel-postgres'
 import { resendAdapter } from '@payloadcms/email-resend'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { s3Storage } from '@payloadcms/storage-s3'
+import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
@@ -16,6 +17,7 @@ import { Memories } from './collections/Memories'
 import { OpenWhenMessages } from './collections/OpenWhenMessages'
 import { LegacyDeliveries } from './collections/LegacyDeliveries'
 import { DigitalLegacyItems } from './collections/DigitalLegacyItems'
+import { VaultJobs } from './collections/VaultJobs'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -30,6 +32,15 @@ const s3Endpoint = process.env.S3_ENDPOINT
 const s3PublicUrl = process.env.S3_PUBLIC_URL?.replace(/\/+$/, '')
 const s3Region = process.env.S3_REGION || 'auto'
 const s3Enabled = Boolean(s3Bucket && s3AccessKeyId && s3SecretAccessKey && s3Endpoint)
+const blobReadWriteToken = process.env.BLOB_READ_WRITE_TOKEN
+
+// STORAGE_DRIVER picks the media storage backend explicitly. Left unset, it
+// auto-detects from whichever credentials are present (so existing installs
+// with S3_* already configured keep working unchanged), and falls back to
+// local disk storage - no setup required to try the app.
+const explicitStorageDriver = process.env.STORAGE_DRIVER as 'local' | 's3' | 'vercel-blob' | undefined
+const storageDriver: 'local' | 's3' | 'vercel-blob' =
+  explicitStorageDriver ?? (s3Enabled ? 's3' : blobReadWriteToken ? 'vercel-blob' : 'local')
 
 export default buildConfig({
   serverURL,
@@ -49,6 +60,7 @@ export default buildConfig({
     LovedOneGroups,
     LegacyDeliveries,
     DigitalLegacyItems,
+    VaultJobs,
   ],
   localization: {
     defaultLocale: 'en',
@@ -85,30 +97,50 @@ export default buildConfig({
   }),
   sharp,
   plugins: [
-    s3Storage({
-      enabled: s3Enabled,
-      collections: {
-        media: s3PublicUrl
-          ? {
-              disablePayloadAccessControl: true,
-              generateFileURL: ({ filename, prefix }) => {
-                const key = prefix ? `${prefix}/${filename}` : filename
-                return `${s3PublicUrl}/${key}`
+    ...(storageDriver === 's3'
+      ? [
+          s3Storage({
+            enabled: true,
+            collections: {
+              media: s3PublicUrl
+                ? {
+                    disablePayloadAccessControl: true,
+                    generateFileURL: ({ filename, prefix }) => {
+                      const key = prefix ? `${prefix}/${filename}` : filename
+                      return `${s3PublicUrl}/${key}`
+                    },
+                  }
+                : true,
+            },
+            bucket: s3Bucket as string,
+            config: {
+              credentials: {
+                accessKeyId: s3AccessKeyId as string,
+                secretAccessKey: s3SecretAccessKey as string,
               },
-            }
-          : true,
-      },
-      bucket: s3Bucket as string,
-      config: {
-        credentials: {
-          accessKeyId: s3AccessKeyId as string,
-          secretAccessKey: s3SecretAccessKey as string,
-        },
-        endpoint: s3Endpoint,
-        forcePathStyle: true,
-        region: s3Region,
-      },
-      clientUploads: true,
-    }),
+              endpoint: s3Endpoint,
+              forcePathStyle: true,
+              region: s3Region,
+            },
+            clientUploads: true,
+          }),
+        ]
+      : []),
+    ...(storageDriver === 'vercel-blob'
+      ? [
+          vercelBlobStorage({
+            enabled: true,
+            collections: {
+              media: true,
+            },
+            token: blobReadWriteToken as string,
+            addRandomSuffix: true,
+            cacheControlMaxAge: 31536000,
+          }),
+        ]
+      : []),
+    // storageDriver === 'local': no plugin registered, Payload's built-in
+    // local-disk default takes over (writes to <cwd>/media, per Media.ts's
+    // staticDir config), served by src/app/api/media/local-file/[filename].
   ],
 })

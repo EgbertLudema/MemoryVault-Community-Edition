@@ -29,6 +29,13 @@ function getSteps(t: ReturnType<typeof useTranslations>): Step[] {
       title: t('actionsTitle'),
       content: t('actionsBody'),
     },
+    {
+      target: '[data-tour="account-data"]',
+      placement: 'top',
+      skipBeacon: true,
+      title: t('vaultDataTitle'),
+      content: t('vaultDataBody'),
+    },
   ]
 }
 
