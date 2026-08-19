@@ -34,10 +34,13 @@ docker compose up
 Then open [http://localhost:3000](http://localhost:3000). Payload Admin is at
 [http://localhost:3000/admin](http://localhost:3000/admin).
 
-The compose file starts Postgres for you, but you still need to fill in a few
-secrets and your media storage credentials in `.env` before things work end to
-end, see [Environment Variables](#environment-variables) below,
-`PAYLOAD_SECRET`, `APP_ENCRYPTION_KEY`, and the `S3_*` values in particular.
+The compose file starts Postgres for you and defaults to local disk storage,
+so there's no media storage setup needed to try it out. You still need to
+fill in a few secrets in `.env` before things work end to end, see
+[Environment Variables](#environment-variables) below, `PAYLOAD_SECRET`,
+`APP_ENCRYPTION_KEY`, and `RESEND_API_KEY`/`RESEND_FROM_ADDRESS` in
+particular, the latter two are what send check-in and Open When Message
+delivery emails.
 
 For a manual (non-Docker) setup, see [Manual Setup](#manual-setup).
 
@@ -69,8 +72,12 @@ See [LICENSE.md](./LICENSE.md) and [NOTICE](./NOTICE).
 - Node.js `24.15.0` or newer, below Node `25`
 - npm
 - PostgreSQL
-- S3-compatible object storage for media uploads
-- Optional: Resend for email delivery
+- Media storage: none to set up if you use the `local` driver (the default), or an S3-compatible
+  bucket, or a Vercel Blob store, see [Media Storage](#media-storage) below
+- A [Resend](https://resend.com) account and API key. The app runs without one, but check-in
+  reminders, trusted contact notifications, and Open When Message delivery are all sent by email,
+  so those features silently do nothing until Resend is configured. This is the only email
+  provider wired up in this codebase (more will be added in future updates).
 
 ## Environment Variables
 
@@ -80,19 +87,16 @@ Copy the environment file and fill it in:
 cp .env.example .env
 ```
 
-Minimum local values:
+Minimum local values (media storage defaults to local disk, no extra
+variables needed, see [Media Storage](#media-storage) for S3 or Vercel Blob):
 
 ```txt
 NEXT_PUBLIC_SERVER_URL=http://localhost:3000
 PAYLOAD_SECRET=replace-with-a-long-random-secret
 POSTGRES_URL=postgresql://postgres:postgres@localhost:5432/memoryvault
-S3_BUCKET=memoryvault
-S3_REGION=auto
-S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
-S3_ACCESS_KEY_ID=your-access-key-id
-S3_SECRET_ACCESS_KEY=your-secret-access-key
-S3_PUBLIC_URL=https://media.example.com
 APP_ENCRYPTION_KEY=replace-with-a-long-random-secret
+RESEND_API_KEY=your-resend-api-key
+RESEND_FROM_ADDRESS=notifications@yourdomain.com
 ```
 
 ## Manual Setup
